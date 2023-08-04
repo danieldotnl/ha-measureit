@@ -1,6 +1,6 @@
 {
-    "name": "ludeeus/integration_blueprint",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.10-bullseye",
+    "name": "danieldotnl/measureit",
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [
         8123
