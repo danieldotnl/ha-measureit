@@ -2,10 +2,57 @@
   "config": {
     "step": {
       "user": {
-        "description": "If you need help with the configuration have a look here: https://github.com/ludeeus/integration_blueprint",
+        "title": "Choose what you want to measure",
+        "description": "Thanks for setting up MeasureIt! If you need help with the configuration have a look here: https://github.com/danieldotnl/ha-measureit.\nTime measures the duration while a condition (template) equals true. Source will measure the value changes of another entity, while a condition (template) equals true.",
+        "menu_options": {
+          "time": "Time",
+          "source": "Source sensor"
+        }
+      },
+      "time": {
+        "title": "Configure time meter",
+        "description": "Configure the configuration name (used for sensor names and logging) and the unit of the measurement.",
         "data": {
-          "username": "Username",
-          "password": "Password"
+          "name": "Configuration name"
+        }
+      },
+      "source": {
+        "title": "Configure source meter",
+        "description": "Configure the configuration name (used for sensor names and logging), the source to measure and the unit of the measurement.",
+        "data": {
+          "name": "Configuration name",
+          "source": "Source entity"
+        }
+      },
+      "when": {
+        "title": "When do you want to measure?",
+        "description": "Configure an optional condition (template) and/or the days and time when you want to measure. Default: always measure. When the from time is later than the till time, it is assumed that the time window crosses midnight.",
+        "data": {
+          "condition": "Condition template",
+          "when_days": "Days:",
+          "when_from": "From time",
+          "when_till": "Till time"
+        }
+      },
+      "sensors": {
+        "title": "Configure the period to measure",
+        "description": "Pick a predefined period or create a custom one (with duration). Each period becomes a sensor. When finished choose: I'm done.",
+        "menu_options": {
+          "5m": "5 Minutes",
+          "hour": "Hour",
+          "day": "Day",
+          "week": "Week",
+          "month": "Month",
+          "year": "Year",
+          "custom": "Custom (advanced)",
+          "done": "I'm done"
+        },
+        "data": {
+          "period": "Periods",
+          "unit_of_measurement": "Unit of measurement",
+          "value_template": "Value template",
+          "state_class": "State class",
+          "device_class": "Device class"
         }
       }
     },
