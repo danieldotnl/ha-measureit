@@ -1,4 +1,4 @@
-"""Adds config flow for Blueprint."""
+"""Adds config flow for MeasureIt."""
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -113,7 +113,7 @@ SENSORS_CONFIG = {
         selector.SelectSelectorConfig(
             options=PERIOD_OPTIONS,
             multiple=True,
-            custom_value=True,
+            custom_value=False,
             mode=selector.SelectSelectorMode.LIST,
         )
     ),
@@ -133,7 +133,6 @@ SENSORS_CONFIG = {
     ),
 }
 
-
 DATA_SCHEMA_TIME = vol.Schema(MAIN_CONFIG)
 DATA_SCHEMA_SOURCE = vol.Schema(
     {
@@ -144,6 +143,23 @@ DATA_SCHEMA_SOURCE = vol.Schema(
 DATA_SCHEMA_WHEN = vol.Schema(WHEN_CONFIG)
 DATA_SCHEMA_EDIT_SENSOR = vol.Schema(SENSOR_CONFIG)
 DATA_SCHEMA_SENSORS = vol.Schema(SENSORS_CONFIG)
+
+DATA_SCHEMA_EDIT_MAIN = vol.Schema(
+    {
+        **MAIN_CONFIG,
+        **WHEN_CONFIG,
+    }
+)
+
+DATA_SCHEMA_THANK_YOU = vol.Schema({})
+#     {
+#         vol.Optional("thank you"): selector.ConstantSelector(
+#             selector.ConstantSelectorConfig(
+#                 label="testlbl", value="testvalue", translation_key="testkey"
+#             )
+#         ),
+#     }
+# )
 
 CONFIG_FLOW = {
     "user": SchemaFlowMenuStep(["time", "source"]),
@@ -164,6 +180,23 @@ CONFIG_FLOW = {
     "sensors": SchemaFlowFormStep(
         schema=DATA_SCHEMA_SENSORS,
         validate_user_input=validate_sensor_setup,
+        next_step="thank_you",
+    ),
+    "thank_you": SchemaFlowFormStep(
+        DATA_SCHEMA_THANK_YOU,
+    ),
+}
+
+OPTIONS_FLOW = {
+    "init": SchemaFlowMenuStep(
+        ["edit_main", "add_sensor", "select_edit_sensor", "remove_sensor", "thank_you"]
+    ),
+    "edit_main": SchemaFlowFormStep(
+        DATA_SCHEMA_EDIT_MAIN,
+        validate_user_input=validate_main_config,
+    ),
+    "thank_you": SchemaFlowFormStep(
+        DATA_SCHEMA_THANK_YOU,
     ),
 }
 
@@ -172,7 +205,7 @@ class MeasureItFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config flow for Scrape."""
 
     config_flow = CONFIG_FLOW
-    # options_flow = OPTIONS_FLOW
+    options_flow = OPTIONS_FLOW
 
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
         """Return config entry title."""

@@ -54,12 +54,24 @@
           "state_class": "State class",
           "device_class": "Device class"
         }
+      },
+      "thank_you": {
+        "title": "Thank you for setting up MeasureIt!",
+        "description": "I am incredibly motivated by coffee!\nIf you do like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl"
       }
     },
     "error": {
       "auth": "Username/Password is wrong.",
       "connection": "Unable to connect to the server.",
       "unknown": "Unknown error occurred."
+    }
+  },
+  "options": {
+    "step": {
+      "thank_you": {
+        "title": "Thank you for setting up MeasureIt!",
+        "description": "Did you know that I'm incredibly motivated by coffee?\nIf you like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl"
+      }
     }
   }
 }
