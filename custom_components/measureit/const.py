@@ -24,5 +24,7 @@ CONF_STATE_CLASS = "state_class"
 CONF_TW_DAYS = "when_days"
 CONF_TW_FROM = "when_from"
 CONF_TW_TILL = "when_till"
+CONF_CONFIG_NAME = "config_name"
+CONF_SENSOR_NAME = "sensor_name"
 
 CONF_INDEX = "index"

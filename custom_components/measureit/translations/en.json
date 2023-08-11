@@ -20,8 +20,8 @@
         "title": "Configure source meter",
         "description": "Configure the configuration name (used for sensor names and logging), the source to measure and the unit of the measurement.",
         "data": {
-          "name": "Configuration name",
-          "source": "Source entity"
+          "config_name": "Configuration name",
+          "source_entity": "Source entity"
         }
       },
       "when": {
@@ -35,29 +35,27 @@
         }
       },
       "sensors": {
-        "title": "Configure the period to measure",
-        "description": "Pick a predefined period or create a custom one (with duration). Each period becomes a sensor. When finished choose: I'm done.",
+        "title": "Configure the periods to measure",
+        "description": "Select the periods you want to measure (when the meter will reset) and optionally provide other fields. Each period becomes a sensor.",
         "menu_options": {
           "5m": "5 Minutes",
           "hour": "Hour",
           "day": "Day",
           "week": "Week",
           "month": "Month",
-          "year": "Year",
-          "custom": "Custom (advanced)",
-          "done": "I'm done"
+          "year": "Year"
         },
         "data": {
           "period": "Periods",
           "unit_of_measurement": "Unit of measurement",
-          "value_template": "Value template",
+          "value_template": "Value template (for sensor value)",
           "state_class": "State class",
           "device_class": "Device class"
         }
       },
       "thank_you": {
         "title": "Thank you for setting up MeasureIt!",
-        "description": "I am incredibly motivated by coffee!\nIf you do like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl"
+        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl 🙏"
       }
     },
     "error": {
@@ -68,9 +66,62 @@
   },
   "options": {
     "step": {
+      "init": {
+        "title": "Pick an action",
+        "menu_options": {
+          "edit_main": "Edit the main configuration",
+          "add_sensors": "Add new sensors",
+          "remove_sensor": "Remove a sensor",
+          "select_edit_sensor": "Edit a sensor configuration"
+        }
+      },
+      "add_sensors": {
+        "title": "Add sensors",
+        "description": "Select the periods you want to measure (when the meter will reset) and optionally provide other fields. Each period becomes a sensor.",
+        "menu_options": {
+          "5m": "5 Minutes",
+          "hour": "Hour",
+          "day": "Day",
+          "week": "Week",
+          "month": "Month",
+          "year": "Year"
+        },
+        "data": {
+          "period": "Periods",
+          "unit_of_measurement": "Unit of measurement",
+          "value_template": "Value template (for sensor value)",
+          "state_class": "State class",
+          "device_class": "Device class"
+        }
+      },
+      "edit_main": {
+        "title": "Edit main configuration",
+        "data": {
+          "config_name": "Name",
+          "condition": "Condition template",
+          "when_days": "Days:",
+          "when_from": "From time",
+          "when_till": "Till time"
+        }
+      },
       "thank_you": {
         "title": "Thank you for setting up MeasureIt!",
-        "description": "Did you know that I'm incredibly motivated by coffee?\nIf you like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl"
+        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl 🙏"
+      },
+      "edit_sensor": {
+        "title": "Edit sensor",
+        "description": "Edit the configuration of the selected sensor.",
+        "data": {
+          "sensor_name": "Name",
+          "unit_of_measurement": "Unit of measurement",
+          "value_template": "Value template",
+          "state_class": "State class",
+          "device_class": "Device class"
+        }
+      },
+      "remove_sensor": {
+        "title": "Remove sensor(s)",
+        "description": "Select the sensors you want to remove."
       }
     }
   }
