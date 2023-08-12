@@ -33,7 +33,9 @@ from homeassistant.helpers.schema_config_entry_flow import (
 from .const import (
     CONF_CONDITION,
     CONF_CONFIG_NAME,
+    CONF_CRON,
     CONF_INDEX,
+    CONF_METER_TYPE,
     CONF_PERIOD,
     CONF_PERIODS,
     CONF_SENSOR_NAME,
@@ -43,6 +45,9 @@ from .const import (
     CONF_TW_TILL,
     DOMAIN,
     LOGGER,
+    METER_TYPE_SOURCE,
+    METER_TYPE_TIME,
+    PREDEFINED_PERIODS,
 )
 
 PERIOD_OPTIONS = [
@@ -95,6 +100,7 @@ async def validate_sensor_setup(
         sensor[CONF_SENSOR_NAME] = make_unique_name(
             period, [item.get(CONF_SENSOR_NAME) for item in sensors]
         )
+        sensor[CONF_CRON] = PREDEFINED_PERIODS[period]
         sensor[CONF_PERIOD] = period
         del sensor[CONF_PERIODS]
         LOGGER.warning("To be added: %s", sensor)
@@ -104,10 +110,33 @@ async def validate_sensor_setup(
     return {}
 
 
-async def validate_main_config(
+async def validate_edit_main_config(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
-    """Validate main config."""
+    """Validate edit main config."""
+    return user_input
+
+
+async def validate_time_config(
+    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Validate time config."""
+    user_input[CONF_METER_TYPE] = METER_TYPE_TIME
+    return user_input
+
+
+async def validate_source_config(
+    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Validate source config."""
+    user_input[CONF_METER_TYPE] = METER_TYPE_SOURCE
+    return user_input
+
+
+async def validate_when(
+    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Validate when config."""
     return user_input
 
 
@@ -267,15 +296,16 @@ CONFIG_FLOW = {
     "time": SchemaFlowFormStep(
         schema=DATA_SCHEMA_TIME,
         next_step="when",
-        validate_user_input=validate_main_config,
+        validate_user_input=validate_time_config,
     ),
     "source": SchemaFlowFormStep(
         schema=DATA_SCHEMA_SOURCE,
         next_step="when",
-        # validate_user_input=validate_rest_setup,
+        validate_user_input=validate_source_config,
     ),
     "when": SchemaFlowFormStep(
         schema=DATA_SCHEMA_WHEN,
+        validate_user_input=validate_when,
         next_step="sensors",
     ),
     "sensors": SchemaFlowFormStep(
@@ -294,7 +324,7 @@ OPTIONS_FLOW = {
     ),
     "edit_main": SchemaFlowFormStep(
         DATA_SCHEMA_EDIT_MAIN,
-        validate_user_input=validate_main_config,
+        validate_user_input=validate_edit_main_config,
     ),
     "add_sensors": SchemaFlowFormStep(
         DATA_SCHEMA_SENSORS,
