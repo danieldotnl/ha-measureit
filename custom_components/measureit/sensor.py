@@ -8,7 +8,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_UNIT_OF_MEASUREMENT
-from homeassistant.const import CONF_VALUE_TEMPLATE
+from homeassistant.const import CONF_VALUE_TEMPLATE, CONF_UNIQUE_ID
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -45,6 +45,7 @@ async def async_setup_entry(
 
     for sensor in config_entry.options[CONF_SENSOR]:
         value_template_renderer = None
+        unique_id = sensor.get(CONF_UNIQUE_ID)
         if sensor.get(CONF_VALUE_TEMPLATE):
             value_template_renderer = create_renderer(
                 hass, sensor.get(CONF_VALUE_TEMPLATE)
@@ -53,6 +54,7 @@ async def async_setup_entry(
         sensors.append(
             MeasureItSensor(
                 coordinator,
+                unique_id,
                 config_name,
                 meter_type,
                 sensor[CONF_SENSOR_NAME],
@@ -70,6 +72,7 @@ class MeasureItSensor(SensorEntity):
     def __init__(
         self,
         coordinator,
+        unique_id,
         config_name,
         meter_type,
         pattern_name,
@@ -81,7 +84,7 @@ class MeasureItSensor(SensorEntity):
         self._coordinator: MeasureItCoordinator = coordinator
         self._pattern_name = pattern_name
         self._attr_name = f"{config_name}_{pattern_name}"
-        self._attr_unique_id = f"{config_name}_{pattern_name}"
+        self._attr_unique_id = unique_id
         self._attr_icon = ICON
         self._attr_extra_state_attributes = {}
         self._value_template_renderer = value_template_renderer

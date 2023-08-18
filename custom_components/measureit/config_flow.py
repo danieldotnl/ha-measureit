@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any
+import uuid
 
 import voluptuous as vol
 from homeassistant.const import (
@@ -95,7 +96,7 @@ async def validate_sensor_setup(
     sensors: list[dict[str, Any]] = handler.options.setdefault(SENSOR_DOMAIN, [])
     for period in user_input[CONF_PERIODS]:
         sensor = dict(user_input)
-        # sensor[CONF_UNIQUE_ID] = str(uuid.uuid1())
+        sensor[CONF_UNIQUE_ID] = str(uuid.uuid1())
 
         sensor[CONF_SENSOR_NAME] = make_unique_name(
             period, [item.get(CONF_SENSOR_NAME) for item in sensors]
@@ -103,7 +104,6 @@ async def validate_sensor_setup(
         sensor[CONF_CRON] = PREDEFINED_PERIODS[period]
         sensor[CONF_PERIOD] = period
         del sensor[CONF_PERIODS]
-        LOGGER.warning("To be added: %s", sensor)
         sensors.append(sensor)
 
     LOGGER.error("Options: %s", handler.options)
@@ -190,6 +190,29 @@ async def validate_remove_sensor(
     return {}
 
 
+async def get_add_sensor_suggested_values(
+    handler: SchemaCommonFlowHandler,
+) -> dict[str, Any]:
+    """Return suggested values for adding sensors."""
+    suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL_INCREASING}
+    if handler.options[CONF_METER_TYPE] == METER_TYPE_TIME:
+        suggested[CONF_DEVICE_CLASS] = SensorDeviceClass.DURATION
+        suggested[CONF_VALUE_TEMPLATE] = "{{ value | float / 60 }}"
+        suggested[CONF_UNIT_OF_MEASUREMENT] = "min"
+    elif handler.options[CONF_METER_TYPE] == METER_TYPE_SOURCE:
+        try:
+            state = handler.parent_handler.hass.states.get(handler.options[CONF_SOURCE])
+            suggested[CONF_DEVICE_CLASS] = state.attributes.get("device_class")
+            suggested[CONF_UNIT_OF_MEASUREMENT] = state.attributes.get(
+                "unit_of_measurement"
+            )
+        except Exception as ex:
+            LOGGER.warning(
+                "Couldn't retrieve properties from source sensor in config_flow: %s", ex
+            )
+    return suggested
+
+
 async def get_edit_sensor_suggested_values(
     handler: SchemaCommonFlowHandler,
 ) -> dict[str, Any]:
@@ -210,10 +233,6 @@ async def validate_sensor_edit(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Update edited sensor."""
-    sensors: list[dict[str, Any]] = handler.options.setdefault(SENSOR_DOMAIN, [])
-    user_input[CONF_SENSOR_NAME] = make_unique_name(
-        user_input[CONF_SENSOR_NAME], [item.get(CONF_SENSOR_NAME) for item in sensors]
-    )
 
     # Standard behavior is to merge the result with the options.
     # In this case, we want to add a sub-item so we update the options directly.
@@ -311,6 +330,7 @@ CONFIG_FLOW = {
     "sensors": SchemaFlowFormStep(
         schema=DATA_SCHEMA_SENSORS,
         validate_user_input=validate_sensor_setup,
+        suggested_values=get_add_sensor_suggested_values,
         next_step="thank_you",
     ),
     "thank_you": SchemaFlowFormStep(
@@ -328,7 +348,7 @@ OPTIONS_FLOW = {
     ),
     "add_sensors": SchemaFlowFormStep(
         DATA_SCHEMA_SENSORS,
-        suggested_values=None,
+        suggested_values=get_add_sensor_suggested_values,
         validate_user_input=validate_sensor_setup,
         next_step="thank_you",
     ),
