@@ -106,7 +106,6 @@ async def validate_sensor_setup(
         del sensor[CONF_PERIODS]
         sensors.append(sensor)
 
-    LOGGER.error("Options: %s", handler.options)
     return {}
 
 

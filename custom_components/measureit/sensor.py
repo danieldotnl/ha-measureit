@@ -12,8 +12,19 @@ from homeassistant.const import CONF_VALUE_TEMPLATE, CONF_UNIQUE_ID
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.util import dt as dt_util
 
-from .const import ATTR_NEXT_RESET, CONF_CONFIG_NAME, CONF_SENSOR, CONF_SENSOR_NAME
+from .period import Period
+from .reading import ReadingData
+
+from .const import (
+    ATTR_NEXT_RESET,
+    CONF_CONFIG_NAME,
+    CONF_CRON,
+    CONF_SENSOR,
+    CONF_SENSOR_NAME,
+)
 from .const import ATTR_PREV
 from .const import ATTR_STATUS
 from .const import CONF_METER_TYPE
@@ -24,6 +35,7 @@ from .const import METER_TYPE_TIME
 from .coordinator import MeasureItCoordinator
 from .meter import Meter
 from .util import create_renderer
+
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -36,7 +48,7 @@ async def async_setup_entry(
     """Set up sensor platform."""
     entry_id: str = config_entry.entry_id
     meter_type: str = config_entry.options[CONF_METER_TYPE]
-    _LOGGER.warning("Options: %s", config_entry.options)
+    _LOGGER.debug("Options: %s", config_entry.options)
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
 
     coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
@@ -46,14 +58,16 @@ async def async_setup_entry(
     for sensor in config_entry.options[CONF_SENSOR]:
         value_template_renderer = None
         unique_id = sensor.get(CONF_UNIQUE_ID)
-        if sensor.get(CONF_VALUE_TEMPLATE):
-            value_template_renderer = create_renderer(
-                hass, sensor.get(CONF_VALUE_TEMPLATE)
-            )
+
+        period = Period(sensor[CONF_CRON], dt_util.now())
+        meter = Meter(f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period)
+
+        value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
 
         sensors.append(
             MeasureItSensor(
                 coordinator,
+                meter,
                 unique_id,
                 config_name,
                 meter_type,
@@ -66,12 +80,13 @@ async def async_setup_entry(
     async_add_entities(sensors)
 
 
-class MeasureItSensor(SensorEntity):
+class MeasureItSensor(RestoreEntity, SensorEntity):
     """MeasureIt Sensor Entity."""
 
     def __init__(
         self,
         coordinator,
+        meter,
         unique_id,
         config_name,
         meter_type,
@@ -81,6 +96,7 @@ class MeasureItSensor(SensorEntity):
     ):
         """Initialize a sensor entity."""
         self._meter_type = meter_type
+        self.meter = meter
         self._coordinator: MeasureItCoordinator = coordinator
         self._pattern_name = pattern_name
         self._attr_name = f"{config_name}_{pattern_name}"
@@ -101,34 +117,21 @@ class MeasureItSensor(SensorEntity):
             self._coordinator.async_add_listener(self._handle_coordinator_update)
         )
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        """Return the state attributes."""
+        return {
+            ATTR_STATUS: self.meter.state,
+            ATTR_PREV: self._value_template_renderer(self.meter.prev_measured_value),
+            ATTR_NEXT_RESET: self.meter.next_reset,
+        }
+
     @callback
-    def _handle_coordinator_update(self) -> None:
+    def _handle_coordinator_update(self, reading: ReadingData) -> None:
         """Handle updated data from the coordinator."""
-        meter: Meter = self._coordinator.get_meter(self._pattern_name)
 
-        measured_value = meter.measured_value
-        prev_measured_value = meter.prev_measured_value
-
-        if self._value_template_renderer:
-            self._attr_native_value = self._value_template_renderer(measured_value)
-            self._attr_extra_state_attributes[ATTR_STATUS] = meter.state
-            self._attr_extra_state_attributes[
-                ATTR_PREV
-            ] = self._value_template_renderer(prev_measured_value)
-        else:
-            if self._meter_type == METER_TYPE_TIME:
-                self._attr_native_value = round(measured_value)
-                self._attr_extra_state_attributes[ATTR_PREV] = round(
-                    prev_measured_value
-                )
-            else:
-                self._attr_native_value = round(measured_value, 2)
-                self._attr_extra_state_attributes[ATTR_PREV] = round(
-                    prev_measured_value, 2
-                )
-
-        self._attr_last_reset = meter.last_reset
-        self._attr_extra_state_attributes[ATTR_NEXT_RESET] = meter.next_reset
-        self.async_set_context(self._coordinator._context)
-
+        self.meter.on_update(reading)
+        self._attr_native_value = self._value_template_renderer(
+            self.meter.measured_value
+        )
         self.async_write_ha_state()
