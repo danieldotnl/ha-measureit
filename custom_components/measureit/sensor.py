@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
+from typing import Any
+from dataclasses import dataclass
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
@@ -12,8 +15,9 @@ from homeassistant.const import CONF_VALUE_TEMPLATE, CONF_UNIQUE_ID
 from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.restore_state import RestoreEntity, ExtraStoredData
 from homeassistant.util import dt as dt_util
+
 
 from .period import Period
 from .reading import ReadingData
@@ -80,6 +84,59 @@ async def async_setup_entry(
     async_add_entities(sensors)
 
 
+@dataclass
+class MeasureItMeterStoredData(ExtraStoredData):
+    """Object to hold meter data to be stored."""
+
+    state: str | None = None
+    measured_value: float = 0
+    prev_measured_value: float = 0
+    session_start_reading: float | None = None
+    start_measured_value: float | None = None
+    last_reset: datetime | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a dict representation of the meter data."""
+
+        _LOGGER.debug("Persisting meter data")
+
+        data = {
+            "measured_value": self.measured_value,
+            "start_measured_value": self.start_measured_value,
+            "prev_measured_value": self.prev_measured_value,
+            "session_start_reading": self.session_start_reading,
+            "last_reset": dt_util.as_timestamp(self.last_reset),
+            "state": self.state,
+        }
+        return data
+
+    @classmethod
+    def from_dict(cls, restored: dict[str, Any]) -> MeasureItMeterStoredData | None:
+        """Initialize a stored sensor state from a dict."""
+
+        try:
+            measured_value = restored["measured_value"]
+            start_measured_value = restored["start_measured_value"]
+            prev_measured_value = restored["prev_measured_value"]
+            session_start_reading = restored["session_start_reading"]
+            last_reset = restored.get("last_reset")
+            if last_reset:
+                last_reset = dt_util.utc_from_timestamp(last_reset)
+            state = restored["state"]
+        except KeyError:
+            # restored is a dict, but does not have all values
+            return None
+
+        return cls(
+            state,
+            measured_value,
+            prev_measured_value,
+            session_start_reading,
+            start_measured_value,
+            last_reset,
+        )
+
+
 class MeasureItSensor(RestoreEntity, SensorEntity):
     """MeasureIt Sensor Entity."""
 
@@ -96,7 +153,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
     ):
         """Initialize a sensor entity."""
         self._meter_type = meter_type
-        self.meter = meter
+        self.meter: Meter = meter
         self._coordinator: MeasureItCoordinator = coordinator
         self._pattern_name = pattern_name
         self._attr_name = f"{config_name}_{pattern_name}"
@@ -113,6 +170,22 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
 
     async def async_added_to_hass(self):
         """Add sensors as a listener for coordinator updates."""
+
+        if (last_meter_data := await self.async_get_last_sensor_data()) is not None:
+            _LOGGER.debug(
+                "%s # Restoring data from last session: %s",
+                self._attr_name,
+                last_meter_data,
+            )
+            self.meter.state = last_meter_data.state
+            self.meter.measured_value = last_meter_data.measured_value
+            self.meter._start_measured_value = last_meter_data.start_measured_value
+            self.meter.prev_measured_value = last_meter_data.prev_measured_value
+            self.meter._session_start_reading = last_meter_data.session_start_reading
+            self.meter._period.last_reset = last_meter_data.last_reset
+        else:
+            _LOGGER.warning("%s # Could not restore data", self._attr_name)
+
         self.async_on_remove(
             self._coordinator.async_add_listener(self._handle_coordinator_update)
         )
@@ -130,8 +203,29 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
     def _handle_coordinator_update(self, reading: ReadingData) -> None:
         """Handle updated data from the coordinator."""
 
+        _LOGGER.debug("Coordinator update received!")
+
         self.meter.on_update(reading)
         self._attr_native_value = self._value_template_renderer(
             self.meter.measured_value
         )
         self.async_write_ha_state()
+
+    @property
+    def extra_restore_state_data(self) -> MeasureItMeterStoredData:
+        """Return sensor specific state data to be restored."""
+
+        return MeasureItMeterStoredData(
+            self.meter.state,
+            self.meter.measured_value,
+            self.meter.prev_measured_value,
+            self.meter._session_start_reading,
+            self.meter._start_measured_value,
+            self.meter._period.last_reset,
+        )
+
+    async def async_get_last_sensor_data(self) -> MeasureItMeterStoredData | None:
+        """Restore native_value and native_unit_of_measurement."""
+        if (restored_last_extra_data := await self.async_get_last_extra_data()) is None:
+            return None
+        return MeasureItMeterStoredData.from_dict(restored_last_extra_data.as_dict())

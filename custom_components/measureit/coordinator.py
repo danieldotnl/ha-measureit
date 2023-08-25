@@ -171,29 +171,3 @@ class MeasureItCoordinator:
             raise ValueError("Could not process value as it's unknown or unavailable.")
         else:
             return float(value)
-
-    # async def _async_from_storage(self):
-    #     try:
-    #         stored_data = await self._store.async_load()
-    #         if stored_data:
-    #             for meter in self.meters:
-    #                 Meter.from_dict(stored_data[meter.name], meter)
-    #     except Exception as ex:
-    #         _LOGGER.error(
-    #             "%s # Loading component state from disk failed with error: %s",
-    #             self._name,
-    #             ex,
-    #         )
-
-    # async def _async_to_storage(self) -> None:
-    #     try:
-    #         data = {}
-    #         for meter in self.meters:
-    #             data[meter.name] = Meter.to_dict(meter)
-    #         await self._store.async_save(data)
-    #     except Exception as ex:
-    #         _LOGGER.error(
-    #             "%s # Saving component state to disk failed with error: %s",
-    #             self._name,
-    #             ex,
-    #         )
