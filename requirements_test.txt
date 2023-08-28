@@ -1,3 +1,4 @@
 -r requirements.txt
 pytest==7.3.1
 pytz==2023.3
+croniter==1.4.1
