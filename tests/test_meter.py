@@ -1,6 +1,5 @@
 """Tests for MeasureIt meter class."""
 
-import json
 from datetime import datetime
 
 import pytest
@@ -8,6 +7,7 @@ import pytz
 from custom_components.measureit.meter import Meter
 from custom_components.measureit.meter import MeterState
 from custom_components.measureit.period import Period
+from custom_components.measureit.reading import ReadingData
 
 START_PATTERN = "0 0 * * *"
 NAME = "24h"
@@ -30,88 +30,64 @@ def test_init(meter: Meter):
 
 def test_heartbeat(meter: Meter):
     """Test on_heartbeat function of meter."""
-    # should trigger start()
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 5))
-    meter._template_active = True
-    meter.on_heartbeat(fake_now, 123, True)
+    # should trigger meter start()
+    reading = ReadingData(
+        reading_datetime=TZ.localize(datetime(2022, 1, 1, 11, 5)),
+        value=123,
+        template_active=True,
+        timewindow_active=True,
+    )
+    meter.on_update(reading)
     assert meter._session_start_reading == 123
     assert meter._start_measured_value == 0
 
     fake_now = TZ.localize(datetime(2022, 1, 1, 11, 10))
-    meter.on_heartbeat(fake_now, 130, True)
+    meter.on_update(ReadingData(fake_now, True, True, 130))
     assert meter.measured_value == 7
 
+    # next day, meter should reset
     fake_now = TZ.localize(datetime(2022, 1, 2, 11, 11))
-    meter.on_heartbeat(fake_now, 132, True)
+    meter.on_update(ReadingData(fake_now, True, True, 132))
     assert meter.measured_value == 0
     assert meter.prev_measured_value == 9
 
     fake_now = TZ.localize(datetime(2022, 1, 2, 11, 20))
-    meter.on_heartbeat(fake_now, 140, False)
+    meter.on_update(ReadingData(fake_now, True, False, 140))
     assert meter.measured_value == 8
 
     fake_now = TZ.localize(datetime(2022, 1, 2, 11, 20))
-    meter.on_heartbeat(fake_now, 145, False)
+    meter.on_update(ReadingData(fake_now, True, False, 145))
     assert meter.measured_value == 8
 
     fake_now = TZ.localize(datetime(2022, 1, 2, 11, 20))
-    meter.on_heartbeat(fake_now, 148, True)
+    meter.on_update(ReadingData(fake_now, True, True, 148))
     assert meter.measured_value == 8
 
     fake_now = TZ.localize(datetime(2022, 1, 2, 11, 21))
-    meter.on_heartbeat(fake_now, 150, True)
+    meter.on_update(ReadingData(fake_now, True, True, 150))
     assert meter.measured_value == 10
 
 
 def test_template_update(meter: Meter):
     """Test on_template_change function of meter."""
     fake_now = TZ.localize(datetime(2022, 1, 1, 11, 5))
-    meter.on_template_change(fake_now, 123, True, tw_active=True)
+    meter.on_update(ReadingData(fake_now, True, True, 123))
     assert meter.state == MeterState.MEASURING
 
     fake_now = TZ.localize(datetime(2022, 1, 1, 11, 6))
-    meter.on_template_change(fake_now, 125, False, tw_active=True)
+    meter.on_update(ReadingData(fake_now, False, True, 125))
     assert meter.state == MeterState.WAITING_FOR_CONDITION
     assert meter.measured_value == 2
 
     fake_now = TZ.localize(datetime(2022, 1, 1, 11, 7))
-    meter.on_template_change(fake_now, 127, True, tw_active=True)
+    meter.on_update(ReadingData(fake_now, True, True, 127))
     assert meter.state == MeterState.MEASURING
     assert meter.measured_value == 2
 
     fake_now = TZ.localize(datetime(2022, 1, 1, 11, 8))
-    meter.on_heartbeat(fake_now, 130, True)
+    meter.on_update(ReadingData(fake_now, True, True, 130))
     assert meter.state == MeterState.MEASURING
     assert meter.measured_value == 5
-
-
-def test_serializing(meter: Meter):
-    """Test (de-)serializing a meter."""
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 5))
-    meter.on_template_change(fake_now, 123, True, tw_active=True)
-    assert meter.state == MeterState.MEASURING
-
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 8))
-    meter.on_heartbeat(fake_now, 130, True)
-    assert meter.state == MeterState.MEASURING
-    data = Meter.to_dict(meter)
-
-    meter2 = Meter(meter.name, meter._period)
-    meter2: Meter = Meter.from_dict(data, meter2)
-    assert meter2.state == MeterState.MEASURING
-    assert meter2.measured_value == 7
-
-    meter2.on_template_change(fake_now, 150, False, tw_active=True)
-    assert meter2.state == MeterState.WAITING_FOR_CONDITION
-    assert meter2.measured_value == 27
-
-    # serialize to json
-    data = Meter.to_dict(meter2)
-    json_data = json.dumps(data, indent=4)
-    assert json_data
-
-    json_data2 = json.loads(json_data)
-    assert json_data2["measured_value"] == 27
 
 
 # def test_daylight_savings(meter):

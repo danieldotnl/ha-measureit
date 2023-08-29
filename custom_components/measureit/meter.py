@@ -41,11 +41,6 @@ class Meter:
         """Next reset property."""
         return self._period.end
 
-    def disable_template(self):
-        """Disable template for meter."""
-        # TODO: check what's going on here and why it's called disable while setting to True
-        self._template_active = True  # bit hacky but more explicit than setting _template_active from coordinator
-
     def on_update(self, reading: ReadingData):
         """Define what happens on a template change."""
         if self.state == MeterState.MEASURING:
