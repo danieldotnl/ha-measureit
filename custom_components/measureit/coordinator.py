@@ -12,16 +12,15 @@ import homeassistant.util.dt as dt_util
 from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import callback
-from homeassistant.core import CALLBACK_TYPE
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.event import async_track_template_result
 from homeassistant.helpers.event import TrackTemplate
-from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import Template
 
-from .meter import Meter
+from .reading import ReadingData
+
 from .time_window import TimeWindow
 from .util import NumberType
 
@@ -36,8 +35,6 @@ class MeasureItCoordinator:
         self,
         hass: HomeAssistant,
         config_name: str,
-        store: Store,
-        meters: list[Meter],
         condition: Template | None,
         time_window: TimeWindow,
         value_callback: Callable[[str], NumberType],
@@ -45,25 +42,21 @@ class MeasureItCoordinator:
         """Initialize the coordinator."""
         self._hass: HomeAssistant = hass
         self._name: str = config_name
-        self._store: Store = store
-        self._meters: dict[str, Meter] = meters
+        self._meters = []
         self._condition: Template | None = condition
         self._get_value: Callable[[str], NumberType] = value_callback
-        self._listeners: dict[CALLBACK_TYPE, tuple[CALLBACK_TYPE, object | None]] = {}
+        self._listeners: dict[
+            Callable[[ReadingData], None],
+            tuple[Callable[[ReadingData], None], object | None],
+        ] = {}
         self._time_window: TimeWindow = time_window
         self._template_listener = None
         self._heartbeat_listener = None
-        self._context = None
         self.last_reading = None
 
-    async def async_init(self):
-        """Initialize the coordinator by restoring state from storage async."""
-        await self._async_from_storage()
-        if not self._condition:
-            for meter in self.meters:
-                meter.disable_template()
+        self._template_active: bool = True
 
-    async def async_stop(self):
+    def stop(self):
         """Stop the coordinator."""
         _LOGGER.debug("Stop listening, template listener: %s", self._template_listener)
         if self._template_listener:
@@ -72,7 +65,7 @@ class MeasureItCoordinator:
             self._heartbeat_listener()
         _LOGGER.debug("Stop listeners")
 
-    async def async_start(self):
+    def start(self):
         """Start the coordinator."""
         if self._condition:
             self._template_listener = async_track_template_result(
@@ -82,11 +75,11 @@ class MeasureItCoordinator:
             )
             self._template_listener.async_refresh()
 
-        await self.async_on_heartbeat()
+        self.async_on_heartbeat()
 
     @callback
     def async_add_listener(
-        self, update_callback: CALLBACK_TYPE, context: Any = None
+        self, update_callback: Callable[[ReadingData], None], context: Any = None
     ) -> Callable[[], None]:
         """Listen for data updates."""
 
@@ -97,35 +90,21 @@ class MeasureItCoordinator:
 
         self._listeners[remove_listener] = (update_callback, context)
 
-        update_callback()
+        if self.last_reading:
+            update_callback(self.last_reading)
         return remove_listener
 
-    def get_meter(self, name: str) -> Meter:
-        """Get a meter by name."""
-        return self._meters[name]
-
-    @property
-    def meters(self) -> list[Meter]:
-        """Property with a list of meters."""
-        return self._meters.values()
-
-    async def _async_update_meters(self, template_result: bool | None = None):
+    def _async_on_update(self, event=None):
         tznow = dt_util.now()
-        trigger = (
-            f"condition changed to {template_result}"
-            if template_result is not None
-            else "update interval"
-        )
         _LOGGER.debug(
-            "%s # Update triggered at: %s by %s.",
+            "%s # Update triggered at: %s.",
             self._name,
             tznow.isoformat(),
-            trigger,
         )
 
         try:
-            reading = self._parse_value(self._get_value())
-            self.last_reading = reading
+            reading_value = self._parse_value(self._get_value())
+            self.last_reading = reading_value
         except ValueError as ex:
             _LOGGER.error(
                 "%s # Could not update meters because the input value is invalid. Error: %s",
@@ -134,25 +113,24 @@ class MeasureItCoordinator:
             )
             # set the input value to the last updated value, so the meters are at least reset when required
             if self.last_reading:
-                reading = self.last_reading
+                reading_value = self.last_reading
             else:
                 return  # nothing we can do... we'll try again next time
 
         tw_active = self._time_window.is_active(tznow)
-        if template_result is not None:
-            for meter in self.meters:
-                meter.on_template_change(tznow, reading, template_result, tw_active)
-        else:
-            for meter in self.meters:
-                meter.on_heartbeat(tznow, reading, tw_active)
+        reading = ReadingData(
+            reading_datetime=tznow,
+            value=reading_value,
+            timewindow_active=tw_active,
+            template_active=self._template_active,
+        )
 
-        self._update_listeners()
-        await self._async_to_storage()
+        self._update_listeners(reading)
 
     @callback
-    async def async_on_heartbeat(self, now: datetime | None = None):
+    def async_on_heartbeat(self, now: datetime | None = None):
         """Configure the coordinator heartbeat."""
-        await self._async_update_meters()
+        self._async_on_update()
 
         # We _floor_ utcnow to create a schedule on a rounded minute,
         # minimizing the time between the point and the real activation.
@@ -165,7 +143,7 @@ class MeasureItCoordinator:
         )
 
     @callback
-    async def _async_on_template_update(self, event, updates):
+    def _async_on_template_update(self, event, updates):
         result = updates.pop().result
 
         if isinstance(result, TemplateError):
@@ -175,14 +153,13 @@ class MeasureItCoordinator:
                 result,
             )
         else:
-            await self._async_update_meters(result)
+            _LOGGER.debug("%s # Condition template changed to: %s.", self._name, result)
+            self._template_active = result
+            self._async_on_update()
 
-        if event:
-            self._context = event.context
-
-    def _update_listeners(self):
+    def _update_listeners(self, reading):
         for update_callback, _ in list(self._listeners.values()):
-            update_callback()
+            update_callback(reading)
 
     def _parse_value(self, value: Any) -> NumberType | None:
         if isinstance(value, get_args(NumberType)):
@@ -194,29 +171,3 @@ class MeasureItCoordinator:
             raise ValueError("Could not process value as it's unknown or unavailable.")
         else:
             return float(value)
-
-    async def _async_from_storage(self):
-        try:
-            stored_data = await self._store.async_load()
-            if stored_data:
-                for meter in self.meters:
-                    Meter.from_dict(stored_data[meter.name], meter)
-        except Exception as ex:
-            _LOGGER.error(
-                "%s # Loading component state from disk failed with error: %s",
-                self._name,
-                ex,
-            )
-
-    async def _async_to_storage(self) -> None:
-        try:
-            data = {}
-            for meter in self.meters:
-                data[meter.name] = Meter.to_dict(meter)
-            await self._store.async_save(data)
-        except Exception as ex:
-            _LOGGER.error(
-                "%s # Saving component state to disk failed with error: %s",
-                self._name,
-                ex,
-            )

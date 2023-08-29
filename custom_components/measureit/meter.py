@@ -1,15 +1,9 @@
 """Meter logic for MeasureIt."""
 from __future__ import annotations
-
-from datetime import datetime
 from enum import Enum
-
-from homeassistant.util import dt as dt_util
-
+from .reading import ReadingData
 from .period import Period
-
-# import logging
-# _LOGGER: logging.Logger = logging.getLogger(__package__)
+from .const import LOGGER
 
 
 class MeterState(str, Enum):
@@ -25,12 +19,12 @@ class Meter:
 
     def __init__(self, name: str, period: Period):
         """Initialize meter."""
-        self.name = name
-        self._period = period
+        self.name: str = name
+        self._period: Period = period
 
         self.state: MeterState | None = None
-        self.measured_value = 0
-        self.prev_measured_value = 0
+        self.measured_value: float = 0
+        self.prev_measured_value: float = 0
         self._session_start_reading: float | None = None
         self._start_measured_value: float | None = None
 
@@ -47,29 +41,22 @@ class Meter:
         """Next reset property."""
         return self._period.end
 
-    def disable_template(self):
-        """Disable template for meter."""
-        # TODO: check what's going on here and why it's called disable while setting to True
-        self._template_active = True  # bit hacky but more explicit than setting _template_active from coordinator
-
-    def on_heartbeat(self, tznow: datetime, reading: float, tw_active: bool):
-        """Define what happens on heartbeat."""
-        if self.state == MeterState.MEASURING:
-            self._update(reading)
-        self._period.update(tznow, self._reset, reading)
-        self._time_window_active = tw_active
-        self._update_state(reading)
-
-    def on_template_change(
-        self, tznow: datetime, reading: float, tp_active: bool, tw_active: bool
-    ):
+    def on_update(self, reading: ReadingData):
         """Define what happens on a template change."""
         if self.state == MeterState.MEASURING:
-            self._update(reading)
-        self._period.update(tznow, self._reset, reading)
-        self._template_active = tp_active
-        self._time_window_active = tw_active
-        self._update_state(reading)
+            self._update(reading.value)
+        self._period.update(reading.reading_datetime, self._reset, reading.value)
+        self._template_active = reading.template_active
+        self._time_window_active = reading.timewindow_active
+        self._update_state(reading.value)
+
+        LOGGER.debug(
+            "New state - measured value: %s, start_measured_value: %s, session_start_reading: %s, state: %s",
+            self.measured_value,
+            self._start_measured_value,
+            self._session_start_reading,
+            self.state,
+        )
 
     def _update_state(self, reading: float) -> MeterState:
         if self._template_active is True and self._time_window_active is True:
@@ -99,30 +86,3 @@ class Meter:
         self.prev_measured_value, self.measured_value = self.measured_value, 0
         self._session_start_reading = reading
         self._start_measured_value = self.measured_value
-
-    @classmethod
-    def to_dict(cls, meter: Meter) -> dict[str, str]:
-        """Convert meter to dictionary."""
-        data = {
-            "measured_value": meter.measured_value,
-            "start_measured_value": meter._start_measured_value,
-            "prev_measured_value": meter.prev_measured_value,
-            "session_start_reading": meter._session_start_reading,
-            "last_reset": dt_util.as_timestamp(meter._period.last_reset),
-            "state": meter.state,
-        }
-        return data
-
-    @classmethod
-    def from_dict(cls, data: dict[str, str], meter: Meter) -> Meter:
-        """Convert dictionary to meter."""
-        meter.measured_value = data["measured_value"]
-        meter._start_measured_value = data["start_measured_value"]
-        meter.prev_measured_value = data["prev_measured_value"]
-        meter._session_start_reading = data["session_start_reading"]
-        last_reset = data.get("last_reset")
-        if last_reset:
-            meter._period.last_reset = dt_util.utc_from_timestamp(last_reset)
-        meter.state = MeterState(data["state"])
-
-        return meter

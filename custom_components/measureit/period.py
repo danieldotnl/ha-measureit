@@ -14,7 +14,7 @@ class Period:
         """Initialize period."""
         self._start_pattern: str = start_pattern
         self.start: datetime = croniter(self._start_pattern, tznow).get_prev(datetime)
-        self.end = self._determine_end()
+        self.end: datetime = self._determine_end()
         self.last_reset: datetime = tznow
 
     def update(self, tznow: datetime, reset_func: Callable, input_value: float):

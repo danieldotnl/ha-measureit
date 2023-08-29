@@ -3,34 +3,24 @@ import logging
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.const import Platform
-from homeassistant.core import callback
 from homeassistant.core import Config
-from homeassistant.core import CoreState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_CONDITION, CONF_CONFIG_NAME, CONF_SENSOR_NAME
-from .const import CONF_CRON
+from .const import CONF_CONDITION, CONF_CONFIG_NAME
 from .const import CONF_METER_TYPE
-from .const import CONF_SENSOR
 from .const import CONF_SOURCE
 from .const import CONF_TW_DAYS
 from .const import CONF_TW_FROM
 from .const import CONF_TW_TILL
 from .const import COORDINATOR
-from .const import DOMAIN
 from .const import DOMAIN_DATA
 from .const import METER_TYPE_SOURCE
 from .const import METER_TYPE_TIME
-from .const import STORE
 from .coordinator import MeasureItCoordinator
-from .meter import Meter
-from .period import Period
 from .time_window import TimeWindow
 
 STORAGE_VERSION = 1
@@ -81,47 +71,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         condition = Template(condition)
         condition.ensure_valid()
 
-    store = Store(
-        hass,
-        STORAGE_VERSION,
-        STORAGE_KEY_TEMPLATE.format(domain=DOMAIN, entry_id=entry.entry_id),
-    )
-
     time_window = TimeWindow(
         entry.options[CONF_TW_DAYS],
         entry.options[CONF_TW_FROM],
         entry.options[CONF_TW_TILL],
     )
 
-    meters = {}
-    now = dt_util.now()
-
-    for sensor in entry.options[CONF_SENSOR]:
-        period = Period(sensor[CONF_CRON], now)
-        meters[sensor[CONF_SENSOR_NAME]] = Meter(
-            f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period
-        )
-
     coordinator = MeasureItCoordinator(
-        hass, config_name, store, meters, condition, time_window, value_callback
+        hass, config_name, condition, time_window, value_callback
     )
-    await coordinator.async_init()
-
-    @callback
-    async def run_start(event):
-        await coordinator.async_start()
-
-    if hass.state != CoreState.running:
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, run_start)
-    else:
-        await run_start(None)
 
     hass.data.setdefault(DOMAIN_DATA, {})[entry.entry_id] = {
         COORDINATOR: coordinator,
-        STORE: store,
     }
-    await hass.config_entries.async_forward_entry_setups(entry, ([Platform.SENSOR]))
 
+    await hass.config_entries.async_forward_entry_setups(entry, ([Platform.SENSOR]))
+    coordinator.start()
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     return True
 
@@ -134,7 +99,7 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     coordinator = hass.data[DOMAIN_DATA][entry.entry_id][COORDINATOR]
-    await coordinator.async_stop()
+    coordinator.stop()
 
     if unload_ok := await hass.config_entries.async_unload_platforms(
         entry,
