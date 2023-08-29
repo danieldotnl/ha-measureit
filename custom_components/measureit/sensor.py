@@ -93,7 +93,8 @@ class MeasureItMeterStoredData(ExtraStoredData):
     prev_measured_value: float = 0
     session_start_reading: float | None = None
     start_measured_value: float | None = None
-    last_reset: datetime | None = None
+    period_last_reset: datetime | None = None
+    period_end: datetime | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """Return a dict representation of the meter data."""
@@ -105,7 +106,8 @@ class MeasureItMeterStoredData(ExtraStoredData):
             "start_measured_value": self.start_measured_value,
             "prev_measured_value": self.prev_measured_value,
             "session_start_reading": self.session_start_reading,
-            "last_reset": dt_util.as_timestamp(self.last_reset),
+            "period_last_reset": dt_util.as_timestamp(self.period_last_reset),
+            "period_end": dt_util.as_timestamp(self.period_end),
             "state": self.state,
         }
         return data
@@ -119,9 +121,10 @@ class MeasureItMeterStoredData(ExtraStoredData):
             start_measured_value = restored["start_measured_value"]
             prev_measured_value = restored["prev_measured_value"]
             session_start_reading = restored["session_start_reading"]
-            last_reset = restored.get("last_reset")
-            if last_reset:
-                last_reset = dt_util.utc_from_timestamp(last_reset)
+            period_last_reset = restored.get("last_reset")
+            if period_last_reset:
+                period_last_reset = dt_util.utc_from_timestamp(period_last_reset)
+            period_end = dt_util.utc_from_timestamp(restored["period_end"])
             state = restored["state"]
         except KeyError:
             # restored is a dict, but does not have all values
@@ -133,7 +136,8 @@ class MeasureItMeterStoredData(ExtraStoredData):
             prev_measured_value,
             session_start_reading,
             start_measured_value,
-            last_reset,
+            period_last_reset,
+            period_end,
         )
 
 
@@ -182,7 +186,8 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
             self.meter._start_measured_value = last_meter_data.start_measured_value
             self.meter.prev_measured_value = last_meter_data.prev_measured_value
             self.meter._session_start_reading = last_meter_data.session_start_reading
-            self.meter._period.last_reset = last_meter_data.last_reset
+            self.meter._period.last_reset = last_meter_data.period_last_reset
+            self.meter._period.end = last_meter_data.period_end
         else:
             _LOGGER.warning("%s # Could not restore data", self._attr_name)
 
@@ -222,6 +227,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
             self.meter._session_start_reading,
             self.meter._start_measured_value,
             self.meter._period.last_reset,
+            self.meter._period.end,
         )
 
     async def async_get_last_sensor_data(self) -> MeasureItMeterStoredData | None:
