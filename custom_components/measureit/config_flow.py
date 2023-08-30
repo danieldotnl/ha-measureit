@@ -196,8 +196,7 @@ async def get_add_sensor_suggested_values(
     suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL_INCREASING}
     if handler.options[CONF_METER_TYPE] == METER_TYPE_TIME:
         suggested[CONF_DEVICE_CLASS] = SensorDeviceClass.DURATION
-        suggested[CONF_VALUE_TEMPLATE] = "{{ value | float / 60 }}"
-        suggested[CONF_UNIT_OF_MEASUREMENT] = "min"
+        suggested[CONF_UNIT_OF_MEASUREMENT] = "s"
     elif handler.options[CONF_METER_TYPE] == METER_TYPE_SOURCE:
         try:
             state = handler.parent_handler.hass.states.get(handler.options[CONF_SOURCE])
