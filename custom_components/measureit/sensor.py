@@ -121,9 +121,9 @@ class MeasureItMeterStoredData(ExtraStoredData):
             start_measured_value = restored["start_measured_value"]
             prev_measured_value = restored["prev_measured_value"]
             session_start_reading = restored["session_start_reading"]
-            period_last_reset = restored.get("last_reset")
-            if period_last_reset:
-                period_last_reset = dt_util.utc_from_timestamp(period_last_reset)
+            period_last_reset = dt_util.utc_from_timestamp(
+                restored["period_last_reset"]
+            )
             period_end = dt_util.utc_from_timestamp(restored["period_end"])
             state = restored["state"]
         except KeyError:

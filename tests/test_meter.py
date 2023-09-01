@@ -150,6 +150,7 @@ def test_update_after_restore(meter: Meter):
     meter2._period.end = last_meter_data.period_end
 
     assert meter2.measured_value == 150
+    assert meter2.last_reset == meter.last_reset
 
     fake_now = TZ.localize(datetime(2022, 1, 2, 0, 35))
     meter2.on_update(ReadingData(fake_now, True, True, 350))
