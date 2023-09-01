@@ -4,9 +4,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from datetime import timedelta
-from typing import Any
+from typing import Any, get_args
 from collections.abc import Callable
-from typing import get_args
 
 import homeassistant.util.dt as dt_util
 from homeassistant.const import STATE_UNAVAILABLE
@@ -58,12 +57,11 @@ class MeasureItCoordinator:
 
     def stop(self):
         """Stop the coordinator."""
-        _LOGGER.debug("Stop listening, template listener: %s", self._template_listener)
+        _LOGGER.debug("Stopping coordinator")
         if self._template_listener:
             self._template_listener.async_remove()
         if self._heartbeat_listener:
             self._heartbeat_listener()
-        _LOGGER.debug("Stop listeners")
 
     def start(self):
         """Start the coordinator."""
@@ -105,7 +103,7 @@ class MeasureItCoordinator:
         try:
             reading_value = self._parse_value(self._get_value())
             self.last_reading = reading_value
-        except ValueError as ex:
+        except (ValueError, AttributeError) as ex:
             _LOGGER.error(
                 "%s # Could not update meters because the input value is invalid. Error: %s",
                 self._name,

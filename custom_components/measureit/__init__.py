@@ -45,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         return dt_util.utcnow().timestamp()
 
     def get_source_value():
+        _LOGGER.debug("Reading state from source entity: %s", source_entity)
         return hass.states.get(source_entity).state
 
     if meter_type == METER_TYPE_TIME:
