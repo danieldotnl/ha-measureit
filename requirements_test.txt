@@ -1,4 +1,4 @@
 -r requirements.txt
 pytest==7.4.2
-pytz==2023.3
+pytz==2023.3.post1
 croniter==1.4.1
