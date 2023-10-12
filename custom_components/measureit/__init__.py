@@ -4,7 +4,8 @@ import logging
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import Config
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import Config, CoreState, callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.template import Template
@@ -81,13 +82,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     coordinator = MeasureItCoordinator(
         hass, config_name, condition, time_window, value_callback
     )
-
     hass.data.setdefault(DOMAIN_DATA, {})[entry.entry_id] = {
         COORDINATOR: coordinator,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, ([Platform.SENSOR]))
-    coordinator.start()
+
+    @callback
+    def run_start(event):
+        # pylint: disable=unused-argument
+        _LOGGER.debug("%s # Start coordinator", config_name)
+        coordinator.start()
+
+    if hass.state != CoreState.running:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, run_start)
+    else:
+        run_start(None)
+
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     return True
 
