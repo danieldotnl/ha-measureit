@@ -13,7 +13,11 @@ class Period:
     def __init__(self, start_pattern: str, tznow: datetime) -> None:
         """Initialize period."""
         self._start_pattern: str = start_pattern
-        self.start: datetime = croniter(self._start_pattern, tznow).get_prev(datetime)
+        if start_pattern == "none":
+            self.start: datetime = tznow
+        else:
+            self.start: datetime = croniter(self._start_pattern, tznow).get_prev(datetime)
+
         self.end: datetime = self._determine_end()
         self.last_reset: datetime = tznow
 
@@ -26,4 +30,7 @@ class Period:
             reset_func(input_value)
 
     def _determine_end(self) -> datetime:
+        """Determine the end of the period."""
+        if self._start_pattern == "none":
+            return datetime.max.replace(tzinfo=self.start.tzinfo)
         return croniter(self._start_pattern, self.start).get_next(datetime)

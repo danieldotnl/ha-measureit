@@ -48,5 +48,5 @@ PREDEFINED_PERIODS = {
     "week": "0 0 * * 1",
     "month": "0 0 1 * *",
     "year": "0 0 1 1 *",
-    "none": "59 59 23 31 12 ? 2099",
+    "forever": "none",
 }

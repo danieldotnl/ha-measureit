@@ -59,6 +59,7 @@ PERIOD_OPTIONS = [
     selector.SelectOptionDict(value="week", label="week"),
     selector.SelectOptionDict(value="month", label="month"),
     selector.SelectOptionDict(value="year", label="year"),
+    selector.SelectOptionDict(value="forever", label="forever (or service-operated)"),
 ]
 
 DAY_OPTIONS = [
