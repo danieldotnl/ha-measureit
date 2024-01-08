@@ -9,14 +9,17 @@ Some examples of use cases:
 
 Some of the use cases can also be achieved with the `history_stats` integration, but MeasureIt is much simpler to set up, and can measure only when a template evaluates to true. There are also some similarities with the way the `utility_meter` is working.
 
-## Installation
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/danieldotnl/ha-measureit)
+## Automated Installation Using HACS
 
-Check it out on github: [MeasureIt ](https://github.com/danieldotnl/ha-measureit) and let me know your thoughts!
-To be installed via HACS, not yet in the standard HACS repo [(pending on this PR)](https://github.com/hacs/default/pull/2107), so to be added as a custom repository in HACS.
+![hacs_badge](https://img.shields.io/badge/HACS-Default-orange)
+![hacs installs](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Flauwbier.nl%2Fhacs%2Fmeasureit)
 
-After that go to Settings → Devices & Services → + Add integration
-Search for MeasureIt and follow the config flow.
+MeasureIt is included the standard HACS repositories. 
+
+Install MeasureIt via the standard HACS installation steps:
+* Search for MeasureIt in the Integrations section of HACS,
+* Choose 'MeasureIt' and select the Download button,
+* Restart HomeAssistant to complete the installation.
 
 ## Configuration
 I spent a lot of time on the config flow to make it as convenient as possible, but I will provide some further explanation here.
