@@ -11,7 +11,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_CONDITION, CONF_CONFIG_NAME
+from .const import CONF_CONDITION, CONF_CONFIG_NAME, SOURCE_ENTITY_ID
 from .const import CONF_METER_TYPE
 from .const import CONF_SOURCE
 from .const import CONF_TW_DAYS
@@ -58,6 +58,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             source_entity = er.async_validate_entity_id(
                 registry, entry.options[CONF_SOURCE]
             )
+            hass.data.setdefault(DOMAIN_DATA, {}).setdefault(entry.entry_id, {}).update(
+                {
+                    SOURCE_ENTITY_ID: entry.options[CONF_SOURCE],
+                }
+            )
         except vol.Invalid:
             # The entity is identified by an unknown entity registry ID
             _LOGGER.error(
@@ -82,9 +87,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     coordinator = MeasureItCoordinator(
         hass, config_name, condition, time_window, value_callback
     )
-    hass.data.setdefault(DOMAIN_DATA, {})[entry.entry_id] = {
-        COORDINATOR: coordinator,
-    }
+    hass.data.setdefault(DOMAIN_DATA, {}).setdefault(entry.entry_id, {}).update(
+        {
+            COORDINATOR: coordinator,
+        }
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, ([Platform.SENSOR]))
 

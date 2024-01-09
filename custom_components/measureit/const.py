@@ -9,6 +9,7 @@ DOMAIN_DATA = "measureit_data"
 VERSION = "0.0.1"
 COORDINATOR = "coordinator"
 STORE = "store"
+SOURCE_ENTITY_ID = "source_entity_id"
 
 # Icons
 ICON = "mdi:measure"

@@ -28,6 +28,7 @@ from .const import (
     CONF_CRON,
     CONF_SENSOR,
     CONF_SENSOR_NAME,
+    SOURCE_ENTITY_ID,
 )
 from .const import ATTR_PREV
 from .const import ATTR_STATUS
@@ -56,6 +57,7 @@ async def async_setup_entry(
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
 
     coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
+    source_entity_id = hass.data[DOMAIN_DATA][entry_id].get(SOURCE_ENTITY_ID)
 
     sensors: list[MeasureItSensor] = []
 
@@ -78,6 +80,7 @@ async def async_setup_entry(
                 sensor[CONF_SENSOR_NAME],
                 value_template_renderer,
                 sensor.get(CONF_UNIT_OF_MEASUREMENT),
+                source_entity_id,
             )
         )
 
@@ -154,6 +157,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         pattern_name,
         value_template_renderer,
         unit_of_measurement,
+        source_entity_id=None,
     ):
         """Initialize a sensor entity."""
         self._meter_type = meter_type
@@ -168,6 +172,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = unit_of_measurement
         self._attr_should_poll = False
+        self._source_entity_id = source_entity_id
 
         if self._meter_type == METER_TYPE_TIME:
             self._attr_device_class = SensorDeviceClass.DURATION
@@ -198,11 +203,14 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, str]:
         """Return the state attributes."""
-        return {
+        attributes = {
             ATTR_STATUS: self.meter.state,
             ATTR_PREV: self._value_template_renderer(self.meter.prev_measured_value),
             ATTR_NEXT_RESET: self.meter.next_reset,
         }
+        if self._source_entity_id:
+            attributes.update({SOURCE_ENTITY_ID: self._source_entity_id})
+        return attributes
 
     @callback
     def _handle_coordinator_update(self, reading: ReadingData) -> None:
