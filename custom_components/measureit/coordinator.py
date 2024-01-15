@@ -15,8 +15,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.event import async_track_template_result
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.event import TrackTemplate
 from homeassistant.helpers.template import Template
+
+from .const import MeterType
 
 from .reading import ReadingData
 
@@ -36,22 +39,26 @@ class MeasureItCoordinator:
         config_name: str,
         condition: Template | None,
         time_window: TimeWindow,
-        value_callback: Callable[[str], NumberType],
+        meter_type: MeterType,
+        source_entity: str | None = None,
     ) -> None:
         """Initialize the coordinator."""
         self._hass: HomeAssistant = hass
         self._name: str = config_name
         self._meters = []
         self._condition: Template | None = condition
-        self._get_value: Callable[[str], NumberType] = value_callback
+        self._meter_type: MeterType = meter_type
+        self._source_entity: str = source_entity
         self._listeners: dict[
             Callable[[ReadingData], None],
             tuple[Callable[[ReadingData], None], object | None],
         ] = {}
         self._time_window: TimeWindow = time_window
         self._template_listener = None
+        self._entity_update_listener = None
         self._heartbeat_listener = None
         self.last_reading = None
+        self._get_value = self.get_time_value
 
         self._template_active: bool = True
 
@@ -65,6 +72,12 @@ class MeasureItCoordinator:
 
     def start(self):
         """Start the coordinator."""
+        if self._meter_type == MeterType.SOURCE:
+            self._entity_update_listener = async_track_state_change_event(
+                self._hass,
+                self._source_entity,
+                self._async_on_state_change,
+            )
         if self._condition:
             self._template_listener = async_track_template_result(
                 self._hass,
@@ -74,6 +87,18 @@ class MeasureItCoordinator:
             self._template_listener.async_refresh()
 
         self.async_on_heartbeat()
+
+    @callback
+    def _async_on_state_change(self, event):
+        _LOGGER.warning("%s # State change event\n%s", self._name, event)
+
+    def get_time_value(self):
+        """Return the current time as timestamp."""
+        return dt_util.utcnow().timestamp()
+
+    # def get_source_value():
+    #     _LOGGER.debug("Reading state from source entity: %s", source_entity)
+    #     return hass.states.get(source_entity).state
 
     @callback
     def async_add_listener(
