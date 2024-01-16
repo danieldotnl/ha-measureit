@@ -58,7 +58,6 @@ class MeasureItCoordinator:
         self._entity_update_listener = None
         self._heartbeat_listener = None
         self.last_reading = None
-        self._get_value = self.get_time_value
 
         self._template_active: bool = True
 
@@ -72,12 +71,7 @@ class MeasureItCoordinator:
 
     def start(self):
         """Start the coordinator."""
-        if self._meter_type == MeterType.SOURCE:
-            self._entity_update_listener = async_track_state_change_event(
-                self._hass,
-                self._source_entity,
-                self._async_on_state_change,
-            )
+
         if self._condition:
             self._template_listener = async_track_template_result(
                 self._hass,
@@ -86,19 +80,25 @@ class MeasureItCoordinator:
             )
             self._template_listener.async_refresh()
 
-        self.async_on_heartbeat()
+        if self._meter_type == MeterType.SOURCE:
+            self._entity_update_listener = async_track_state_change_event(
+                self._hass,
+                self._source_entity,
+                self._async_on_state_change,
+            )
+            # Update once on startup to get the initial state. After that we're tracking state changes and receive events
+            source_state = self._hass.states.get(self._source_entity).state
+            self._update(source_state)
+
+        else:
+            self.async_on_heartbeat()
 
     @callback
     def _async_on_state_change(self, event):
-        _LOGGER.warning("%s # State change event\n%s", self._name, event)
-
-    def get_time_value(self):
-        """Return the current time as timestamp."""
-        return dt_util.utcnow().timestamp()
-
-    # def get_source_value():
-    #     _LOGGER.debug("Reading state from source entity: %s", source_entity)
-    #     return hass.states.get(source_entity).state
+        old_state = event.data.get("old_state").state
+        new_state = event.data.get("new_state").state
+        _LOGGER.debug("%s # Source entity state changed, old: %s, new: %s", self._name, old_state, new_state)
+        self._update(new_state)
 
     @callback
     def async_add_listener(
@@ -117,19 +117,20 @@ class MeasureItCoordinator:
             update_callback(self.last_reading)
         return remove_listener
 
-    def _async_on_update(self, event=None):
+    def _update(self, new_value: NumberType):
         tznow = dt_util.now()
         _LOGGER.debug(
-            "%s # Update triggered at: %s.",
+            "%s # Update triggered at: %s. Value: %s",
             self._name,
             tznow.isoformat(),
+            new_value
         )
 
         try:
-            reading_value = self._parse_value(self._get_value())
+            reading_value = self._parse_value(new_value)
             self.last_reading = reading_value
         except (ValueError, AttributeError) as ex:
-            _LOGGER.error(
+            _LOGGER.warning(
                 "%s # Could not update meters because the input value is invalid. Error: %s",
                 self._name,
                 ex,
@@ -153,7 +154,7 @@ class MeasureItCoordinator:
     @callback
     def async_on_heartbeat(self, now: datetime | None = None):
         """Configure the coordinator heartbeat."""
-        self._async_on_update()
+        self._update(dt_util.utcnow().timestamp())
 
         # We _floor_ utcnow to create a schedule on a rounded minute,
         # minimizing the time between the point and the real activation.
@@ -178,7 +179,10 @@ class MeasureItCoordinator:
         else:
             _LOGGER.debug("%s # Condition template changed to: %s.", self._name, result)
             self._template_active = result
-            self._async_on_update()
+            if self._meter_type == MeterType.SOURCE:
+                self._update(self._hass.states.get(self._source_entity).state)
+            elif self._meter_type == MeterType.TIME:
+                self._update(dt_util.utcnow().timestamp())
 
     def _update_listeners(self, reading):
         for update_callback, _ in list(self._listeners.values()):
