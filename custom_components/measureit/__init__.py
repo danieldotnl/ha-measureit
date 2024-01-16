@@ -9,7 +9,6 @@ from homeassistant.core import Config, CoreState, callback
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.template import Template
-from homeassistant.util import dt as dt_util
 
 from .const import CONF_CONDITION, CONF_CONFIG_NAME, SOURCE_ENTITY_ID
 from .const import CONF_METER_TYPE
@@ -20,7 +19,6 @@ from .const import CONF_TW_TILL
 from .const import COORDINATOR
 from .const import DOMAIN_DATA
 from .const import METER_TYPE_SOURCE
-from .const import METER_TYPE_TIME
 from .coordinator import MeasureItCoordinator
 from .time_window import TimeWindow
 
@@ -41,17 +39,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     config_name: str = entry.options[CONF_CONFIG_NAME]
     meter_type: str = entry.options[CONF_METER_TYPE]
     condition: str | None = entry.options.get(CONF_CONDITION)
+    source_entity = None
 
-    def get_time_value():
-        return dt_util.utcnow().timestamp()
-
-    def get_source_value():
-        _LOGGER.debug("Reading state from source entity: %s", source_entity)
-        return hass.states.get(source_entity).state
-
-    if meter_type == METER_TYPE_TIME:
-        value_callback = get_time_value
-    elif meter_type == METER_TYPE_SOURCE:
+    if meter_type == METER_TYPE_SOURCE:
         registry = er.async_get(hass)
 
         try:
@@ -72,8 +62,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             )
             return False
 
-        value_callback = get_source_value
-
     if condition:
         condition = Template(condition)
         condition.ensure_valid()
@@ -85,7 +73,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     )
 
     coordinator = MeasureItCoordinator(
-        hass, config_name, condition, time_window, value_callback
+        hass, config_name, condition, time_window, meter_type, source_entity
     )
     hass.data.setdefault(DOMAIN_DATA, {}).setdefault(entry.entry_id, {}).update(
         {

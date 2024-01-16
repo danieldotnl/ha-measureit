@@ -42,7 +42,7 @@ class Meter:
         return self._period.end
 
     def on_update(self, reading: ReadingData):
-        """Define what happens on a template change."""
+        """Update the meter with reading data."""
         if self.state == MeterState.MEASURING:
             self._update(reading.value)
         self._period.update(reading.reading_datetime, self._reset, reading.value)
