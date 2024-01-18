@@ -124,10 +124,12 @@ class MeasureItMeterStoredData(ExtraStoredData):
             start_measured_value = restored["start_measured_value"]
             prev_measured_value = restored["prev_measured_value"]
             session_start_reading = restored["session_start_reading"]
-            period_last_reset = dt_util.utc_from_timestamp(
-                restored["period_last_reset"]
+            period_last_reset = datetime.fromtimestamp(
+                restored["period_last_reset"], dt_util.DEFAULT_TIME_ZONE
             )
-            period_end = dt_util.utc_from_timestamp(restored["period_end"])
+            period_end = dt_util.now().fromtimestamp(
+                restored["period_end"], dt_util.DEFAULT_TIME_ZONE
+            )
             state = restored["state"]
         except KeyError:
             # restored is a dict, but does not have all values
@@ -215,9 +217,6 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
     @callback
     def _handle_coordinator_update(self, reading: ReadingData) -> None:
         """Handle updated data from the coordinator."""
-
-        _LOGGER.debug("Coordinator update received!")
-
         self.meter.on_update(reading)
         self._attr_native_value = self._value_template_renderer(
             self.meter.measured_value
