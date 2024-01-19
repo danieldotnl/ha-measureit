@@ -3,7 +3,7 @@
 from datetime import datetime
 
 import pytest
-import pytz
+from homeassistant.util import dt as dt_util
 from custom_components.measureit.meter import Meter
 from custom_components.measureit.meter import MeterState
 from custom_components.measureit.period import Period
@@ -12,28 +12,32 @@ from custom_components.measureit.sensor import MeasureItMeterStoredData
 
 START_PATTERN = "0 0 * * *"
 NAME = "24h"
-TZ = pytz.timezone("Europe/Amsterdam")
+TEST_TIME_ZONE = "Europe/Amsterdam"
+dt_util.set_default_time_zone(dt_util.get_time_zone(TEST_TIME_ZONE))
+TZ = dt_util.DEFAULT_TIME_ZONE
 
 
 @pytest.fixture
 def meter():
     """Create a fixture for testing meter class."""
-    fake_now = datetime(2022, 1, 1, 10, 30)
-    period = Period(START_PATTERN, tznow=TZ.localize(fake_now))
+    dt_util.set_default_time_zone(dt_util.get_time_zone(TEST_TIME_ZONE))
+    TZ = dt_util.DEFAULT_TIME_ZONE
+    fake_now = datetime(2022, 1, 1, 10, 30, tzinfo=TZ)
+    period = Period(START_PATTERN, fake_now)
     return Meter(NAME, period)
 
 
 def test_init(meter: Meter):
     """Test initializing a meter."""
-    start = datetime(2022, 1, 1, 0, 0)
-    assert meter._period.start == TZ.localize(start)
+    start = datetime(2022, 1, 1, 0, 0, tzinfo=TZ)
+    assert meter._period.start == start
 
 
 def test_heartbeat(meter: Meter):
     """Test on_heartbeat function of meter."""
     # should trigger meter start()
     reading = ReadingData(
-        reading_datetime=TZ.localize(datetime(2022, 1, 1, 11, 5)),
+        reading_datetime=datetime(2022, 1, 1, 11, 5, tzinfo=TZ),
         value=123,
         template_active=True,
         timewindow_active=True,
@@ -42,85 +46,66 @@ def test_heartbeat(meter: Meter):
     assert meter._session_start_reading == 123
     assert meter._start_measured_value == 0
 
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 10))
+    fake_now = datetime(2022, 1, 1, 11, 10, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     meter.on_update(ReadingData(fake_now, True, True, 130))
     assert meter.measured_value == 7
 
     # next day, meter should reset
-    fake_now = TZ.localize(datetime(2022, 1, 2, 11, 11))
+    fake_now = datetime(2022, 1, 2, 11, 11, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 132))
     assert meter.measured_value == 0
     assert meter.prev_measured_value == 9
 
-    fake_now = TZ.localize(datetime(2022, 1, 2, 11, 20))
+    fake_now = datetime(2022, 1, 2, 11, 20, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, False, 140))
     assert meter.measured_value == 8
 
-    fake_now = TZ.localize(datetime(2022, 1, 2, 11, 20))
+    fake_now = datetime(2022, 1, 2, 11, 20, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, False, 145))
     assert meter.measured_value == 8
 
-    fake_now = TZ.localize(datetime(2022, 1, 2, 11, 20))
+    fake_now = datetime(2022, 1, 2, 11, 20, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 148))
     assert meter.measured_value == 8
 
-    fake_now = TZ.localize(datetime(2022, 1, 2, 11, 21))
+    fake_now = datetime(2022, 1, 2, 11, 21, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 150))
     assert meter.measured_value == 10
 
 
 def test_template_update(meter: Meter):
     """Test on_template_change function of meter."""
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 5))
+    fake_now = datetime(2022, 1, 1, 11, 5, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 123))
     assert meter.state == MeterState.MEASURING
 
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 6))
+    fake_now = datetime(2022, 1, 1, 11, 6, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, False, True, 125))
     assert meter.state == MeterState.WAITING_FOR_CONDITION
     assert meter.measured_value == 2
 
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 7))
+    fake_now = datetime(2022, 1, 1, 11, 7, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 127))
     assert meter.state == MeterState.MEASURING
     assert meter.measured_value == 2
 
-    fake_now = TZ.localize(datetime(2022, 1, 1, 11, 8))
+    fake_now = datetime(2022, 1, 1, 11, 8, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 130))
     assert meter.state == MeterState.MEASURING
     assert meter.measured_value == 5
 
 
-# def test_daylight_savings(meter):
-#     fake_now = datetime(2022, 3, 27, 1, 50, tzinfo=timezone.utc)  # start summer time
-#     meter.start(fake_now.timestamp())
-
-#     fake_now += timedelta(minutes=20)  # 2:10
-#     meter.stop(fake_now.timestamp())
-
-#     assert meter._box_state == 1200
-
-#     fake_reset = datetime(2022, 10, 30, 2, 50, tzinfo=pytz.timezone("Europe/Amsterdam"))
-#     fake_now = datetime(2022, 10, 30, 2, 50, tzinfo=timezone.utc)  # start winter time
-#     meter = Meter(NAME, reset_pattern=RESET_PATTERN, tznow=fake_reset)
-#     meter.start(fake_now.timestamp())
-
-#     fake_now = datetime(2022, 10, 30, 3, 10, tzinfo=timezone.utc)  # 2:10
-#     meter.stop(fake_now.timestamp())
-
-#     assert meter._box_state == 1200
-
-
 def test_update_after_restore(meter: Meter):
     """Test restoring a meter after serialization."""
-    fake_now = TZ.localize(datetime(2022, 1, 1, 10, 35))
+    fake_now = datetime(2022, 1, 1, 10, 35, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 100))
     assert meter.measured_value == 0
     assert meter.state == MeterState.MEASURING
 
-    fake_now = TZ.localize(datetime(2022, 1, 1, 23, 35))
+    fake_now = datetime(2022, 1, 1, 23, 35, tzinfo=TZ)
     meter.on_update(ReadingData(fake_now, True, True, 250))
     assert meter.measured_value == 150
+    assert meter._period.end.tzinfo == TZ
 
     restore = MeasureItMeterStoredData(
         meter.state,
@@ -137,8 +122,8 @@ def test_update_after_restore(meter: Meter):
     last_meter_data = MeasureItMeterStoredData.from_dict(restore)
 
     # restore is after the end of the period so meter needs to be reset
-    fake_now = datetime(2022, 1, 2, 0, 30)
-    period = Period(START_PATTERN, tznow=TZ.localize(fake_now))
+    fake_now = datetime(2022, 1, 2, 0, 30, tzinfo=TZ)
+    period = Period(START_PATTERN, fake_now)
     meter2 = Meter(NAME, period)
 
     meter2.state = last_meter_data.state
@@ -151,8 +136,9 @@ def test_update_after_restore(meter: Meter):
 
     assert meter2.measured_value == 150
     assert meter2.last_reset == meter.last_reset
+    assert meter2._period.end.tzinfo == TZ
 
-    fake_now = TZ.localize(datetime(2022, 1, 2, 0, 35))
+    fake_now = datetime(2022, 1, 2, 0, 35, tzinfo=TZ)
     meter2.on_update(ReadingData(fake_now, True, True, 350))
     assert meter2.measured_value == 0
     assert meter2.prev_measured_value == 250
