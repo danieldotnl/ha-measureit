@@ -1,5 +1,6 @@
 """Meter logic for MeasureIt."""
 from __future__ import annotations
+from datetime import datetime
 from enum import Enum
 from .reading import ReadingData
 from .period import Period
@@ -37,9 +38,13 @@ class Meter:
         return self._period.last_reset
 
     @property
-    def next_reset(self):
+    def next_reset(self) -> datetime:
         """Next reset property."""
         return self._period.end
+
+    @next_reset.setter
+    def next_reset(self, value: datetime):
+        self._period.end = value
 
     def on_update(self, reading: ReadingData):
         """Update the meter with reading data."""

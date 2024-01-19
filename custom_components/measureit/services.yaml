@@ -1,0 +1,10 @@
+reset_sensor:
+  target:
+    entity:
+      domain: sensor
+      integration: measureit
+  fields:
+    reset_datetime:
+      selector:
+        datetime:
+      example: "2025-01-01 00:00:00"

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import SensorStateClass
+from homeassistant.components.sensor import SensorStateClass, DOMAIN as SENSOR_DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_UNIT_OF_MEASUREMENT
 from homeassistant.const import CONF_VALUE_TEMPLATE, CONF_UNIQUE_ID
@@ -28,6 +28,7 @@ from .const import (
     CONF_CRON,
     CONF_SENSOR,
     CONF_SENSOR_NAME,
+    DOMAIN,
     SOURCE_ENTITY_ID,
 )
 from .const import ATTR_PREV
@@ -64,24 +65,26 @@ async def async_setup_entry(
     for sensor in config_entry.options[CONF_SENSOR]:
         value_template_renderer = None
         unique_id = sensor.get(CONF_UNIQUE_ID)
+        sensor_name = f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
 
         period = Period(sensor[CONF_CRON], dt_util.now())
         meter = Meter(f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period)
 
         value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
 
-        sensors.append(
-            MeasureItSensor(
-                coordinator,
-                meter,
-                unique_id,
-                config_name,
-                meter_type,
-                sensor[CONF_SENSOR_NAME],
-                value_template_renderer,
-                sensor.get(CONF_UNIT_OF_MEASUREMENT),
-                source_entity_id,
-            )
+        sensor_entity = MeasureItSensor(
+            coordinator,
+            meter,
+            unique_id,
+            meter_type,
+            sensor_name,
+            value_template_renderer,
+            sensor.get(CONF_UNIT_OF_MEASUREMENT),
+            source_entity_id,
+        )
+        sensors.append(sensor_entity)
+        hass.data[DOMAIN][SENSOR_DOMAIN].update(
+            {f"{SENSOR_DOMAIN}.{sensor_name}": sensor_entity}
         )
 
     async_add_entities(sensors)
@@ -154,9 +157,8 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         coordinator,
         meter,
         unique_id,
-        config_name,
         meter_type,
-        pattern_name,
+        sensor_name,
         value_template_renderer,
         unit_of_measurement,
         source_entity_id=None,
@@ -165,8 +167,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         self._meter_type = meter_type
         self.meter: Meter = meter
         self._coordinator: MeasureItCoordinator = coordinator
-        self._pattern_name = pattern_name
-        self._attr_name = f"{config_name}_{pattern_name}"
+        self._attr_name = sensor_name
         self._attr_unique_id = unique_id
         self._attr_icon = ICON
         self._attr_extra_state_attributes = {}
@@ -213,6 +214,12 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         if self._source_entity_id:
             attributes.update({SOURCE_ENTITY_ID: self._source_entity_id})
         return attributes
+
+    def reset(self, reset_datetime: datetime):
+        """Reset the sensor."""
+        _LOGGER.error("Resetting sensor %s at %s", self._attr_name, reset_datetime)
+        self.meter.next_reset = reset_datetime
+        self.async_write_ha_state()
 
     @callback
     def _handle_coordinator_update(self, reading: ReadingData) -> None:
