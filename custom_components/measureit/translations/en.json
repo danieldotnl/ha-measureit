@@ -131,7 +131,7 @@
       "description": "Reset a sensor at a given time. If no time is given, the sensor will be reset immediately.",
       "fields": {
         "reset_datetime": {
-          "name:": "Reset datetime",
+          "name": "Reset datetime",
           "description": "The time when the sensor should be reset. If no time is given, the sensor will be reset immediately."
         }
       }
