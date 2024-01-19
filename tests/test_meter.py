@@ -10,7 +10,7 @@ from custom_components.measureit.period import Period
 from custom_components.measureit.reading import ReadingData
 from custom_components.measureit.sensor import MeasureItMeterStoredData
 
-START_PATTERN = "0 0 * * *"
+START_PATTERN = "0 0 * * *"  # every day at midnight
 NAME = "24h"
 TEST_TIME_ZONE = "Europe/Amsterdam"
 dt_util.set_default_time_zone(dt_util.get_time_zone(TEST_TIME_ZONE))
@@ -137,8 +137,28 @@ def test_update_after_restore(meter: Meter):
     assert meter2.measured_value == 150
     assert meter2.last_reset == meter.last_reset
     assert meter2._period.end.tzinfo == TZ
+    assert meter2.next_reset == datetime(2022, 1, 2, 0, 0, tzinfo=TZ)
 
     fake_now = datetime(2022, 1, 2, 0, 35, tzinfo=TZ)
     meter2.on_update(ReadingData(fake_now, True, True, 350))
     assert meter2.measured_value == 0
     assert meter2.prev_measured_value == 250
+
+
+def test_update_after_restore_forever_meter(meter: Meter):
+    """Test restoring a forever meter."""
+    meter.next_reset = datetime.max.replace(tzinfo=TZ)
+    assert meter.next_reset.year == 9999
+
+    restore = MeasureItMeterStoredData(
+        meter.state,
+        meter.measured_value,
+        meter.prev_measured_value,
+        meter._session_start_reading,
+        meter._start_measured_value,
+        meter._period.last_reset,
+        meter._period.end,
+    ).as_dict()
+
+    restored_meter = MeasureItMeterStoredData.from_dict(restore)
+    assert restored_meter.period_end == datetime.max.replace(tzinfo=TZ)
