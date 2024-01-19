@@ -130,7 +130,7 @@ class MeasureItMeterStoredData(ExtraStoredData):
             period_last_reset = datetime.fromtimestamp(
                 restored["period_last_reset"], dt_util.DEFAULT_TIME_ZONE
             )
-            period_end = dt_util.now().fromtimestamp(
+            period_end = datetime.fromtimestamp(
                 restored["period_end"], dt_util.DEFAULT_TIME_ZONE
             )
             state = restored["state"]
@@ -217,7 +217,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
 
     def reset(self, reset_datetime: datetime):
         """Reset the sensor."""
-        _LOGGER.error("Resetting sensor %s at %s", self._attr_name, reset_datetime)
+        _LOGGER.info("Resetting sensor %s at %s", self._attr_name, reset_datetime)
         self.meter.next_reset = reset_datetime
         self.async_write_ha_state()
 
