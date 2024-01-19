@@ -26,7 +26,7 @@ from .coordinator import MeasureItCoordinator
 from .time_window import TimeWindow
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
-
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN) # required to pass hassfest validation due to use of async_setup
 
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""
