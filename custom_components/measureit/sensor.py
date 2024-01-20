@@ -89,6 +89,16 @@ async def async_setup_entry(
 
     async_add_entities(sensors)
 
+def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime:
+    """Parse a timestamp or string into a datetime object."""
+
+    try:
+        return datetime.fromisoformat(timestamp_or_string).replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    except (TypeError, ValueError):
+        try:
+            return datetime.fromtimestamp(float(timestamp_or_string), dt_util.DEFAULT_TIME_ZONE)
+        except OverflowError:
+            return datetime.max.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
 
 @dataclass
 class MeasureItMeterStoredData(ExtraStoredData):
@@ -112,8 +122,8 @@ class MeasureItMeterStoredData(ExtraStoredData):
             "start_measured_value": self.start_measured_value,
             "prev_measured_value": self.prev_measured_value,
             "session_start_reading": self.session_start_reading,
-            "period_last_reset": dt_util.as_timestamp(self.period_last_reset),
-            "period_end": dt_util.as_timestamp(self.period_end),
+            "period_last_reset": self.period_last_reset.isoformat(),
+            "period_end": self.period_end.isoformat(),
             "state": self.state,
         }
         return data
@@ -127,12 +137,8 @@ class MeasureItMeterStoredData(ExtraStoredData):
             start_measured_value = restored["start_measured_value"]
             prev_measured_value = restored["prev_measured_value"]
             session_start_reading = restored["session_start_reading"]
-            period_last_reset = datetime.fromtimestamp(
-                restored["period_last_reset"], dt_util.DEFAULT_TIME_ZONE
-            )
-            period_end = datetime.fromtimestamp(
-                restored["period_end"], dt_util.DEFAULT_TIME_ZONE
-            )
+            period_last_reset = temp_parse_timestamp_or_string(restored["period_last_reset"])
+            period_end = temp_parse_timestamp_or_string(restored["period_end"])
             state = restored["state"]
         except KeyError:
             # restored is a dict, but does not have all values
