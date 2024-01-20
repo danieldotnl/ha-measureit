@@ -219,7 +219,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         """Reset the sensor."""
         _LOGGER.info("Resetting sensor %s at %s", self._attr_name, reset_datetime)
         self.meter.next_reset = reset_datetime
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
     @callback
     def _handle_coordinator_update(self, reading: ReadingData) -> None:
