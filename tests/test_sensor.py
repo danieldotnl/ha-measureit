@@ -1,51 +1,224 @@
 """Tests for MeasureIt sensor class."""
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from custom_components.measureit import async_setup_entry, async_unload_entry
-from custom_components.measureit.const import DOMAIN
+from datetime import datetime, timedelta
+from unittest import mock
+from unittest.mock import MagicMock
+import pytest
+from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+
+from custom_components.measureit.const import PREDEFINED_PERIODS, SensorState
+from custom_components.measureit.meter import CounterMeter
+from custom_components.measureit.sensor import MeasureItSensor
 
 
-async def test_sensor_creation(hass):
-    """Test the creation of sensors in Home Assistant."""
-    config_entry = MockConfigEntry(
-        data={},
-        domain=DOMAIN,
-        options={
-            "config_name": "test_config",
-            "meter_type": "time",
-            "when_days": ["0", "1", "2", "3", "4", "5", "6"],
-            "when_from": "00:00:00",
-            "when_till": "00:00:00",
-            "sensor": [
-                {
-                    "unit_of_measurement": "s",
-                    "device_class": "duration",
-                    "state_class": "total_increasing",
-                    "unique_id": "50d844d8-b5ff-11ee-8d04-0242ac110002",
-                    "sensor_name": "day",
-                    "cron": "0 0 * * *",
-                    "period": "day",
-                },
-                {
-                    "unit_of_measurement": "s",
-                    "device_class": "duration",
-                    "state_class": "total_increasing",
-                    "unique_id": "50d859e6-b5ff-11ee-8d04-0242ac110002",
-                    "sensor_name": "week",
-                    "cron": "0 0 * * 1",
-                    "period": "week",
-                },
-            ],
-        },
-        title="My time config",
+@pytest.fixture(name="test_now")
+def fixture_datetime_now():
+    """Fixture for datetime.now."""
+    return datetime(2025, 1, 1, 10, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+
+
+@pytest.fixture(name="day_sensor")
+def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
+    """Fixture for creating a MeasureIt sensor."""
+    mockMeter = MagicMock()
+    mockMeter.measured_value = 0
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=test_now,
+    ):
+        sensor = MeasureItSensor(
+            hass,
+            MagicMock(),
+            mockMeter,
+            "test_sensor_day",
+            "test_sensor_day",
+            PREDEFINED_PERIODS["day"],
+            lambda x: x,
+            "hours",
+            SensorStateClass.TOTAL,
+            SensorDeviceClass.DURATION,
+        )
+        sensor.entity_id = "sensor.test_sensor_day"
+        yield sensor
+        sensor.unsub_reset_listener()
+
+
+@pytest.fixture(name="real_meter_sensor")
+def fixture_real_meter_sensor(hass: HomeAssistant, test_now: datetime):
+    """Fixture for creating a MeasureIt sensor."""
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=test_now,
+    ):
+        sensor = MeasureItSensor(
+            hass,
+            MagicMock(),
+            CounterMeter(),
+            "test_sensor_day",
+            "test_sensor_day",
+            PREDEFINED_PERIODS["day"],
+            lambda x: x,
+        )
+        sensor.entity_id = "sensor.test_sensor_day"
+        yield sensor
+        sensor.unsub_reset_listener()
+
+
+@pytest.fixture(name="restore_sensor")
+def fixture_restore_sensor(hass: HomeAssistant, test_now: datetime):
+    """Fixture for creating a MeasureIt sensor."""
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=test_now,
+    ):
+        sensor = MeasureItSensor(
+            hass,
+            MagicMock(),
+            CounterMeter(),
+            "test_sensor_day",
+            "test_sensor_day",
+            PREDEFINED_PERIODS["day"],
+            lambda x: x,
+        )
+        sensor.entity_id = "sensor.test_sensor_day"
+        sensor.async_get_last_sensor_data = MagicMock()
+        yield sensor
+        sensor.unsub_reset_listener()
+
+
+@pytest.fixture(name="none_sensor")
+def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
+    """Fixture for creating a MeasureIt sensor."""
+    mockMeter = MagicMock()
+    mockMeter.measured_value = 0
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=test_now,
+    ):
+        sensor = MeasureItSensor(
+            hass,
+            MagicMock(),
+            mockMeter,
+            "test_sensor_day",
+            "test_sensor_day",
+            None,
+            lambda x: x,
+        )
+        sensor.entity_id = "sensor.test_sensor_none"
+        yield sensor
+        sensor.unsub_reset_listener()
+
+
+# def test_meter_after_sensor_restore():
+#     """Test meter after sensor restore."""
+#     assert True
+
+
+def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
+    """Test sensor initialization."""
+    assert day_sensor.native_value == 0
+    assert day_sensor.unit_of_measurement == "hours"
+    assert day_sensor.state_class == SensorStateClass.TOTAL
+    assert day_sensor.device_class == SensorDeviceClass.DURATION
+
+
+def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
+    """Test sensor initialization."""
+    assert none_sensor.native_value == 0
+    assert none_sensor.next_reset is None
+    assert none_sensor.unit_of_measurement is None
+    assert none_sensor.state_class is None
+    assert none_sensor.device_class is None
+
+
+async def test_added_to_hass(
+    day_sensor: MeasureItSensor, hass: HomeAssistant, test_now: datetime
+):
+    """Test sensor added to hass."""
+    await day_sensor.async_added_to_hass()
+    assert day_sensor._coordinator.register.call_count == 1
+    assert day_sensor.next_reset == (test_now + timedelta(days=1)).replace(
+        hour=0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
 
-    assert await async_setup_entry(hass, config_entry)
-    await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.test_config_day")
-    assert state
-    state = hass.states.get("sensor.test_config_week")
-    assert state
+def test_sensor_state_on_condition_timewindow_change(
+    real_meter_sensor: MeasureItSensor,
+):
+    """Test sensor state update on condition template change."""
+    sensor = real_meter_sensor
+    assert sensor.sensor_state == SensorState.WAITING_FOR_TIME_WINDOW
+    assert sensor.meter.measuring is False
+    sensor.on_time_window_change(True)
+    assert sensor.sensor_state == SensorState.WAITING_FOR_CONDITION
+    sensor.on_condition_template_change(True)
+    assert sensor.sensor_state == SensorState.MEASURING
+    assert sensor.meter.measuring is True
+    sensor.on_condition_template_change(False)
+    assert sensor.sensor_state == SensorState.WAITING_FOR_CONDITION
+    sensor.on_time_window_change(False)
+    assert sensor.sensor_state == SensorState.WAITING_FOR_TIME_WINDOW
+    sensor.on_condition_template_change(True)
+    assert sensor.sensor_state == SensorState.WAITING_FOR_TIME_WINDOW
+    assert sensor.meter.measuring is False
 
-    await async_unload_entry(hass, config_entry)
-    await hass.async_block_till_done()
+
+def test_scheduled_reset_in_past(day_sensor: MeasureItSensor, test_now: datetime):
+    """Test sensor reset when scheduled in past."""
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=datetime(2025, 1, 1, 12, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE),
+    ):
+        day_sensor.reset = mock.MagicMock()
+        day_sensor.schedule_next_reset(test_now + timedelta(hours=1))
+    assert day_sensor.reset.call_count == 1
+
+
+def test_scheduled_reset_in_future(day_sensor: MeasureItSensor, test_now: datetime):
+    """Test sensor reset when scheduled in past."""
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=datetime(2025, 1, 1, 10, 30, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE),
+    ):
+        day_sensor.reset = mock.MagicMock()
+        day_sensor.schedule_next_reset(test_now + timedelta(hours=1))
+
+    assert day_sensor.reset.call_count == 0
+    assert day_sensor.next_reset == test_now + timedelta(hours=1)
+
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=datetime(2025, 1, 3, 12, 30, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE),
+    ):
+        day_sensor.schedule_next_reset()
+    assert day_sensor.next_reset == datetime(
+        2025, 1, 4, 0, 00, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+
+def test_scheduled_reset_none_sensor(none_sensor: MeasureItSensor):
+    """Test sensor reset when scheduled in past."""
+    with mock.patch(
+        "homeassistant.helpers.condition.dt_util.now",
+        return_value=datetime(2025, 1, 1, 12, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE),
+    ):
+        none_sensor.reset = mock.MagicMock()
+        none_sensor.schedule_next_reset(
+            datetime(2025, 1, 1, 13, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        )
+    assert none_sensor.reset.call_count == 0
+    assert none_sensor.next_reset == datetime(
+        2025, 1, 1, 13, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    none_sensor.schedule_next_reset()
+    assert none_sensor.next_reset is None
+
+
+async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
+    """Test sensor reset."""
+    assert none_sensor.next_reset is None
+    none_sensor.reset()
+    assert none_sensor.meter.reset.called_once
+    assert none_sensor.next_reset is None
+    assert none_sensor._attr_last_reset == test_now
