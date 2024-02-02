@@ -97,3 +97,26 @@ def test_reset():
     meter.reset()
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(0)
+
+
+def test_store_and_restore():
+    """Test storing and restoring a source meter."""
+    meter = SourceMeter(Decimal(100))
+    meter.start()
+    meter.update(Decimal(200))
+    assert meter.measuring is True
+    assert meter.measured_value == Decimal(100)
+    data = meter.to_dict()
+    meter2 = SourceMeter(Decimal(300))
+    meter2.from_dict(data)
+    assert meter2.measuring is True
+    assert meter2.measured_value == Decimal(200)
+    meter2.update(Decimal(500))
+    meter2.stop()
+    assert meter2.measuring is False
+    assert meter2.measured_value == Decimal(400)
+    data = meter2.to_dict()
+    meter3 = SourceMeter(Decimal(500))
+    meter3.from_dict(data)
+    assert meter3.measuring is False
+    assert meter3.measured_value == Decimal(400)

@@ -95,3 +95,35 @@ def test_reset_when_not_measuring():
     meter.reset()
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(HOUR * 2)
+
+
+def test_store_and_restore():
+    """Test storing and restoring a counter meter."""
+    meter = TimeMeter()
+    mock = DatetimeMock(datetime.now(), timedelta(hours=1))
+    meter.get_timestamp = mock.get_timestamp
+
+    meter.start()
+    meter.update()
+    assert meter.measuring is True
+    assert meter.measured_value == Decimal(HOUR)
+    data = meter.to_dict()
+
+    meter2 = TimeMeter()
+    meter2.get_timestamp = mock.get_timestamp
+
+    meter2.from_dict(data)
+    assert meter2.measuring is True
+    assert meter2.measured_value == Decimal(HOUR)
+    meter2.update()
+    meter2.update()
+    meter2.stop()
+    assert meter2.measuring is False
+    assert meter2.measured_value == Decimal(HOUR * 4)
+    data = meter2.to_dict()
+
+    meter3 = TimeMeter()
+    meter3.get_timestamp = mock.get_timestamp
+    meter3.from_dict(data)
+    assert meter3.measuring is False
+    assert meter3.measured_value == Decimal(HOUR * 4)

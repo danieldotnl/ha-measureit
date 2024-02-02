@@ -68,3 +68,26 @@ def test_reset_when_not_measuring():
     meter.reset()
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(1)
+
+
+def test_store_and_restore():
+    """Test storing and restoring a counter meter."""
+    meter = CounterMeter()
+    meter.start()
+    meter.update(1)
+    assert meter.measuring is True
+    assert meter.measured_value == Decimal(1)
+    data = meter.to_dict()
+    meter2 = CounterMeter()
+    meter2.from_dict(data)
+    assert meter2.measuring is True
+    assert meter2.measured_value == Decimal(1)
+    meter2.update(1)
+    meter2.stop()
+    assert meter2.measuring is False
+    assert meter2.measured_value == Decimal(2)
+    data = meter2.to_dict()
+    meter3 = CounterMeter()
+    meter3.from_dict(data)
+    assert meter3.measuring is False
+    assert meter3.measured_value == Decimal(2)
