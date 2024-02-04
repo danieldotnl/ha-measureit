@@ -102,11 +102,10 @@ def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime | None:
 class MeasureItSensorStoredData(ExtraStoredData):
     """Object to hold meter data to be stored."""
 
-    sensor_state: str | None
-    last_reset: datetime | None
     meter_data: dict
     time_window_active: bool
     condition_active: bool
+    last_reset: datetime | None
     next_reset: datetime | None = None
 
     # measured_value: float = 0
@@ -122,42 +121,51 @@ class MeasureItSensorStoredData(ExtraStoredData):
         _LOGGER.debug("Persisting meter data")
 
         data = {
-            "measured_value": self.measured_value,
-            "start_measured_value": self.start_measured_value,
-            "prev_measured_value": self.prev_measured_value,
-            "session_start_reading": self.session_start_reading,
-            "period_last_reset": self.period_last_reset.isoformat(),
-            "period_end": self.period_end.isoformat(),
-            "state": self.state,
+            "meter_data": self.meter.as_dict(),
+            "time_window_active": self._time_window_active,
+            "condition_active": self._condition_active,
+            "last_reset": self.last_reset.isoformat(),
+            "next_reset": self.next_reset.isoformat()
         }
         return data
+
+    @classmethod
+    def from_old_format_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData:
+        """Initialize a stored sensor state from an old format dict."""
+        raise NotImplementedError()
+            # restored["measured_value"]
+            # restored["start_measured_value"]
+            # restored["prev_measured_value"]
+            # restored["session_start_reading"]
+            # temp_parse_timestamp_or_string(
+            #     restored["period_last_reset"]
+            # )
+            # temp_parse_timestamp_or_string(restored["period_end"])
+            # restored["state"]
 
     @classmethod
     def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData:
         """Initialize a stored sensor state from a dict."""
 
         try:
-            measured_value = restored["measured_value"]
-            start_measured_value = restored["start_measured_value"]
-            prev_measured_value = restored["prev_measured_value"]
-            session_start_reading = restored["session_start_reading"]
-            period_last_reset = temp_parse_timestamp_or_string(
-                restored["period_last_reset"]
-            )
-            period_end = temp_parse_timestamp_or_string(restored["period_end"])
-            state = restored["state"]
+            if not restored.get("meter_data"):
+                return MeasureItSensorStoredData.from_old_format_dict(restored)
+
+            meter_data = restored["meter_data"]
+            time_window_active = restored["time_window_active"]
+            condition_active = restored["condition_active"]
+            last_reset = restored["last_reset"]
+            next_reset = restored["next_reset"]
         except KeyError:
             # restored is a dict, but does not have all values
             return None
 
         return cls(
-            state,
-            measured_value,
-            prev_measured_value,
-            session_start_reading,
-            start_measured_value,
-            period_last_reset,
-            period_end,
+            meter_data,
+            time_window_active,
+            condition_active,
+            last_reset,
+            next_reset
         )
 
 
