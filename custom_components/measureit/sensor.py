@@ -1,4 +1,5 @@
 """Sensor platform for MeasureIt."""
+from __future__ import annotations
 import logging
 from decimal import Decimal
 from datetime import datetime
@@ -8,10 +9,9 @@ from croniter import croniter
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import SensorStateClass, DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_UNIT_OF_MEASUREMENT
-from homeassistant.const import CONF_VALUE_TEMPLATE, CONF_UNIQUE_ID
+from homeassistant.const import CONF_UNIQUE_ID
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.core import HomeAssistant
@@ -19,14 +19,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity, ExtraStoredData
 from homeassistant.util import dt as dt_util
 
-from .period import Period
 from .const import (
     ATTR_NEXT_RESET,
     CONF_CONFIG_NAME,
-    CONF_CRON,
     CONF_SENSOR,
     CONF_SENSOR_NAME,
-    DOMAIN,
     SOURCE_ENTITY_ID,
     SensorState,
 )
@@ -38,7 +35,6 @@ from .const import DOMAIN_DATA
 from .const import ICON
 from .coordinator import MeasureItCoordinator
 from .meter import MeasureItMeter
-from .util import create_renderer
 
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -51,41 +47,39 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensor platform."""
     entry_id: str = config_entry.entry_id
-    meter_type: str = config_entry.options[CONF_METER_TYPE]
+    config_entry.options[CONF_METER_TYPE]
     _LOGGER.debug("Options: %s", config_entry.options)
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
 
-    coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
-    source_entity_id = hass.data[DOMAIN_DATA][entry_id].get(SOURCE_ENTITY_ID)
+    hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
+    hass.data[DOMAIN_DATA][entry_id].get(SOURCE_ENTITY_ID)
 
-    sensors: list[MeasureItSensor] = []
 
     for sensor in config_entry.options[CONF_SENSOR]:
-        value_template_renderer = None
-        unique_id = sensor.get(CONF_UNIQUE_ID)
-        sensor_name = f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
+        sensor.get(CONF_UNIQUE_ID)
+        f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
 
-        Period(sensor[CONF_CRON], dt_util.now())
+        #Period(sensor[CONF_CRON], dt_util.now())
         # meter = TimeM(f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period)
 
-        value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
+    #     value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
 
-        sensor_entity = MeasureItSensor(
-            coordinator,
-            meter,
-            unique_id,
-            meter_type,
-            sensor_name,
-            value_template_renderer,
-            sensor.get(CONF_UNIT_OF_MEASUREMENT),
-            source_entity_id,
-        )
-        sensors.append(sensor_entity)
-        hass.data[DOMAIN][SENSOR_DOMAIN].update(
-            {f"{SENSOR_DOMAIN}.{sensor_name}": sensor_entity}
-        )
+    #     sensor_entity = MeasureItSensor(
+    #         coordinator,
+    #         meter,
+    #         unique_id,
+    #         meter_type,
+    #         sensor_name,
+    #         value_template_renderer,
+    #         sensor.get(CONF_UNIT_OF_MEASUREMENT),
+    #         source_entity_id,
+    #     )
+    #     sensors.append(sensor_entity)
+    #     hass.data[DOMAIN][SENSOR_DOMAIN].update(
+    #         {f"{SENSOR_DOMAIN}.{sensor_name}": sensor_entity}
+    #     )
 
-    async_add_entities(sensors)
+    # async_add_entities(sensors)
 
 
 def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime | None:
@@ -108,11 +102,11 @@ def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime | None:
 class MeasureItSensorStoredData(ExtraStoredData):
     """Object to hold meter data to be stored."""
 
-    sensor_state: str | None = None
-    last_reset: datetime | None = None
-    meter_data: dict = {}
-    time_window_active: bool = None
-    condition_active: bool = None
+    sensor_state: str | None
+    last_reset: datetime | None
+    meter_data: dict
+    time_window_active: bool
+    condition_active: bool
     next_reset: datetime | None = None
 
     # measured_value: float = 0
@@ -139,7 +133,7 @@ class MeasureItSensorStoredData(ExtraStoredData):
         return data
 
     @classmethod
-    def from_dict(cls, restored: dict[str, Any]):  # -> MeasureItSensorStoredData:
+    def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData:
         """Initialize a stored sensor state from a dict."""
 
         try:
