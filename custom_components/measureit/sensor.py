@@ -358,13 +358,11 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         """Return sensor specific state data to be stored."""
 
         return MeasureItSensorStoredData(
-            self.meter.state,
-            self.meter.measured_value,
-            self.meter.prev_measured_value,
-            self.meter._session_start_reading,
-            self.meter._start_measured_value,
-            self.meter._period.last_reset,
-            self.meter._period.end,
+            self.meter.to_dict(),
+            self._time_window_active,
+            self._condition_active,
+            self.last_reset,
+            self.next_reset,
         )
 
     async def async_get_last_sensor_data(self) -> MeasureItSensorStoredData | None:

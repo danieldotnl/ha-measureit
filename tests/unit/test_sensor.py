@@ -8,7 +8,7 @@ from homeassistant.util import dt as dt_util
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from custom_components.measureit.const import PREDEFINED_PERIODS, SensorState
-from custom_components.measureit.meter import CounterMeter
+from custom_components.measureit.meter import CounterMeter, SourceMeter
 from custom_components.measureit.sensor import (
     MeasureItSensor,
     MeasureItSensorStoredData,
@@ -356,3 +356,18 @@ async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
     assert restore_sensor._time_window_active is True
     assert restore_sensor._condition_active is False
     assert restore_sensor.sensor_state == SensorState.WAITING_FOR_CONDITION
+
+
+def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
+    """Test getting extra restore state data."""
+    day_sensor.meter = SourceMeter(100)
+    day_sensor.on_condition_template_change(True)
+    day_sensor.on_time_window_change(True)
+    day_sensor.on_value_change(200)
+    stored_data = day_sensor.extra_restore_state_data
+    assert stored_data.meter_data["measured_value"] == 100
+    assert stored_data.condition_active is True
+    assert stored_data.time_window_active is True
+    day_sensor.on_condition_template_change(False)
+    stored_data = day_sensor.extra_restore_state_data
+    assert stored_data.condition_active is False
