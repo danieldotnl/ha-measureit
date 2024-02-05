@@ -1,7 +1,7 @@
 """Tests for MeasureIt sensor class."""
 from datetime import datetime, timedelta
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
@@ -9,7 +9,10 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from custom_components.measureit.const import PREDEFINED_PERIODS, SensorState
 from custom_components.measureit.meter import CounterMeter
-from custom_components.measureit.sensor import MeasureItSensor
+from custom_components.measureit.sensor import (
+    MeasureItSensor,
+    MeasureItSensorStoredData,
+)
 
 
 @pytest.fixture(name="test_now")
@@ -82,7 +85,21 @@ def fixture_restore_sensor(hass: HomeAssistant, test_now: datetime):
             lambda x: x,
         )
         sensor.entity_id = "sensor.test_sensor_day"
-        sensor.async_get_last_sensor_data = MagicMock()
+        data = {
+            "meter_data": {
+                "measured_value": 123,
+                "prev_measured_value": 256,
+                "measuring": False,
+            },
+            "last_reset": "2025-01-01T00:00:00-08:00",
+            "next_reset": "2025-01-02T00:00:00-08:00",
+            "time_window_active": True,
+            "condition_active": False,
+        }
+        stored_data = MeasureItSensorStoredData.from_dict(data)
+        stored_data_mock = AsyncMock()
+        stored_data_mock.return_value = stored_data
+        sensor.async_get_last_sensor_data = stored_data_mock
         yield sensor
         sensor.unsub_reset_listener()
 
@@ -110,11 +127,6 @@ def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
         sensor.unsub_reset_listener()
 
 
-# def test_meter_after_sensor_restore():
-#     """Test meter after sensor restore."""
-#     assert True
-
-
 def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor initialization."""
     assert day_sensor.native_value == 0
@@ -130,17 +142,6 @@ def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
     assert none_sensor.unit_of_measurement is None
     assert none_sensor.state_class is None
     assert none_sensor.device_class is None
-
-
-async def test_added_to_hass(
-    day_sensor: MeasureItSensor, hass: HomeAssistant, test_now: datetime
-):
-    """Test sensor added to hass."""
-    await day_sensor.async_added_to_hass()
-    assert day_sensor._coordinator.register.call_count == 1
-    assert day_sensor.next_reset == (test_now + timedelta(days=1)).replace(
-        hour=0, tzinfo=dt_util.DEFAULT_TIME_ZONE
-    )
 
 
 def test_sensor_state_on_condition_timewindow_change(
@@ -222,3 +223,136 @@ async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
     assert none_sensor.meter.reset.called_once
     assert none_sensor.next_reset is None
     assert none_sensor._attr_last_reset == test_now
+
+
+def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
+    """Test sensor restore."""
+    data = MeasureItSensorStoredData(
+        meter_data=none_sensor.meter.to_dict(),
+        last_reset=none_sensor.last_reset,
+        next_reset=none_sensor.next_reset,
+        time_window_active=none_sensor._time_window_active,
+        condition_active=none_sensor._condition_active,
+    )
+
+    stored = data.as_dict()
+    restored = MeasureItSensorStoredData.from_dict(stored)
+    assert data == restored
+    assert restored.time_window_active is False
+    assert restored.condition_active is False
+    assert restored.next_reset is None
+
+
+def test_day_sensor_stored_data(day_sensor: MeasureItSensor):
+    """Test sensor restore."""
+    data = MeasureItSensorStoredData(
+        meter_data=day_sensor.meter.to_dict(),
+        last_reset=day_sensor.last_reset,
+        next_reset=day_sensor.next_reset,
+        time_window_active=day_sensor._time_window_active,
+        condition_active=day_sensor._condition_active,
+    )
+
+    stored = data.as_dict()
+    restored = MeasureItSensorStoredData.from_dict(stored)
+    assert data == restored
+    assert restored.time_window_active is False
+    assert restored.condition_active is False
+    assert restored.next_reset == day_sensor.next_reset
+    assert restored.last_reset == day_sensor.last_reset
+
+
+def test_restore_from_data():
+    """Test sensor restore from json."""
+    data = {
+        "meter_data": {
+            "measured_value": 0,
+            "measuring": False,
+        },
+        "last_reset": "2025-01-01T00:00:00-08:00",
+        "next_reset": "2025-01-02T00:00:00+00:00",
+        "time_window_active": True,
+        "condition_active": False,
+    }
+    restored = MeasureItSensorStoredData.from_dict(data)
+    assert restored.time_window_active is True
+    assert restored.condition_active is False
+    assert restored.last_reset == datetime(
+        2025, 1, 1, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    assert restored.next_reset == datetime(2025, 1, 2, 0, 0, 0, tzinfo=dt_util.UTC)
+    assert restored.meter_data["measured_value"] == 0
+    assert restored.meter_data["measuring"] is False
+
+
+def test_restore_old_format_state_measuring():
+    """Test sensor restore with old format."""
+    data = {
+        "measured_value": 2880.001408100128,
+        "start_measured_value": 2700,
+        "prev_measured_value": 180.00166988372803,
+        "session_start_reading": 1705914000.004058,
+        "period_last_reset": 1705914000.004091,
+        "period_end": 1706119200.0,
+        "state": "measuring",
+    }
+    restored = MeasureItSensorStoredData.from_dict(data)
+    assert restored.time_window_active is True
+    assert restored.condition_active is True
+    assert restored.next_reset == datetime(
+        2024, 1, 24, 10, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    assert restored.last_reset is not None
+    assert restored.meter_data["measured_value"] == 2880.001408100128
+    assert restored.meter_data["measuring"] is True
+    assert restored.meter_data["session_start_measured_value"] == 2700
+    assert restored.meter_data["prev_measured_value"] == 180.00166988372803
+    assert restored.meter_data["session_start_value"] == 1705914000.004058
+
+
+def test_restore_old_format_state_not_measuring():
+    """Test sensor restore with old format."""
+    data = {
+        "measured_value": 2880.001408100128,
+        "start_measured_value": 0,
+        "prev_measured_value": 180.00166988372803,
+        "session_start_reading": 1705914000.004058,
+        "period_last_reset": 1705914000.004091,
+        "period_end": 1706119200.0,
+        "state": "waiting for condition",
+    }
+    restored = MeasureItSensorStoredData.from_dict(data)
+    assert restored.time_window_active is True
+    assert restored.condition_active is False
+    assert restored.next_reset is not None
+    assert restored.last_reset is not None
+    assert restored.meter_data["measured_value"] == 2880.001408100128
+    assert restored.meter_data["measuring"] is False
+    assert restored.meter_data["session_start_measured_value"] == 0
+    assert restored.meter_data["prev_measured_value"] == 180.00166988372803
+    assert restored.meter_data["session_start_value"] == 1705914000.004058
+
+
+async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
+    """Test sensor added to hass."""
+    await day_sensor.async_added_to_hass()
+    assert day_sensor._coordinator.register.call_count == 1
+    assert day_sensor.next_reset == (test_now + timedelta(days=1)).replace(
+        hour=0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+
+async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
+    """Test sensor added to hass."""
+    await restore_sensor.async_added_to_hass()
+    assert restore_sensor.last_reset == datetime(
+        2025, 1, 1, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    assert restore_sensor.next_reset == datetime(
+        2025, 1, 2, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    assert restore_sensor.native_value == 123
+    assert restore_sensor.meter.prev_measured_value == 256
+    assert restore_sensor._time_window_active is True
+    assert restore_sensor._condition_active is False
+    assert restore_sensor.sensor_state == SensorState.WAITING_FOR_CONDITION

@@ -120,6 +120,7 @@ def test_store_and_restore():
     meter2.stop()
     assert meter2.measuring is False
     assert meter2.measured_value == Decimal(HOUR * 4)
+    assert isinstance(meter2.measured_value, Decimal)
     data = meter2.to_dict()
 
     meter3 = TimeMeter()

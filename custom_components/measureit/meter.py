@@ -53,9 +53,9 @@ class MeasureItMeter:
 
     def from_dict(self, data: dict) -> None:
         """Restore the meter from a dictionary."""
-        self._measured_value = data["measured_value"]
-        self._prev_measured_value = data["prev_measured_value"]
-        self._measuring = data["measuring"]
+        self._measured_value = Decimal(data["measured_value"])
+        self._prev_measured_value = Decimal(data["prev_measured_value"])
+        self._measuring = bool(data["measuring"])
 
 
 class CounterMeter(MeasureItMeter):
@@ -140,13 +140,15 @@ class SourceMeter(MeasureItMeter):
     def from_dict(self, data: dict) -> None:
         """Restore the meter from a dictionary."""
         super().from_dict(data)
-        self._session_start_value = data["session_start_value"]
-        self._session_start_measured_value = data["session_start_measured_value"]
+        self._session_start_value = Decimal(data["session_start_value"])
+        self._session_start_measured_value = Decimal(
+            data["session_start_measured_value"]
+        )
 
         if self._source_value:
             self.update(self._source_value)
         else:
-            self._source_value = data["source_value"]
+            self._source_value = Decimal(data["source_value"])
 
 
 class TimeMeter(MeasureItMeter):
@@ -203,5 +205,7 @@ class TimeMeter(MeasureItMeter):
     def from_dict(self, data: dict) -> None:
         """Restore the meter from a dictionary."""
         super().from_dict(data)
-        self._session_start_value = data["session_start_value"]
-        self._session_start_measured_value = data["session_start_measured_value"]
+        self._session_start_value = Decimal(data["session_start_value"])
+        self._session_start_measured_value = Decimal(
+            data["session_start_measured_value"]
+        )

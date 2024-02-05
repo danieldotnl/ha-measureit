@@ -54,12 +54,11 @@ async def async_setup_entry(
     hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
     hass.data[DOMAIN_DATA][entry_id].get(SOURCE_ENTITY_ID)
 
-
     for sensor in config_entry.options[CONF_SENSOR]:
         sensor.get(CONF_UNIQUE_ID)
         f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
 
-        #Period(sensor[CONF_CRON], dt_util.now())
+        # Period(sensor[CONF_CRON], dt_util.now())
         # meter = TimeM(f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period)
 
     #     value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
@@ -108,40 +107,49 @@ class MeasureItSensorStoredData(ExtraStoredData):
     last_reset: datetime | None
     next_reset: datetime | None = None
 
-    # measured_value: float = 0
-    # prev_measured_value: float = 0
-    # session_start_reading: float | None = None
-    # start_measured_value: float | None = None
-    # period_last_reset: datetime | None = None
-    # period_end: datetime | None = None
-
     def as_dict(self) -> dict[str, Any]:
         """Return a dict representation of the meter data."""
 
         _LOGGER.debug("Persisting meter data")
 
         data = {
-            "meter_data": self.meter.as_dict(),
-            "time_window_active": self._time_window_active,
-            "condition_active": self._condition_active,
-            "last_reset": self.last_reset.isoformat(),
-            "next_reset": self.next_reset.isoformat()
+            "meter_data": self.meter_data,
+            "time_window_active": self.time_window_active,
+            "condition_active": self.condition_active,
+            "last_reset": self.last_reset.isoformat() if self.last_reset else None,
+            "next_reset": self.next_reset.isoformat() if self.next_reset else None,
         }
         return data
 
     @classmethod
-    def from_old_format_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData:
+    def from_old_format_dict(
+        cls, restored: dict[str, Any]
+    ) -> MeasureItSensorStoredData:
         """Initialize a stored sensor state from an old format dict."""
-        raise NotImplementedError()
-            # restored["measured_value"]
-            # restored["start_measured_value"]
-            # restored["prev_measured_value"]
-            # restored["session_start_reading"]
-            # temp_parse_timestamp_or_string(
-            #     restored["period_last_reset"]
-            # )
-            # temp_parse_timestamp_or_string(restored["period_end"])
-            # restored["state"]
+        time_window_active = False
+        condition_active = False
+        if restored.get("state") == SensorState.MEASURING:
+            time_window_active = True
+            condition_active = True
+        elif restored.get("state") == SensorState.WAITING_FOR_TIME_WINDOW:
+            time_window_active = False
+            condition_active = True
+        elif restored.get("state") == SensorState.WAITING_FOR_CONDITION:
+            time_window_active = True
+            condition_active = False
+        meter_data = {
+            "measured_value": restored["measured_value"],
+            "session_start_value": restored["session_start_reading"],
+            "session_start_measured_value": restored["start_measured_value"],
+            "prev_measured_value": restored["prev_measured_value"],
+            "measuring": True if restored["state"] == SensorState.MEASURING else False,
+        }
+        last_reset = temp_parse_timestamp_or_string(restored["period_last_reset"])
+        next_reset = temp_parse_timestamp_or_string(restored["period_end"])
+
+        return cls(
+            meter_data, time_window_active, condition_active, last_reset, next_reset
+        )
 
     @classmethod
     def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData:
@@ -152,20 +160,28 @@ class MeasureItSensorStoredData(ExtraStoredData):
                 return MeasureItSensorStoredData.from_old_format_dict(restored)
 
             meter_data = restored["meter_data"]
-            time_window_active = restored["time_window_active"]
-            condition_active = restored["condition_active"]
-            last_reset = restored["last_reset"]
-            next_reset = restored["next_reset"]
+            time_window_active = bool(restored["time_window_active"])
+            condition_active = bool(restored["condition_active"])
+            last_reset = (
+                datetime.fromisoformat(restored["last_reset"]).astimezone(
+                    tz=dt_util.DEFAULT_TIME_ZONE
+                )
+                if restored.get("last_reset")
+                else None
+            )
+            next_reset = (
+                datetime.fromisoformat(restored["next_reset"]).astimezone(
+                    tz=dt_util.DEFAULT_TIME_ZONE
+                )
+                if restored.get("next_reset")
+                else None
+            )
         except KeyError:
             # restored is a dict, but does not have all values
             return None
 
         return cls(
-            meter_data,
-            time_window_active,
-            condition_active,
-            last_reset,
-            next_reset
+            meter_data, time_window_active, condition_active, last_reset, next_reset
         )
 
 
@@ -214,14 +230,10 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
                 self._attr_name,
                 last_sensor_data,
             )
-            self.meter.state = last_sensor_data.state
-            self.meter.measured_value = last_sensor_data.measured_value
-            self.meter._start_measured_value = last_sensor_data.start_measured_value
-            self.meter.prev_measured_value = last_sensor_data.prev_measured_value
-            self.meter._session_start_reading = last_sensor_data.session_start_reading
-            self.meter._period.last_reset = last_sensor_data.period_last_reset
-            self.meter._period.end = last_sensor_data.period_end
-
+            self.meter.from_dict(last_sensor_data.meter_data)
+            self._condition_active = last_sensor_data.condition_active
+            self._time_window_active = last_sensor_data.time_window_active
+            self._attr_last_reset = last_sensor_data.last_reset
             self.schedule_next_reset(last_sensor_data.next_reset)
         else:
             _LOGGER.warning("%s # Could not restore data", self._attr_name)
