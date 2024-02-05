@@ -38,9 +38,9 @@ def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
             "test_sensor_day",
             PREDEFINED_PERIODS["day"],
             lambda x: x,
-            "hours",
             SensorStateClass.TOTAL,
             SensorDeviceClass.DURATION,
+            "hours",
         )
         sensor.entity_id = "sensor.test_sensor_day"
         yield sensor
@@ -62,6 +62,7 @@ def fixture_real_meter_sensor(hass: HomeAssistant, test_now: datetime):
             "test_sensor_day",
             PREDEFINED_PERIODS["day"],
             lambda x: x,
+            SensorStateClass.TOTAL,
         )
         sensor.entity_id = "sensor.test_sensor_day"
         yield sensor
@@ -83,6 +84,7 @@ def fixture_restore_sensor(hass: HomeAssistant, test_now: datetime):
             "test_sensor_day",
             PREDEFINED_PERIODS["day"],
             lambda x: x,
+            SensorStateClass.TOTAL_INCREASING,
         )
         sensor.entity_id = "sensor.test_sensor_day"
         data = {
@@ -121,6 +123,7 @@ def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
             "test_sensor_day",
             None,
             lambda x: x,
+            SensorStateClass.TOTAL,
         )
         sensor.entity_id = "sensor.test_sensor_none"
         yield sensor
@@ -140,7 +143,7 @@ def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
     assert none_sensor.native_value == 0
     assert none_sensor.next_reset is None
     assert none_sensor.unit_of_measurement is None
-    assert none_sensor.state_class is None
+    assert none_sensor.state_class is SensorStateClass.TOTAL
     assert none_sensor.device_class is None
 
 
