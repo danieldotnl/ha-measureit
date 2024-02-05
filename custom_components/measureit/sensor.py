@@ -19,6 +19,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity, ExtraStoredData
 from homeassistant.util import dt as dt_util
 
+from .util import NumberType
+
 from .const import (
     ATTR_NEXT_RESET,
     CONF_CONFIG_NAME,
@@ -48,8 +50,8 @@ async def async_setup_entry(
     """Set up sensor platform."""
     entry_id: str = config_entry.entry_id
     config_entry.options[CONF_METER_TYPE]
-    _LOGGER.debug("Options: %s", config_entry.options)
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
+    _LOGGER.debug("%s # Options: %s", config_name, config_entry.options)
 
     hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
     hass.data[DOMAIN_DATA][entry_id].get(SOURCE_ENTITY_ID)
@@ -58,7 +60,6 @@ async def async_setup_entry(
         sensor.get(CONF_UNIQUE_ID)
         f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
 
-        # Period(sensor[CONF_CRON], dt_util.now())
         # meter = TimeM(f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period)
 
     #     value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
@@ -337,9 +338,9 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         self._async_write_ha_state()
 
     @callback
-    def on_value_change(self, new_value: float) -> None:
+    def on_value_change(self, new_value: NumberType) -> None:
         """Handle a change in the value."""
-        self.meter.update(new_value)
+        self.meter.update(Decimal(new_value))
         self._async_write_ha_state()
 
     def _on_sensor_state_update(

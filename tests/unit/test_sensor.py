@@ -225,6 +225,17 @@ async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
     assert none_sensor._attr_last_reset == test_now
 
 
+def test_on_value_change(day_sensor: MeasureItSensor):
+    """Test sensor value change."""
+    day_sensor.meter = CounterMeter()
+    day_sensor.on_condition_template_change(True)
+    day_sensor.on_time_window_change(True)
+    day_sensor.on_value_change(1)
+    assert day_sensor.native_value == 1
+    day_sensor.on_value_change(1)
+    assert day_sensor.native_value == 2
+
+
 def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
     """Test sensor restore."""
     data = MeasureItSensorStoredData(

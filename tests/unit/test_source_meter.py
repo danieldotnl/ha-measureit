@@ -19,6 +19,12 @@ def test_start():
     assert meter.measured_value == Decimal(0)
 
 
+# def test_start_without_source_value():
+#     """Test starting a counter meter without a source value."""
+#    This should actually not happen as we should not allow a sensor to be created when there is no source value.
+#    That can only occur the first time the meter is created. After that the source value will be restored from storage.
+
+
 def test_stop():
     """Test stopping a counter meter."""
     meter = SourceMeter(100)
