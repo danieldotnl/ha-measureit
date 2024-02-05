@@ -16,8 +16,11 @@ from homeassistant.exceptions import TemplateError
 from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.event import async_track_template_result
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.event import TrackTemplate
 from homeassistant.helpers.template import Template
+
+from .sensor import MeasureItSensor
 
 from .const import MeterType
 
@@ -37,44 +40,40 @@ class MeasureItCoordinator:
         self,
         hass: HomeAssistant,
         config_name: str,
-        condition: Template | None,
-        time_window: TimeWindow,
         meter_type: MeterType,
+        time_window: TimeWindow,
+        condition: Template | None = None,
         source_entity: str | None = None,
     ) -> None:
         """Initialize the coordinator."""
-        self._hass: HomeAssistant = hass
-        self._name: str = config_name
-        self._meters = []
-        self._condition: Template | None = condition
+        self.hass: HomeAssistant = hass
+        self._config_name: str = config_name
+
         self._meter_type: MeterType = meter_type
-        self._source_entity: str = source_entity
-        self._listeners: dict[
-            Callable[[ReadingData], None],
-            tuple[Callable[[ReadingData], None], object | None],
-        ] = {}
         self._time_window: TimeWindow = time_window
-        self._template_listener = None
-        self._entity_update_listener = None
-        self._heartbeat_listener = None
-        self.last_reading = None
+        self._condition: Template | None = condition
+        self._source_entity: str | None = source_entity
 
-        self._template_active: bool = True
+        self._sensors: list[MeasureItSensor] = []
 
-    def stop(self):
-        """Stop the coordinator."""
-        _LOGGER.debug("Stopping coordinator")
-        if self._template_listener:
-            self._template_listener.async_remove()
-        if self._heartbeat_listener:
-            self._heartbeat_listener()
+        # self._template_listener = None
+        # self._entity_update_listener = None
+        # self._heartbeat_listener = None
+        # self.last_reading = None
 
     def start(self):
         """Start the coordinator."""
 
+        if self._time_window:
+            self._time_window_listener = async_track_point_in_time(
+            self.hass,
+            self.on_time_window_active_change,
+            self._time_window.next_change
+        )
+
         if self._condition:
             self._template_listener = async_track_template_result(
-                self._hass,
+                self.hass,
                 [TrackTemplate(self._condition, None)],
                 self._async_on_template_update,
             )
@@ -82,7 +81,7 @@ class MeasureItCoordinator:
 
         if self._meter_type == MeterType.SOURCE:
             self._entity_update_listener = async_track_state_change_event(
-                self._hass,
+                self.hass,
                 self._source_entity,
                 self._async_on_state_change,
             )
@@ -92,6 +91,35 @@ class MeasureItCoordinator:
 
         else:
             self.async_on_heartbeat()
+
+    def stop(self):
+        """Stop the coordinator."""
+        _LOGGER.debug("Stopping coordinator")
+        if self._time_window_listener:
+            self._time_window_listener()
+        if self._template_listener:
+            self._template_listener.async_remove()
+        if self._heartbeat_listener:
+            self._heartbeat_listener()
+
+    @callback
+    def on_time_window_active_change(self, now: datetime):
+        """Check if the time window is active and update the listeners."""
+        _LOGGER.debug(
+            "%s # Time window active change triggered at: %s. Next change: %s",
+            self._config_name,
+            now.isoformat(),
+            self._time_window.next_change.isoformat()
+        )
+        active = self._time_window.is_active(now)
+        for sensor in self._sensors:
+            sensor.on_time_window_change(active)
+
+        self._time_window_listener = async_track_point_in_time(
+            self.hass,
+            self.on_time_window_active_change,
+            self._time_window.next_change
+        )
 
     @callback
     def _async_on_state_change(self, event):
