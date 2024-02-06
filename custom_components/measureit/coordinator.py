@@ -20,8 +20,6 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.event import TrackTemplate
 from homeassistant.helpers.template import Template
 
-from .sensor import MeasureItSensor
-
 from .const import MeterType
 
 from .reading import ReadingData
@@ -54,7 +52,7 @@ class MeasureItCoordinator:
         self._condition: Template | None = condition
         self._source_entity: str | None = source_entity
 
-        self._sensors: list[MeasureItSensor] = []
+        self._sensors: list[MeasureItCoordinatorEntity] = []
 
         # self._template_listener = None
         # self._entity_update_listener = None
@@ -66,10 +64,10 @@ class MeasureItCoordinator:
 
         if self._time_window:
             self._time_window_listener = async_track_point_in_time(
-            self.hass,
-            self.on_time_window_active_change,
-            self._time_window.next_change
-        )
+                self.hass,
+                self.on_time_window_active_change,
+                self._time_window.next_change,
+            )
 
         if self._condition:
             self._template_listener = async_track_template_result(
@@ -109,23 +107,26 @@ class MeasureItCoordinator:
             "%s # Time window active change triggered at: %s. Next change: %s",
             self._config_name,
             now.isoformat(),
-            self._time_window.next_change.isoformat()
+            self._time_window.next_change.isoformat(),
         )
         active = self._time_window.is_active(now)
         for sensor in self._sensors:
             sensor.on_time_window_change(active)
 
         self._time_window_listener = async_track_point_in_time(
-            self.hass,
-            self.on_time_window_active_change,
-            self._time_window.next_change
+            self.hass, self.on_time_window_active_change, self._time_window.next_change
         )
 
     @callback
     def _async_on_state_change(self, event):
         old_state = event.data.get("old_state").state
         new_state = event.data.get("new_state").state
-        _LOGGER.debug("%s # Source entity state changed, old: %s, new: %s", self._name, old_state, new_state)
+        _LOGGER.debug(
+            "%s # Source entity state changed, old: %s, new: %s",
+            self._name,
+            old_state,
+            new_state,
+        )
         self._update(new_state)
 
     @callback
@@ -151,7 +152,7 @@ class MeasureItCoordinator:
             "%s # Update triggered at: %s. Value: %s",
             self._name,
             tznow.isoformat(),
-            new_value
+            new_value,
         )
 
         try:
@@ -226,3 +227,24 @@ class MeasureItCoordinator:
             raise ValueError("Could not process value as it's unknown or unavailable.")
         else:
             return float(value)
+
+
+class MeasureItCoordinatorEntity:
+    """Coordinator entity for the MeasureIt component."""
+
+    @callback
+    def on_condition_template_change(self, condition_active: bool) -> None:
+        """Abstract method for handling changes in the condition template."""
+        raise NotImplementedError(
+            "Entity should implement on_condition_template_change()"
+        )
+
+    @callback
+    def on_time_window_change(self, time_window_active: bool) -> None:
+        """Abstract method for handling changes in the time window."""
+        raise NotImplementedError("Entity should implement on_time_window_change()")
+
+    @callback
+    def on_value_change(self, new_value: NumberType) -> None:
+        """Abstract method for handling changes in the value."""
+        raise NotImplementedError("Entity should implement on_value_change()")

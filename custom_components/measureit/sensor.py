@@ -35,7 +35,7 @@ from .const import CONF_METER_TYPE
 from .const import COORDINATOR
 from .const import DOMAIN_DATA
 from .const import ICON
-from .coordinator import MeasureItCoordinator
+from .coordinator import MeasureItCoordinator, MeasureItCoordinatorEntity
 from .meter import MeasureItMeter
 
 
@@ -186,7 +186,7 @@ class MeasureItSensorStoredData(ExtraStoredData):
         )
 
 
-class MeasureItSensor(RestoreEntity, SensorEntity):
+class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
     """MeasureIt Sensor Entity."""
 
     def __init__(
@@ -212,7 +212,10 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         self._value_template_renderer = value_template_renderer
         self._attr_native_unit_of_measurement = unit_of_measurement
 
-        if state_class not in [SensorStateClass.TOTAL, SensorStateClass.TOTAL_INCREASING]:
+        if state_class not in [
+            SensorStateClass.TOTAL,
+            SensorStateClass.TOTAL_INCREASING,
+        ]:
             raise TypeError("SensorStateClass must be TOTAL or TOTAL_INCREASING.")
         self._attr_state_class = state_class
         self._attr_device_class = device_class
@@ -290,7 +293,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         return attributes
 
     @callback
-    def reset(self, event = None):
+    def reset(self, event=None):
         """Reset the sensor."""
         reset_datetime = dt_util.now()
         _LOGGER.info("Resetting sensor %s at %s", self._attr_name, reset_datetime)
@@ -319,7 +322,7 @@ class MeasureItSensor(RestoreEntity, SensorEntity):
         self._reset_listener = async_track_point_in_time(
             self.hass,
             self.reset,
-            self._next_reset, # type: ignore
+            self._next_reset,  # type: ignore
         )
 
     @callback
