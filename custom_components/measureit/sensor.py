@@ -1,4 +1,5 @@
 """Sensor platform for MeasureIt."""
+
 from __future__ import annotations
 import logging
 from decimal import Decimal
@@ -18,8 +19,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity, ExtraStoredData
 from homeassistant.util import dt as dt_util
-
-from .util import NumberType
 
 from .const import (
     ATTR_NEXT_RESET,
@@ -344,9 +343,9 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._async_write_ha_state()
 
     @callback
-    def on_value_change(self, new_value: NumberType) -> None:
+    def on_value_change(self, new_value: Decimal | None = None) -> None:
         """Handle a change in the value."""
-        self.meter.update(Decimal(new_value))
+        self.meter.update(Decimal(new_value)) if new_value else self.meter.update()
         self._async_write_ha_state()
 
     def _on_sensor_state_update(

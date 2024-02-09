@@ -1,4 +1,5 @@
 """Tests for MeasureIt sensor class."""
+
 from datetime import datetime, timedelta
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
@@ -8,7 +9,7 @@ from homeassistant.util import dt as dt_util
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from custom_components.measureit.const import PREDEFINED_PERIODS, SensorState
-from custom_components.measureit.meter import CounterMeter, SourceMeter
+from custom_components.measureit.meter import CounterMeter, SourceMeter, TimeMeter
 from custom_components.measureit.sensor import (
     MeasureItSensor,
     MeasureItSensorStoredData,
@@ -237,6 +238,15 @@ def test_on_value_change(day_sensor: MeasureItSensor):
     assert day_sensor.native_value == 1
     day_sensor.on_value_change(1)
     assert day_sensor.native_value == 2
+
+
+def test_on_value_change_for_time(day_sensor: MeasureItSensor):
+    """Test sensor value change for time."""
+    day_sensor.meter = TimeMeter()
+    day_sensor.on_condition_template_change(True)
+    day_sensor.on_time_window_change(True)
+    day_sensor.on_value_change()
+    assert day_sensor.native_value > 0
 
 
 def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
