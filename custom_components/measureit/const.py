@@ -1,4 +1,5 @@
 """Constants for MeasureIt."""
+
 from enum import Enum
 from logging import Logger, getLogger
 
@@ -34,9 +35,8 @@ CONF_TW_TILL = "when_till"
 CONF_CONFIG_NAME = "config_name"
 CONF_SENSOR_NAME = "sensor_name"
 CONF_INDEX = "index"
+CONF_COUNTER_TEMPLATE = "counter_template"
 
-METER_TYPE_TIME = "time"
-METER_TYPE_SOURCE = "source"
 
 # Attributes
 ATTR_PREV = "prev_period"

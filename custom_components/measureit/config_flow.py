@@ -1,4 +1,5 @@
 """Adds config flow for MeasureIt."""
+
 # Handling multiple sensors was inspired by the config_flow for the HA scrape sensor.
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
 from .const import (
     CONF_CONDITION,
     CONF_CONFIG_NAME,
+    CONF_COUNTER_TEMPLATE,
     CONF_CRON,
     CONF_INDEX,
     CONF_METER_TYPE,
@@ -46,9 +48,8 @@ from .const import (
     CONF_TW_TILL,
     DOMAIN,
     LOGGER,
-    METER_TYPE_SOURCE,
-    METER_TYPE_TIME,
     PREDEFINED_PERIODS,
+    MeterType,
 )
 
 PERIOD_OPTIONS = [
@@ -121,7 +122,7 @@ async def validate_time_config(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate time config."""
-    user_input[CONF_METER_TYPE] = METER_TYPE_TIME
+    user_input[CONF_METER_TYPE] = MeterType.TIME
     return user_input
 
 
@@ -129,7 +130,15 @@ async def validate_source_config(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate source config."""
-    user_input[CONF_METER_TYPE] = METER_TYPE_SOURCE
+    user_input[CONF_METER_TYPE] = MeterType.SOURCE
+    return user_input
+
+
+async def validate_count_config(
+    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Validate source config."""
+    user_input[CONF_METER_TYPE] = MeterType.COUNTER
     return user_input
 
 
@@ -195,10 +204,10 @@ async def get_add_sensor_suggested_values(
 ) -> dict[str, Any]:
     """Return suggested values for adding sensors."""
     suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL_INCREASING}
-    if handler.options[CONF_METER_TYPE] == METER_TYPE_TIME:
+    if handler.options[CONF_METER_TYPE] == MeterType.TIME:
         suggested[CONF_DEVICE_CLASS] = SensorDeviceClass.DURATION
         suggested[CONF_UNIT_OF_MEASUREMENT] = "s"
-    elif handler.options[CONF_METER_TYPE] == METER_TYPE_SOURCE:
+    elif handler.options[CONF_METER_TYPE] == MeterType.SOURCE:
         try:
             state = handler.parent_handler.hass.states.get(handler.options[CONF_SOURCE])
             suggested[CONF_DEVICE_CLASS] = state.attributes.get("device_class")
@@ -293,6 +302,12 @@ DATA_SCHEMA_SOURCE = vol.Schema(
         vol.Required(CONF_SOURCE): selector.EntitySelector(),
     }
 )
+DATA_SCHEMA_COUNT = vol.Schema(
+    {
+        **MAIN_CONFIG,
+        vol.Required(CONF_COUNTER_TEMPLATE): selector.TemplateSelector(),
+    }
+)
 DATA_SCHEMA_WHEN = vol.Schema(WHEN_CONFIG)
 DATA_SCHEMA_EDIT_SENSOR = vol.Schema(
     {vol.Required(CONF_SENSOR_NAME): selector.TextSelector(), **SENSOR_CONFIG}
@@ -310,7 +325,7 @@ DATA_SCHEMA_THANK_YOU = vol.Schema({})
 
 
 CONFIG_FLOW = {
-    "user": SchemaFlowMenuStep(["time", "source"]),
+    "user": SchemaFlowMenuStep(["time", "source", "count"]),
     "time": SchemaFlowFormStep(
         schema=DATA_SCHEMA_TIME,
         next_step="when",
@@ -320,6 +335,11 @@ CONFIG_FLOW = {
         schema=DATA_SCHEMA_SOURCE,
         next_step="when",
         validate_user_input=validate_source_config,
+    ),
+    "count": SchemaFlowFormStep(
+        schema=DATA_SCHEMA_COUNT,
+        next_step="when",
+        validate_user_input=validate_count_config,
     ),
     "when": SchemaFlowFormStep(
         schema=DATA_SCHEMA_WHEN,
