@@ -12,7 +12,12 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_UNIQUE_ID
+from homeassistant.const import (
+    CONF_UNIQUE_ID,
+    CONF_VALUE_TEMPLATE,
+    CONF_DEVICE_CLASS,
+    CONF_UNIT_OF_MEASUREMENT,
+)
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.core import HomeAssistant
@@ -23,9 +28,11 @@ from homeassistant.util import dt as dt_util
 from .const import (
     ATTR_NEXT_RESET,
     CONF_CONFIG_NAME,
+    CONF_CRON,
     CONF_SENSOR,
     CONF_SENSOR_NAME,
-    SOURCE_ENTITY_ID,
+    CONF_STATE_CLASS,
+    MeterType,
     SensorState,
 )
 from .const import ATTR_PREV
@@ -35,7 +42,8 @@ from .const import COORDINATOR
 from .const import DOMAIN_DATA
 from .const import ICON
 from .coordinator import MeasureItCoordinator, MeasureItCoordinatorEntity
-from .meter import MeasureItMeter
+from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
+from .util import create_renderer
 
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -48,37 +56,47 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensor platform."""
     entry_id: str = config_entry.entry_id
-    config_entry.options[CONF_METER_TYPE]
+    meter_type: MeterType = config_entry.options[CONF_METER_TYPE]
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
     _LOGGER.debug("%s # Options: %s", config_name, config_entry.options)
 
-    hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
-    hass.data[DOMAIN_DATA][entry_id].get(SOURCE_ENTITY_ID)
+    coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
 
+    sensors: list[MeasureItSensor] = []
     for sensor in config_entry.options[CONF_SENSOR]:
-        sensor.get(CONF_UNIQUE_ID)
-        f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
+        unique_id = sensor.get(CONF_UNIQUE_ID)
+        sensor_name = f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
+        reset_pattern = sensor.get(CONF_CRON)
+        state_class = sensor.get(CONF_STATE_CLASS)
+        device_class = sensor.get(CONF_DEVICE_CLASS)
+        uom = sensor.get(CONF_UNIT_OF_MEASUREMENT)
 
-        # meter = TimeM(f"{config_name}_{sensor[CONF_SENSOR_NAME]}", period)
+        if meter_type == MeterType.SOURCE:
+            meter = SourceMeter()
+        elif meter_type == MeterType.COUNTER:
+            meter = CounterMeter()
+        elif meter_type == MeterType.TIME:
+            meter = TimeMeter()
+        else:
+            raise ValueError("Invalid meter type")
 
-    #     value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
+        value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
 
-    #     sensor_entity = MeasureItSensor(
-    #         coordinator,
-    #         meter,
-    #         unique_id,
-    #         meter_type,
-    #         sensor_name,
-    #         value_template_renderer,
-    #         sensor.get(CONF_UNIT_OF_MEASUREMENT),
-    #         source_entity_id,
-    #     )
-    #     sensors.append(sensor_entity)
-    #     hass.data[DOMAIN][SENSOR_DOMAIN].update(
-    #         {f"{SENSOR_DOMAIN}.{sensor_name}": sensor_entity}
-    #     )
+        sensor_entity = MeasureItSensor(
+            hass,
+            coordinator,
+            meter,
+            unique_id,
+            sensor_name,
+            reset_pattern,
+            value_template_renderer,
+            state_class,
+            device_class,
+            uom,
+        )
+        sensors.append(sensor_entity)
 
-    # async_add_entities(sensors)
+    async_add_entities(sensors)
 
 
 def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime | None:
@@ -245,7 +263,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             _LOGGER.warning("%s # Could not restore data", self._attr_name)
             self.schedule_next_reset()
 
-        self.async_on_remove(self._coordinator.register(self))
+        self.async_on_remove(self._coordinator.async_register_sensor(self))
+        self.async_on_remove(self.unsub_reset_listener)
 
     @callback
     def unsub_reset_listener(self):
@@ -267,7 +286,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             raise ValueError("Invalid sensor state determined.")
 
     @property
-    def native_value(self) -> Decimal | None:
+    def native_value(self) -> str | None:
         """Return the state of the sensor."""
         return self._value_template_renderer(self.meter.measured_value)
 
@@ -286,7 +305,9 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         """Return the state attributes."""
         attributes = {
             ATTR_STATUS: self.sensor_state,
-            ATTR_PREV: self._value_template_renderer(self.meter.prev_measured_value),
+            ATTR_PREV: str(
+                self._value_template_renderer(self.meter.prev_measured_value)
+            ),
             ATTR_NEXT_RESET: self._next_reset,
         }
         return attributes
