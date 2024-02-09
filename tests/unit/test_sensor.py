@@ -384,7 +384,8 @@ async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
 
 def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
     """Test getting extra restore state data."""
-    day_sensor.meter = SourceMeter(100)
+    day_sensor.meter = SourceMeter()
+    day_sensor.meter.update(100)
     day_sensor.on_condition_template_change(True)
     day_sensor.on_time_window_change(True)
     day_sensor.on_value_change(200)

@@ -1,4 +1,5 @@
 """Meter logic for MeasureIt."""
+
 from decimal import Decimal
 from datetime import datetime
 
@@ -88,12 +89,12 @@ class CounterMeter(MeasureItMeter):
 class SourceMeter(MeasureItMeter):
     """Source meter implementation."""
 
-    def __init__(self, source_value: Decimal | None):
+    def __init__(self):
         """Initialize meter."""
         super().__init__()
         self._session_start_value = Decimal(0)
         self._session_start_measured_value = Decimal(0)
-        self._source_value = source_value
+        self._source_value = None
 
     def start(self):
         """Start the meter."""

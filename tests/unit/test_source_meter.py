@@ -1,33 +1,38 @@
 """Test the SourceMeter class."""
+
 from decimal import Decimal
 from custom_components.measureit.meter import SourceMeter
 
 
 def test_init():
     """Test initializing a counter meter."""
-    meter = SourceMeter(100)
+    meter = SourceMeter()
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(0)
     assert meter.measuring is False
 
 
+def test_update_initial_source_value():
+    """Test updating a counter meter with an initial source value."""
+    meter = SourceMeter()
+    assert meter._source_value is None
+    meter.update(Decimal(100))
+    assert meter._source_value == Decimal(100)
+
+
 def test_start():
     """Test starting a counter meter."""
-    meter = SourceMeter(100)
+    meter = SourceMeter()
+    meter.update(Decimal(100))
     meter.start()
     assert meter.measuring is True
     assert meter.measured_value == Decimal(0)
 
 
-# def test_start_without_source_value():
-#     """Test starting a counter meter without a source value."""
-#    This should actually not happen as we should not allow a sensor to be created when there is no source value.
-#    That can only occur the first time the meter is created. After that the source value will be restored from storage.
-
-
 def test_stop():
     """Test stopping a counter meter."""
-    meter = SourceMeter(100)
+    meter = SourceMeter()
+    meter.update(Decimal(100))
     meter.start()
     meter.stop()
     assert meter.measuring is False
@@ -36,7 +41,8 @@ def test_stop():
 
 def test_update():
     """Test updating a counter meter."""
-    meter = SourceMeter(Decimal(100))
+    meter = SourceMeter()
+    meter.update(Decimal(100))
     meter.start()
     meter.update(Decimal(200))
     assert meter.measured_value == Decimal(100)
@@ -54,7 +60,8 @@ def test_update():
 
 def test_negative_update():
     """Test updating a counter meter with negative values."""
-    meter = SourceMeter(Decimal(100))
+    meter = SourceMeter()
+    meter.update(Decimal(100))
     meter.start()
     meter.update(Decimal(-200))
     assert meter.measured_value == Decimal(-300)
@@ -73,7 +80,8 @@ def test_negative_update():
 
 def test_update_decimal_values():
     """Test updating a counter meter with decimal values."""
-    meter = SourceMeter(Decimal("10.03"))
+    meter = SourceMeter()
+    meter.update(Decimal("10.03"))
     meter.update(Decimal("10.75"))
     meter.start()
     assert meter.measured_value == Decimal(0)
@@ -83,7 +91,8 @@ def test_update_decimal_values():
 
 def test_reset():
     """Test resetting a counter meter."""
-    meter = SourceMeter(Decimal(100))
+    meter = SourceMeter()
+    meter.update(Decimal(100))
     meter.start()
     meter.update(Decimal(200))
     assert meter.measured_value == Decimal(100)
@@ -107,14 +116,16 @@ def test_reset():
 
 def test_store_and_restore():
     """Test storing and restoring a source meter."""
-    meter = SourceMeter(Decimal(100))
+    meter = SourceMeter()
+    meter.update(Decimal(100))
     meter.start()
     meter.update(Decimal(200))
     assert meter.measuring is True
     assert meter.measured_value == Decimal(100)
     data = meter.to_dict()
-    meter2 = SourceMeter(Decimal(300))
+    meter2 = SourceMeter()
     meter2.from_dict(data)
+    meter2.update(Decimal(300))
     assert meter2.measuring is True
     assert meter2.measured_value == Decimal(200)
     meter2.update(Decimal(500))
@@ -122,7 +133,8 @@ def test_store_and_restore():
     assert meter2.measuring is False
     assert meter2.measured_value == Decimal(400)
     data = meter2.to_dict()
-    meter3 = SourceMeter(Decimal(500))
+    meter3 = SourceMeter()
     meter3.from_dict(data)
+    meter3.update(Decimal(500))
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(400)
