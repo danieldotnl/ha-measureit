@@ -143,7 +143,6 @@ class MeasureItCoordinator:
                 [TrackTemplate(self._counter_template, None)],
                 self.async_on_counter_template_update,
             )
-            self._counter_template_listener.async_refresh()
 
         if self._meter_type == MeterType.TIME:
             self.async_on_heartbeat()
