@@ -64,8 +64,9 @@ async def test_counter_meter_setup(hass: HomeAssistant):
 
 async def test_counter_meter_counting(hass: HomeAssistant):
     """Test counter_meter should be counting when condition becomes True."""
-    # condition = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
-    hass.states.async_set("sensor.test_counter", 3)
+    # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
+
+    hass.states.async_set("sensor.test_counter", "3")
     # sensor.async_schedule_update_ha_state(True)
     await hass.async_block_till_done()
     assert hass.states.get("sensor.test_counter").state == "3"
@@ -77,7 +78,16 @@ async def test_counter_meter_counting(hass: HomeAssistant):
         assert state
         assert state.state == "0"
 
-    hass.states.async_set("sensor.test_counter", 6)
+    hass.states.async_set("sensor.test_counter", "6")
+    await hass.async_block_till_done()
+
+    expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
+    for entity_id in expected_sensors:
+        state = hass.states.get(entity_id)
+        assert state
+        assert state.state == "1"
+
+    hass.states.async_set("sensor.test_counter", "7")
     await hass.async_block_till_done()
 
     expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
