@@ -10,6 +10,7 @@ COUNTER_ENTRY = MockConfigEntry(
     options={
         "config_name": "test",
         "meter_type": "counter",
+        "condition": "{{ is_state('switch.test_switch', 'on') }}",
         "when_days": ["0", "1", "2", "3", "4", "5", "6"],
         "counter_template": "{{ states('sensor.test_counter') | float % 2 == 0 }}",
         "when_from": "00:00:00",
@@ -24,54 +25,23 @@ COUNTER_ENTRY = MockConfigEntry(
                 "cron": "0 * * * *",
                 "period": "hour",
             },
-            {
-                "unit_of_measurement": "s",
-                "device_class": "duration",
-                "state_class": "total_increasing",
-                "unique_id": "ca100892-b6bb-11ee-923e-0242ac110002",
-                "sensor_name": "day",
-                "cron": "0 0 * * *",
-                "period": "day",
-            },
-            {
-                "unit_of_measurement": "s",
-                "device_class": "duration",
-                "state_class": "total_increasing",
-                "unique_id": "ca1009aa-b6bb-11ee-923e-0242ac110002",
-                "sensor_name": "week",
-                "cron": "0 0 * * 1",
-                "period": "week",
-            },
         ],
     },
 )
 
 
-async def test_counter_meter_setup(hass: HomeAssistant):
-    """Test MeasureIt setup."""
-
-    await setup_with_mock_config(hass, COUNTER_ENTRY)
-
-    expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
-    for entity_id in expected_sensors:
-        state = hass.states.get(entity_id)
-        assert state
-        assert state.state == "0"
-        assert state.attributes["unit_of_measurement"] == "s"
-        assert state.attributes["device_class"] == "duration"
-        assert state.attributes["state_class"] == "total_increasing"
-
-
-async def test_counter_meter_counting(hass: HomeAssistant):
+async def test_only_counting_when_condition_met_start_true(hass: HomeAssistant):
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
-    hass.states.async_set("sensor.test_counter", "3")
+    hass.states.async_set("sensor.test_counter", "4")
+    hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.test_counter").state == "3"
+    assert hass.states.get("sensor.test_counter").state == "4"
+    assert hass.states.get("switch.test_switch").state == "on"
     await setup_with_mock_config(hass, COUNTER_ENTRY)
 
-    expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
+    expected_sensors = ["sensor.test_hour"]
     for entity_id in expected_sensors:
         state = hass.states.get(entity_id)
         assert state
@@ -85,13 +55,8 @@ async def test_counter_meter_counting(hass: HomeAssistant):
         assert state
         assert state.state == "1"
 
-    hass.states.async_set("sensor.test_counter", "7")
+    hass.states.async_set("switch.test_switch", "off")
     await hass.async_block_till_done()
-
-    for entity_id in expected_sensors:
-        state = hass.states.get(entity_id)
-        assert state
-        assert state.state == "1"
 
     hass.states.async_set("sensor.test_counter", "8")
     await hass.async_block_till_done()
@@ -99,37 +64,41 @@ async def test_counter_meter_counting(hass: HomeAssistant):
     for entity_id in expected_sensors:
         state = hass.states.get(entity_id)
         assert state
-        assert state.state == "2"
-
-    hass.states.async_set("sensor.test_counter", "10")
-    await hass.async_block_till_done()
-    # THIS DOES NOT UPDATE THE SENSOR SINCE THE VALUE OF THE TEMPLATE DOESN'T CHANGE,
-    # IT WAS AND STAYS TRUE SO IT DOES NOT TRIGGER
-
-    for entity_id in expected_sensors:
-        state = hass.states.get(entity_id)
-        assert state
-        assert state.state == "2"
+        assert state.state == "1"
 
 
-async def test_counter_should_not_count_positive_template_on_startup(
-    hass: HomeAssistant,
-):
+async def test_only_counting_when_condition_met_start_false(hass: HomeAssistant):
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
     hass.states.async_set("sensor.test_counter", "4")
+    hass.states.async_set("switch.test_switch", "off")
     await hass.async_block_till_done()
     assert hass.states.get("sensor.test_counter").state == "4"
+    assert hass.states.get("switch.test_switch").state == "off"
     await setup_with_mock_config(hass, COUNTER_ENTRY)
 
-    expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
+    expected_sensors = ["sensor.test_hour"]
     for entity_id in expected_sensors:
         state = hass.states.get(entity_id)
         assert state
         assert state.state == "0"
 
     hass.states.async_set("sensor.test_counter", "6")
+    await hass.async_block_till_done()
+
+    for entity_id in expected_sensors:
+        state = hass.states.get(entity_id)
+        assert state
+        assert state.state == "0"
+
+    hass.states.async_set("switch.test_switch", "on")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("sensor.test_counter", "11")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("sensor.test_counter", "8")
     await hass.async_block_till_done()
 
     for entity_id in expected_sensors:
