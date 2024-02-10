@@ -79,7 +79,10 @@ class MeasureItCoordinator:
 
     def _get_sensor_state(self, entity_id: str) -> Any:
         """Get the state of a sensor."""
-        return self.hass.states.get(self._source_entity).state
+        state = self.hass.states.get(entity_id)
+        if state is not None:
+            return state.state
+        raise ValueError("Entity id should be given when requesting entity state.")
 
     def start(self):
         """Start the coordinator."""
@@ -103,8 +106,16 @@ class MeasureItCoordinator:
                 self.async_on_condition_template_update,
             )
             self._condition_template_listener.async_refresh()
+        else:
+            _LOGGER.debug(
+                "%s # No condition template in configuration so we set the condition to True.", self._config_name
+            )
+            for sensor in self._sensors.values():
+                sensor.on_condition_template_change(True)
 
         if self._meter_type == MeterType.SOURCE:
+            if not self._source_entity:
+                raise AssertionError("Source entity is required for source meters.")
             self._source_entity_update_listener = async_track_state_change_event(
                 self.hass,
                 self._source_entity,
@@ -121,10 +132,12 @@ class MeasureItCoordinator:
                     """%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.\n
                     IMPORTANT: Sensor will not start measuring until the source sensor has a valid value and the integration has been restarted.""",
                     self._config_name,
-                    new_state,
+                    source_state,
                 )
 
         if self._meter_type == MeterType.COUNTER:
+            if not self._counter_template:
+                raise AssertionError("Counter template is required for counter meters.")
             self._counter_template_listener = async_track_template_result(
                 self.hass,
                 [TrackTemplate(self._counter_template, None)],
@@ -234,7 +247,7 @@ class MeasureItCoordinator:
             )
             if bool(result):
                 for sensor in self._sensors.values():
-                    sensor.on_value_change(1)
+                    sensor.on_value_change(Decimal(1))
 
     @callback
     def async_on_heartbeat(self, now: datetime | None = None):
