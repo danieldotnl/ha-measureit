@@ -360,7 +360,7 @@ def test_restore_old_format_state_not_measuring():
 async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor added to hass."""
     await day_sensor.async_added_to_hass()
-    assert day_sensor._coordinator.register.call_count == 1
+    assert day_sensor._coordinator.async_register_sensor.call_count == 1
     assert day_sensor.next_reset == (test_now + timedelta(days=1)).replace(
         hour=0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
