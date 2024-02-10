@@ -190,4 +190,5 @@ def test_next_change_always_active():
     )
     # Current time is Sunday at 23:00, inside the active window
     current_time = datetime(2023, 4, 1, 23, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
-    assert tw.next_change(current_time) is None
+    with pytest.raises(AssertionError):
+        tw.next_change(current_time)

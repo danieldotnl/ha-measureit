@@ -63,10 +63,10 @@ class TimeWindow:
                     return tznow.weekday() in self._days
         return False
 
-    def next_change(self, tznow: datetime):
+    def next_change(self, tznow: datetime) -> datetime:
         """Return the next time the time window will change state."""
         if self._always_active:
-            return None
+            raise AssertionError("Next change should not be called for time windows that are always active.")
         if self.is_active(tznow):
             # If currently active, find the end time today or on the next day
             if tznow.time() < self._end:
@@ -93,7 +93,7 @@ class TimeWindow:
             next_day = tznow + timedelta(days=days_ahead)
             if next_day.weekday() in self._days:
                 return next_day.date()
-        return None
+        raise ValueError("Invalid time window, could not find the next active day.")
 
 
 def prev_weekday(day: int) -> int:
