@@ -3,7 +3,7 @@ MeasureIt can measure all kind of things happening in Home Assistant based on ti
 
 Some examples of use cases:
 - Measure the daily shower duration
-- Measure the number of planes during the night flying over your home (e.g. in combination with [this awesome integration](https://github.com/AlexandrErohin/home-assistant-flightradar24).
+- Measure the number of planes during the night flying over your home (e.g. in combination with [this awesome integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)).
 - Measure the time your kids are watching tv every day
 - Measure how many times the door opens when the AC is on
 
@@ -14,9 +14,9 @@ Some of the use cases can also be achieved with the `history_stats` integration,
 ![hacs_badge](https://img.shields.io/badge/HACS-Default-orange)
 ![hacs installs](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Flauwbier.nl%2Fhacs%2Fmeasureit)
 
-MeasureIt is included the standard HACS repositories. 
+[![Install quickly via a HACS link](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=danieldotnl&repository=ha-measureit&category=integration)
 
-Install MeasureIt via the standard HACS installation steps:
+MeasureIt is included the standard HACS repositories. Install it via the standard steps, or quickly with the button above:
 * Search for MeasureIt in the Integrations section of HACS,
 * Choose 'MeasureIt' and select the Download button,
 * Restart HomeAssistant to complete the installation.
