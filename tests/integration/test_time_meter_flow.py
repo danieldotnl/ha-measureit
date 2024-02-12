@@ -21,6 +21,7 @@ TIME_ENTRY = MockConfigEntry(
         "when_days": ["0", "1"],  # Only on Monday and Tuesday
         "when_from": "00:00:00",
         "when_till": "21:00:00",  # Only until 21:00
+        "condition": "{{ is_state('switch.test_switch', 'on') }}",
         "sensor": [
             {
                 "unit_of_measurement": "s",
@@ -56,6 +57,8 @@ TIME_ENTRY = MockConfigEntry(
 
 async def test_time_meter_setup(hass: HomeAssistant):
     """Test MeasureIt setup for source meter."""
+    hass.states.async_set("switch.test_switch", "on")
+    await hass.async_block_till_done()
 
     current_time = datetime(2024, 2, 12, 8, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     with freeze_time(current_time):
@@ -72,5 +75,13 @@ async def test_time_meter_setup(hass: HomeAssistant):
             assert state.attributes["unit_of_measurement"] == "s"
             assert state.attributes["device_class"] == "duration"
             assert state.attributes["state_class"] == "total_increasing"
+
+    current_time = datetime(2024, 2, 12, 8, 1, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    with freeze_time(current_time):
+        async_fire_time_changed(hass, current_time)
+        await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.test_hour")
+    assert Decimal(state.state) == 60
 
     await unload_with_mock_config(hass, TIME_ENTRY)
