@@ -217,6 +217,7 @@ def test_start_with_source(coordinator: MeasureItCoordinator):
     entity = MeasureItCoordinatorEntity()
     entity.on_condition_template_change = MagicMock()
     entity.on_value_change = MagicMock()
+    entity.on_time_window_change = MagicMock()
     coordinator.async_register_sensor(entity)
     assert coordinator._condition_template_listener is None
     assert coordinator._time_window_listener is None

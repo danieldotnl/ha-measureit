@@ -112,6 +112,7 @@ def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
     """Fixture for creating a MeasureIt sensor."""
     mockMeter = MagicMock()
     mockMeter.measured_value = 0
+    mockMeter.prev_measured_value = 0
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
         return_value=test_now,
