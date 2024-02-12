@@ -206,6 +206,8 @@ class MeasureItSensorStoredData(ExtraStoredData):
 class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
     """MeasureIt Sensor Entity."""
 
+    _attr_has_entity_name = True
+
     def __init__(
         self,
         hass: HomeAssistant,
