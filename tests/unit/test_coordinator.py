@@ -160,23 +160,8 @@ def test_async_on_counter_template_update_becomes_true(
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
     coordinator.async_register_sensor(entity)
-    mockTrackTemplateResultInfo = MagicMock()
-    mockTrackTemplateResultInfo.result = True
-    coordinator.async_on_counter_template_update(None, [mockTrackTemplateResultInfo])
+    coordinator.async_on_counter_template_update("mock", False, True)
     entity.on_value_change.assert_called_with(1)
-
-
-def test_async_on_counter_template_update_becomes_false(
-    coordinator: MeasureItCoordinator,
-):
-    """Test async_on_counter_template_changed."""
-    entity = MeasureItCoordinatorEntity()
-    entity.on_value_change = MagicMock()
-    coordinator.async_register_sensor(entity)
-    mockTrackTemplateResultInfo = MagicMock()
-    mockTrackTemplateResultInfo.result = False
-    coordinator.async_on_counter_template_update(None, [mockTrackTemplateResultInfo])
-    entity.on_value_change.assert_not_called
 
 
 def test_async_on_heartbeat(coordinator: MeasureItCoordinator):

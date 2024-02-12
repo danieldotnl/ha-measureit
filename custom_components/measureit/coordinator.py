@@ -16,7 +16,10 @@ from homeassistant.core import callback
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers.event import async_track_point_in_utc_time
-from homeassistant.helpers.event import async_track_template_result
+from homeassistant.helpers.event import (
+    async_track_template,
+    async_track_template_result,
+)
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.event import TrackTemplate, TrackTemplateResultInfo
@@ -141,9 +144,9 @@ class MeasureItCoordinator:
         if self._meter_type == MeterType.COUNTER:
             if not self._counter_template:
                 raise AssertionError("Counter template is required for counter meters.")
-            self._counter_template_listener = async_track_template_result(
+            self._counter_template_listener = async_track_template(
                 self.hass,
-                [TrackTemplate(self._counter_template, None)],
+                self._counter_template,
                 self.async_on_counter_template_update,
             )
 
@@ -158,7 +161,7 @@ class MeasureItCoordinator:
         if self._condition_template_listener:
             self._condition_template_listener.async_remove()
         if self._counter_template_listener:
-            self._counter_template_listener.async_remove()
+            self._counter_template_listener()
         if self._heartbeat_listener:
             self._heartbeat_listener()
         if self._source_entity_update_listener:
@@ -233,23 +236,18 @@ class MeasureItCoordinator:
             )
 
     @callback
-    def async_on_counter_template_update(self, event, updates):
+    def async_on_counter_template_update(self, entity_id, old_state, new_state):
         """Handle changes in the counter template."""
-        result = updates.pop().result
-
-        if isinstance(result, TemplateError):
-            _LOGGER.error(
-                "%s # Encountered a template error: %s. Could not update counter!",
-                self._config_name,
-                result,
-            )
-        else:
-            _LOGGER.debug(
-                "%s # Counter template changed to: %s.", self._config_name, result
-            )
-            if bool(result):
-                for sensor in self._sensors.values():
-                    sensor.on_value_change(Decimal(1))
+        # this function is only called when the counter template became True
+        _LOGGER.debug(
+            "%s # Counter template changed from %s to %s due to change of: %s.",
+            self._config_name,
+            old_state,
+            new_state,
+            entity_id,
+        )
+        for sensor in self._sensors.values():
+            sensor.on_value_change(Decimal(1))
 
     @callback
     def async_on_heartbeat(self, now: datetime | None = None):
