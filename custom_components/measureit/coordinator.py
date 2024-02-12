@@ -82,36 +82,11 @@ class MeasureItCoordinator:
         state = self.hass.states.get(entity_id)
         if state is not None:
             return state.state
-        raise ValueError("Entity id should be given when requesting entity state.")
+        return None
 
     def start(self):
         """Start the coordinator."""
-        now = dt_util.utcnow()
-
-        if self._time_window.always_active:
-            # we don't need to listen for time window changes if it's always active
-            for sensor in self._sensors.values():
-                sensor.on_time_window_change(True)
-        else:
-            self._time_window_listener = async_track_point_in_time(
-                self.hass,
-                self.async_on_time_window_active_change,
-                self._time_window.next_change(now),
-            )
-
-        if self._condition_template:
-            self._condition_template_listener = async_track_template_result(
-                self.hass,
-                [TrackTemplate(self._condition_template, None)],
-                self.async_on_condition_template_update,
-            )
-            self._condition_template_listener.async_refresh()
-        else:
-            _LOGGER.debug(
-                "%s # No condition template in configuration so we set the condition to True.", self._config_name
-            )
-            for sensor in self._sensors.values():
-                sensor.on_condition_template_change(True)
+        tznow = dt_util.now()
 
         if self._meter_type == MeterType.SOURCE:
             if not self._source_entity:
@@ -134,6 +109,34 @@ class MeasureItCoordinator:
                     self._config_name,
                     source_state,
                 )
+
+        if self._time_window.always_active:
+            # we don't need to listen for time window changes if it's always active
+            time_window_active = True
+        else:
+            self._time_window_listener = async_track_point_in_time(
+                self.hass,
+                self.async_on_time_window_active_change,
+                self._time_window.next_change(tznow),
+            )
+            time_window_active = self._time_window.is_active(tznow)
+        for sensor in self._sensors.values():
+            sensor.on_time_window_change(time_window_active)
+
+        if self._condition_template:
+            self._condition_template_listener = async_track_template_result(
+                self.hass,
+                [TrackTemplate(self._condition_template, None)],
+                self.async_on_condition_template_update,
+            )
+            self._condition_template_listener.async_refresh()
+        else:
+            _LOGGER.debug(
+                "%s # No condition template in configuration so we set the condition to True.",
+                self._config_name,
+            )
+            for sensor in self._sensors.values():
+                sensor.on_condition_template_change(True)
 
         if self._meter_type == MeterType.COUNTER:
             if not self._counter_template:
