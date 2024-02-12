@@ -307,7 +307,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         """Return the state attributes."""
         attributes = {
             ATTR_STATUS: self.sensor_state,
-            ATTR_PREV: str(
+            ATTR_PREV: float(  # strange things happen when we parse this one as a Decimal...
                 self._value_template_renderer(self.meter.prev_measured_value)
             ),
             ATTR_NEXT_RESET: self._next_reset,
