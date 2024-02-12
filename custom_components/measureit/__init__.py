@@ -40,7 +40,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""
     hass.data.setdefault(DOMAIN, {}).setdefault(SENSOR_DOMAIN, {})
-    _register_services(hass, "config_name")
+    _register_services(hass)
     return True
 
 
@@ -72,15 +72,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         except vol.Invalid:
             # The entity is identified by an unknown entity registry ID
             _LOGGER.error(
-                "%s # Failed to setup MeasureIt for unknown source entity %s",
+                "%s # Failed to setup MeasureIt due to unknown source entity %s",
                 config_name,
                 entry.options[CONF_SOURCE],
             )
             return False
-
-    # if condition:
-    #     condition = Template(condition)
-    #     condition.ensure_valid()
 
     time_window = TimeWindow(
         entry.options[CONF_TW_DAYS],
@@ -120,12 +116,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
-def _register_services(hass: HomeAssistant, config_name: str):
+def _register_services(hass: HomeAssistant):
     """Register services for MeasureIt."""
 
     def reset_sensor(service_call):
         """Reset sensor."""
-        _LOGGER.debug("%s # Reset sensor with: %s", config_name, service_call.data)
+        _LOGGER.debug("Reset sensor with: %s", service_call.data)
         reset_datetime = service_call.data.get("reset_datetime") or dt_util.now()
         if not reset_datetime.tzinfo:
             reset_datetime = reset_datetime.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
