@@ -19,7 +19,7 @@ SOURCE_ENTRY = MockConfigEntry(
         "sensor": [
             {
                 "unit_of_measurement": "items",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "hour",
                 "cron": "0 * * * *",
@@ -27,7 +27,7 @@ SOURCE_ENTRY = MockConfigEntry(
             },
             {
                 "unit_of_measurement": "items",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca100892-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "day",
                 "cron": "0 0 * * *",
@@ -35,7 +35,7 @@ SOURCE_ENTRY = MockConfigEntry(
             },
             {
                 "unit_of_measurement": "items",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca1009aa-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "week",
                 "cron": "0 0 * * 1",
@@ -61,7 +61,7 @@ async def test_source_meter_setup(hass: HomeAssistant):
         assert state.state == "0"
         assert state.attributes["unit_of_measurement"] == "items"
         assert state.attributes.get("device_class") is None
-        assert state.attributes["state_class"] == "total_increasing"
+        assert state.attributes["state_class"] == "total"
         assert state.attributes["status"] == SensorState.WAITING_FOR_CONDITION
 
     hass.states.async_set("switch.test_switch", "on")
@@ -238,3 +238,38 @@ async def test_continue_after_condition_change(hass: HomeAssistant):
 
     state = hass.states.get(sensor)
     assert state.state == "13"
+
+
+async def test_reset(hass: HomeAssistant):
+    """Test counter_meter reset."""
+
+    hass.states.async_set("sensor.test_source", "3")
+    hass.states.async_set("switch.test_switch", "on")
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.test_source").state == "3"
+    await setup_with_mock_config(hass, SOURCE_ENTRY)
+
+    sensor = "sensor.test_day"
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+
+    hass.states.async_set("sensor.test_source", "6")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "3"
+
+    await hass.services.async_call("measureit", "reset", {"entity_id": sensor})
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+    assert state.attributes["prev_period"] == "3"
+
+    sensor = "sensor.test_hour"
+    state = hass.states.get(sensor)
+    assert state.state == "3"
+    assert state.attributes["prev_period"] == "0"
+
+    await unload_with_mock_config(hass, SOURCE_ENTRY)
+    await hass.async_block_till_done()

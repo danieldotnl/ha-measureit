@@ -18,6 +18,7 @@ from homeassistant.const import (
     CONF_DEVICE_CLASS,
     CONF_UNIT_OF_MEASUREMENT,
 )
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.core import HomeAssistant
@@ -32,6 +33,7 @@ from .const import (
     CONF_SENSOR,
     CONF_SENSOR_NAME,
     CONF_STATE_CLASS,
+    EVENT_TYPE_RESET,
     MeterType,
     SensorState,
 )
@@ -268,6 +270,19 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self.async_on_remove(self._coordinator.async_register_sensor(self))
         self.async_on_remove(self.unsub_reset_listener)
 
+        @callback
+        def event_filter(event):
+            """Filter events."""
+            return self.entity_id in event.data.get(ATTR_ENTITY_ID)
+
+        @callback
+        def on_reset_event(event):
+            self.schedule_next_reset(event.data.get("reset_datetime"))
+
+        self.async_on_remove(
+            self.hass.bus.async_listen(EVENT_TYPE_RESET, on_reset_event, event_filter)
+        )
+
     @callback
     def unsub_reset_listener(self):
         """Unsubscribe and remove the reset listener."""
@@ -307,7 +322,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         """Return the state attributes."""
         attributes = {
             ATTR_STATUS: self.sensor_state,
-            ATTR_PREV: float(  # strange things happen when we parse this one as a Decimal...
+            ATTR_PREV: str(  # strange things happen when we parse this one as a Decimal...
                 self._value_template_renderer(self.meter.prev_measured_value)
             ),
             ATTR_NEXT_RESET: self._next_reset,

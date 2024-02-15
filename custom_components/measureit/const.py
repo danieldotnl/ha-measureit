@@ -37,6 +37,7 @@ CONF_SENSOR_NAME = "sensor_name"
 CONF_INDEX = "index"
 CONF_COUNTER_TEMPLATE = "counter_template"
 
+EVENT_TYPE_RESET = "measureit_reset"
 
 # Attributes
 ATTR_PREV = "prev_period"

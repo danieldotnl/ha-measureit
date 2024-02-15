@@ -19,6 +19,7 @@ from .const import (
     CONF_CONFIG_NAME,
     CONF_COUNTER_TEMPLATE,
     DOMAIN,
+    EVENT_TYPE_RESET,
     MeterType,
 )
 from .const import CONF_METER_TYPE
@@ -119,6 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 def _register_services(hass: HomeAssistant):
     """Register services for MeasureIt."""
 
+    @callback
     def reset_sensor(service_call):
         """Reset sensor."""
         _LOGGER.debug("Reset sensor with: %s", service_call.data)
@@ -126,12 +128,15 @@ def _register_services(hass: HomeAssistant):
         if not reset_datetime.tzinfo:
             reset_datetime = reset_datetime.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
 
-        for entity_id in service_call.data[ATTR_ENTITY_ID]:
-            hass.data[DOMAIN].get_entity(entity_id).schedule_next_reset(reset_datetime)
+        entity_ids = service_call.data[ATTR_ENTITY_ID]
+        hass.bus.async_fire(
+            EVENT_TYPE_RESET,
+            {ATTR_ENTITY_ID: entity_ids, "reset_datetime": reset_datetime},
+        )
 
     hass.services.async_register(
         DOMAIN,
-        "reset_sensor",
+        "reset",
         reset_sensor,
         vol.Schema(
             {
