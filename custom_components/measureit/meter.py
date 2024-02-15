@@ -189,10 +189,12 @@ class TimeMeter(MeasureItMeter):
         """Reset the meter."""
         if self._measuring:
             self.stop()
-        self._prev_measured_value = self._measured_value
-        self._measured_value = Decimal(0)
-        if self._measuring:
+            self._prev_measured_value = self._measured_value
+            self._measured_value = Decimal(0)
             self.start()
+        else:
+            self._prev_measured_value = self._measured_value
+            self._measured_value = Decimal(0)
 
     def to_dict(self) -> dict:
         """Return the meter as a dictionary."""
