@@ -240,8 +240,8 @@ async def test_continue_after_condition_change(hass: HomeAssistant):
     assert state.state == "13"
 
 
-async def test_reset(hass: HomeAssistant):
-    """Test counter_meter reset."""
+async def test_reset_now(hass: HomeAssistant):
+    """Test source meter reset."""
 
     hass.states.async_set("sensor.test_source", "3")
     hass.states.async_set("switch.test_switch", "on")
