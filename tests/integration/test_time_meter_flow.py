@@ -71,6 +71,14 @@ FORMATTED_TIME_ENTRY = MockConfigEntry(
                 "period": "day",
                 "value_template": "{{ value | float | timestamp_custom('%H:%M', 0) }}",
             },
+            {
+                "unique_id": "ca100892-b6bb-11ee-923e-0242ac110003",
+                "sensor_name": "day2",
+                "unit_of_measurement": "hours",
+                "cron": "0 0 * * *",
+                "period": "day",
+                "value_template": "{{ (value | float / 3600) | round(3) }}",
+            },
         ],
     },
 )
@@ -268,4 +276,9 @@ async def test_format_time_with_template(hass: HomeAssistant):
 
         state = hass.states.get(sensor)
         assert state.attributes["status"] == SensorState.MEASURING
-        assert state.state == "13:23"
+        assert state.state == "13:23"  # 48230 seconds
+
+        sensor = "sensor.test_day2"
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert state.state == "13.397"
