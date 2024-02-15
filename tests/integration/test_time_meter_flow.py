@@ -55,6 +55,26 @@ TIME_ENTRY = MockConfigEntry(
     },
 )
 
+FORMATTED_TIME_ENTRY = MockConfigEntry(
+    domain=DOMAIN,
+    options={
+        "config_name": "test",
+        "meter_type": "time",
+        "when_days": ["6", "0", "1", "5"],  # Only on Monday and Tuesday
+        "when_from": "00:00:00",
+        "when_till": "00:00:00",
+        "sensor": [
+            {
+                "unique_id": "ca100892-b6bb-11ee-923e-0242ac110002",
+                "sensor_name": "day",
+                "cron": "0 0 * * *",
+                "period": "day",
+                "value_template": "{{ value | float | timestamp_custom('%H:%M', 0) }}",
+            },
+        ],
+    },
+)
+
 
 async def test_time_meter_setup(hass: HomeAssistant):
     """Test MeasureIt setup for source meter."""
@@ -218,3 +238,34 @@ async def test_reset_end_of_period(hass: HomeAssistant):
         assert state.attributes["status"] == SensorState.WAITING_FOR_TIME_WINDOW
         assert Decimal(state.state) == 0
         assert Decimal(state.attributes["prev_period"]) == Decimal(2 * 60 * 60)
+
+
+async def test_format_time_with_template(hass: HomeAssistant):
+    """Test formatting time with a value_template and no state class."""
+
+    current_time = datetime(2024, 2, 11, 4, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    with freeze_time(current_time) as mock_time:
+        await setup_with_mock_config(hass, FORMATTED_TIME_ENTRY)
+        async_fire_time_changed(hass, current_time)
+        await hass.async_block_till_done()
+
+        sensor = "sensor.test_day"
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert state.state == "00:00"  # 0 because frozen
+
+        current_time = datetime(2024, 2, 12, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        mock_time.move_to(current_time)
+        async_fire_time_changed(hass, current_time)
+        await hass.async_block_till_done()
+
+        current_time = datetime(
+            2024, 2, 12, 13, 23, 50, tzinfo=dt_util.DEFAULT_TIME_ZONE
+        )
+        mock_time.move_to(current_time)
+        async_fire_time_changed(hass, current_time)
+        await hass.async_block_till_done()
+
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert state.state == "13:23"

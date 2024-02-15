@@ -85,7 +85,7 @@ def fixture_restore_sensor(hass: HomeAssistant, test_now: datetime):
             "test_sensor_day",
             PREDEFINED_PERIODS["day"],
             lambda x: x,
-            SensorStateClass.TOTAL_INCREASING,
+            SensorStateClass.TOTAL,
         )
         sensor.entity_id = "sensor.test_sensor_day"
         data = {
@@ -227,7 +227,7 @@ async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
     none_sensor.reset()
     assert none_sensor.meter.reset.called_once
     assert none_sensor.next_reset is None
-    assert none_sensor._attr_last_reset == test_now
+    assert none_sensor.last_reset == test_now
 
 
 def test_on_value_change(day_sensor: MeasureItSensor):

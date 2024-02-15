@@ -77,7 +77,9 @@ def test_reset_when_measuring():
     meter.start()
     meter.update()
     assert meter.measured_value == Decimal(HOUR)
+    assert meter.measuring is True
     meter.reset()
+    assert meter.measuring is True
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(HOUR * 2)
 

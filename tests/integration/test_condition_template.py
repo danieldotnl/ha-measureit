@@ -19,7 +19,7 @@ COUNTER_ENTRY = MockConfigEntry(
             {
                 "unit_of_measurement": "s",
                 "device_class": "duration",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "hour",
                 "cron": "0 * * * *",
@@ -28,7 +28,7 @@ COUNTER_ENTRY = MockConfigEntry(
             {
                 "unit_of_measurement": "s",
                 "device_class": "duration",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110003",
                 "sensor_name": "day",
                 "cron": "0 * * * *",

@@ -18,7 +18,7 @@ COUNTER_ENTRY = MockConfigEntry(
             {
                 "unit_of_measurement": "s",
                 "device_class": "duration",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "hour",
                 "cron": "0 * * * *",
@@ -27,7 +27,7 @@ COUNTER_ENTRY = MockConfigEntry(
             {
                 "unit_of_measurement": "s",
                 "device_class": "duration",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca100892-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "day",
                 "cron": "0 0 * * *",
@@ -36,7 +36,7 @@ COUNTER_ENTRY = MockConfigEntry(
             {
                 "unit_of_measurement": "s",
                 "device_class": "duration",
-                "state_class": "total_increasing",
+                "state_class": "total",
                 "unique_id": "ca1009aa-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "week",
                 "cron": "0 0 * * 1",
@@ -59,7 +59,7 @@ async def test_counter_meter_setup(hass: HomeAssistant):
         assert state.state == "0"
         assert state.attributes["unit_of_measurement"] == "s"
         assert state.attributes["device_class"] == "duration"
-        assert state.attributes["state_class"] == "total_increasing"
+        assert state.attributes["state_class"] == "total"
 
 
 async def test_counter_meter_counting(hass: HomeAssistant):

@@ -96,20 +96,27 @@ def test_reset():
     meter.start()
     meter.update(Decimal(200))
     assert meter.measured_value == Decimal(100)
+    assert meter.measuring is True
     meter.reset()
+    assert meter.measuring is True
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(100)
     meter.reset()
+    assert meter.measuring is True
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(0)
     meter.update(Decimal(300))
+    assert meter.measuring is True
     assert meter.measured_value == Decimal(100)
     meter.stop()
+    assert meter.measuring is False
     assert meter.measured_value == Decimal(100)
     meter.reset()
+    assert meter.measuring is False
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(100)
     meter.reset()
+    assert meter.measuring is False
     assert meter.measured_value == Decimal(0)
     assert meter.prev_measured_value == Decimal(0)
 
