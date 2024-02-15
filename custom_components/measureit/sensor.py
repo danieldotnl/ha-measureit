@@ -233,11 +233,11 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._value_template_renderer = value_template_renderer
         self._attr_native_unit_of_measurement = unit_of_measurement
 
-        if state_class not in [
+        if state_class and state_class not in [
             SensorStateClass.TOTAL,
-            SensorStateClass.TOTAL_INCREASING,
+            None
         ]:
-            raise TypeError("SensorStateClass must be TOTAL or TOTAL_INCREASING.")
+            raise TypeError("Only SensorStateClass TOTAL or none is supported.")
         self._attr_state_class = state_class
         self._attr_device_class = device_class
 
@@ -247,6 +247,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._time_window_active: bool = False
         self._condition_active: bool = False
         self._reset_listener = None
+        self._last_reset: datetime | None = None
         self._next_reset: datetime | None = None
 
     async def async_added_to_hass(self):
@@ -261,7 +262,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             self.meter.from_dict(last_sensor_data.meter_data)
             self._condition_active = last_sensor_data.condition_active
             self._time_window_active = last_sensor_data.time_window_active
-            self._attr_last_reset = last_sensor_data.last_reset
+            self._last_reset = last_sensor_data.last_reset
             self.schedule_next_reset(last_sensor_data.next_reset)
         else:
             _LOGGER.warning("%s # Could not restore data", self._attr_name)
@@ -313,6 +314,13 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         return self._value_template_renderer(self.meter.prev_measured_value)
 
     @property
+    def last_reset(self) -> datetime | None:
+        """Return the time when the sensor was last reset, if any."""
+        if self.state_class == SensorStateClass.TOTAL:
+            return self._last_reset
+        return None
+
+    @property
     def next_reset(self) -> datetime | None:
         """Return the next reset."""
         return self._next_reset
@@ -335,7 +343,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         reset_datetime = dt_util.now()
         _LOGGER.info("Resetting sensor %s at %s", self._attr_name, reset_datetime)
         self.meter.reset()
-        self._attr_last_reset = reset_datetime
+        self._last_reset = reset_datetime
 
         self.schedule_next_reset()
         self._async_write_ha_state()
