@@ -53,6 +53,14 @@ def test_active_with_window():
     fake_now = datetime(2022, 1, 3, 3, 30, tzinfo=TZ)  # = monday outside tw
     assert tw.is_active(fake_now) is False
 
+    fake_now = datetime(2022, 1, 3, 0, 0, tzinfo=TZ)  # = monday
+    assert tw.is_active(fake_now) is True  # TW should be active at start second
+
+    fake_now = datetime(2022, 1, 3, 2, 0, tzinfo=TZ)  # = monday
+    assert (
+        tw.is_active(fake_now) is False
+    )  # TW should not be active anymore at end second
+
 
 def test_tw_cross_midnight():
     """Test is_active function time_window class when time window crosses midnight."""
