@@ -53,7 +53,7 @@ class TimeWindow:
             return True
         check_time = tznow.time()
         if self._start < self._end:
-            if check_time >= self._start and check_time <= self._end:
+            if check_time >= self._start and check_time < self._end:
                 return tznow.weekday() in self._days
         else:  # crosses midnight
             if check_time >= self._start or check_time <= self._end:
@@ -66,7 +66,9 @@ class TimeWindow:
     def next_change(self, tznow: datetime) -> datetime:
         """Return the next time the time window will change state."""
         if self._always_active:
-            raise AssertionError("Next change should not be called for time windows that are always active.")
+            raise AssertionError(
+                "Next change should not be called for time windows that are always active."
+            )
         if self.is_active(tznow):
             # If currently active, find the end time today or on the next day
             if tznow.time() < self._end:
