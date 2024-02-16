@@ -220,7 +220,7 @@ async def get_add_sensor_suggested_values(
     if handler.options[CONF_METER_TYPE] == MeterType.TIME:
         suggested[CONF_DEVICE_CLASS] = SensorDeviceClass.DURATION
         suggested[CONF_UNIT_OF_MEASUREMENT] = "s"
-        suggested[CONF_STATE_CLASS : SensorStateClass.TOTAL_INCREASING]
+        suggested[CONF_STATE_CLASS] = SensorStateClass.TOTAL_INCREASING
     elif handler.options[CONF_METER_TYPE] == MeterType.SOURCE:
         try:
             state = handler.parent_handler.hass.states.get(handler.options[CONF_SOURCE])
