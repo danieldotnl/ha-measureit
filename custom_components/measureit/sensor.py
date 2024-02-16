@@ -235,7 +235,11 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._value_template_renderer = value_template_renderer
         self._attr_native_unit_of_measurement = unit_of_measurement
 
-        if state_class and state_class not in [SensorStateClass.TOTAL, None]:
+        if state_class and state_class not in [
+            SensorStateClass.TOTAL,
+            SensorStateClass.TOTAL_INCREASING,
+            None,
+        ]:
             raise TypeError("Only SensorStateClass TOTAL or none is supported.")
         self._attr_state_class = state_class
         self._attr_device_class = device_class
