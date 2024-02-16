@@ -82,7 +82,8 @@ async def async_setup_entry(
         elif meter_type == MeterType.TIME:
             meter = TimeMeter()
         else:
-            raise ValueError("Invalid meter type")
+            _LOGGER.error("%s # Invalid meter type: %s", config_name, meter_type)
+            raise ValueError(f"Invalid meter type: {meter_type}")
 
         value_template_renderer = create_renderer(hass, sensor.get(CONF_VALUE_TEMPLATE))
 
