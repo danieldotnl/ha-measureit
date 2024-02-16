@@ -24,13 +24,17 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.helpers import selector
 from homeassistant.helpers import config_validation as cv, entity_registry as er
+from homeassistant.helpers.template import Template
+from homeassistant.core import async_get_hass
 
 from homeassistant.helpers.schema_config_entry_flow import (
     SchemaConfigFlowHandler,
     SchemaFlowFormStep,
     SchemaFlowMenuStep,
     SchemaCommonFlowHandler,
+    SchemaFlowError,
 )
+from homeassistant.exceptions import TemplateError
 
 from .const import (
     CONF_CONDITION,
@@ -54,7 +58,6 @@ from .const import (
 
 PERIOD_OPTIONS = [
     # selector.SelectOptionDict(value="none", label="none (no reset)"),
-    selector.SelectOptionDict(value="5m", label="5m"),
     selector.SelectOptionDict(value="hour", label="hour"),
     selector.SelectOptionDict(value="day", label="day"),
     selector.SelectOptionDict(value="week", label="week"),
@@ -146,6 +149,16 @@ async def validate_when(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate when config."""
+    if len(user_input[CONF_TW_DAYS]) == 0:
+        raise SchemaFlowError("tw_days_minimum")
+    if user_input[CONF_CONDITION]:
+        template = Template(user_input[CONF_CONDITION])
+        template.hass = async_get_hass()
+        try:
+            template.ensure_valid()
+            template.async_render()
+        except TemplateError as ex:
+            raise SchemaFlowError("condition_invalid") from ex
     return user_input
 
 
@@ -256,15 +269,15 @@ MAIN_CONFIG = {
 SENSOR_CONFIG = {
     vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
     vol.Optional(CONF_VALUE_TEMPLATE): selector.TemplateSelector(),
-    vol.Optional(CONF_DEVICE_CLASS): selector.SelectSelector(
+    vol.Optional(CONF_DEVICE_CLASS, default=None): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=[cls.value for cls in SensorDeviceClass],
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     ),
-    vol.Optional(CONF_STATE_CLASS): selector.SelectSelector(
+    vol.Optional(CONF_STATE_CLASS, default=None): selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=[cls.value for cls in SensorStateClass],
+            options=[SensorStateClass.TOTAL, SensorStateClass.TOTAL_INCREASING],
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     ),
@@ -272,7 +285,7 @@ SENSOR_CONFIG = {
 
 WHEN_CONFIG = {
     vol.Optional(CONF_CONDITION): selector.TemplateSelector(),
-    vol.Optional(CONF_TW_DAYS, default=DEFAULT_DAYS): selector.SelectSelector(
+    vol.Required(CONF_TW_DAYS, default=DEFAULT_DAYS): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=DAY_OPTIONS,
             multiple=True,
@@ -284,7 +297,7 @@ WHEN_CONFIG = {
 }
 
 SENSORS_CONFIG = {
-    vol.Optional(CONF_PERIODS): selector.SelectSelector(
+    vol.Required(CONF_PERIODS): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=PERIOD_OPTIONS,
             multiple=True,

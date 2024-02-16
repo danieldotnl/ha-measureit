@@ -2,23 +2,32 @@
   "config": {
     "step": {
       "user": {
-        "title": "Choose what you want to measure",
+        "title": "What - Choose what you want to measure",
         "description": "Thanks for setting up MeasureIt! If you need help with the configuration have a look here: https://github.com/danieldotnl/ha-measureit.\nTime measures the duration while a condition (template) equals true. Source will measure the value changes of another entity, while a condition (template) equals true.",
         "menu_options": {
           "time": "Time",
-          "source": "Source sensor"
+          "source": "Source sensor",
+          "count": "Counter"
         }
       },
       "time": {
-        "title": "Configure time meter",
-        "description": "Configure the configuration name (used for sensor names and logging) and the unit of the measurement.",
+        "title": "What - Configure time meter",
+        "description": "Configure the configuration name (used for sensor names and logging).",
         "data": {
           "name": "Configuration name"
         }
       },
       "source": {
-        "title": "Configure source meter",
-        "description": "Configure the configuration name (used for sensor names and logging), the source to measure and the unit of the measurement.",
+        "title": "What - Configure source meter",
+        "description": "Configure the configuration name (used for sensor names and logging) and the source to measure.",
+        "data": {
+          "config_name": "Configuration name",
+          "source_entity": "Source entity"
+        }
+      },
+      "count": {
+        "title": "What - Configure a counting meter",
+        "description": "Configure the configuration name (used for sensor names and logging) and the source to measure.",
         "data": {
           "config_name": "Configuration name",
           "source_entity": "Source entity"
@@ -43,7 +52,8 @@
           "day": "Day",
           "week": "Week",
           "month": "Month",
-          "year": "Year"
+          "year": "Year",
+          "forever": "No reset"
         },
         "data": {
           "period": "Periods",
@@ -59,9 +69,7 @@
       }
     },
     "error": {
-      "auth": "Username/Password is wrong.",
-      "connection": "Unable to connect to the server.",
-      "unknown": "Unknown error occurred."
+      "tw_days_minimum": "Select at least one day to measure."
     }
   },
   "options": {
