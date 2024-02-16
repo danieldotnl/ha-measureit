@@ -48,7 +48,7 @@ async def async_setup(hass: HomeAssistant, config: Config):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
 
-    _LOGGER.error("Config entry:\n%s", entry.options)
+    _LOGGER.debug("Config entry:\n%s", entry.options)
 
     config_name: str = entry.options[CONF_CONFIG_NAME]
     meter_type: str = entry.options[CONF_METER_TYPE]

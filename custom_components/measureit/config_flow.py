@@ -151,7 +151,7 @@ async def validate_when(
     """Validate when config."""
     if len(user_input[CONF_TW_DAYS]) == 0:
         raise SchemaFlowError("tw_days_minimum")
-    if user_input[CONF_CONDITION]:
+    if user_input.get(CONF_CONDITION):
         template = Template(user_input[CONF_CONDITION])
         template.hass = async_get_hass()
         try:
@@ -216,10 +216,11 @@ async def get_add_sensor_suggested_values(
     handler: SchemaCommonFlowHandler,
 ) -> dict[str, Any]:
     """Return suggested values for adding sensors."""
-    suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL_INCREASING}
+    suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL, CONF_PERIODS: ["day"]}
     if handler.options[CONF_METER_TYPE] == MeterType.TIME:
         suggested[CONF_DEVICE_CLASS] = SensorDeviceClass.DURATION
         suggested[CONF_UNIT_OF_MEASUREMENT] = "s"
+        suggested[CONF_STATE_CLASS : SensorStateClass.TOTAL_INCREASING]
     elif handler.options[CONF_METER_TYPE] == MeterType.SOURCE:
         try:
             state = handler.parent_handler.hass.states.get(handler.options[CONF_SOURCE])
@@ -231,6 +232,8 @@ async def get_add_sensor_suggested_values(
             LOGGER.warning(
                 "Couldn't retrieve properties from source sensor in config_flow: %s", ex
             )
+    elif handler.options[CONF_METER_TYPE] == MeterType.COUNTER:
+        suggested[CONF_STATE_CLASS : SensorStateClass.TOTAL_INCREASING]
     return suggested
 
 
