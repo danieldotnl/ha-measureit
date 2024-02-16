@@ -68,7 +68,9 @@ async def async_setup_entry(
     for sensor in config_entry.options[CONF_SENSOR]:
         unique_id = sensor.get(CONF_UNIQUE_ID)
         sensor_name = f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
-        reset_pattern = sensor.get(CONF_CRON)
+        reset_pattern = (
+            sensor.get(CONF_CRON) if sensor.get(CONF_CRON) != "forever" else None
+        )
         state_class = sensor.get(CONF_STATE_CLASS)
         device_class = sensor.get(CONF_DEVICE_CLASS)
         uom = sensor.get(CONF_UNIT_OF_MEASUREMENT)
@@ -233,10 +235,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._value_template_renderer = value_template_renderer
         self._attr_native_unit_of_measurement = unit_of_measurement
 
-        if state_class and state_class not in [
-            SensorStateClass.TOTAL,
-            None
-        ]:
+        if state_class and state_class not in [SensorStateClass.TOTAL, None]:
             raise TypeError("Only SensorStateClass TOTAL or none is supported.")
         self._attr_state_class = state_class
         self._attr_device_class = device_class
