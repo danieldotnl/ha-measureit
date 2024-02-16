@@ -47,8 +47,8 @@ class MeasureItMeter:
     def to_dict(self) -> dict:
         """Return the meter as a dictionary."""
         return {
-            "measured_value": self.measured_value,
-            "prev_measured_value": self.prev_measured_value,
+            "measured_value": str(self.measured_value),
+            "prev_measured_value": str(self.prev_measured_value),
             "measuring": self.measuring,
         }
 
@@ -133,8 +133,8 @@ class SourceMeter(MeasureItMeter):
         data = super().to_dict()
         return {
             **data,
-            "session_start_value": self._session_start_value,
-            "session_start_measured_value": self._session_start_measured_value,
+            "session_start_value": str(self._session_start_value),
+            "session_start_measured_value": str(self._session_start_measured_value),
             "source_value": self._source_value,
         }
 
@@ -149,7 +149,7 @@ class SourceMeter(MeasureItMeter):
         if self._source_value:
             self.update(self._source_value)
         else:
-            self._source_value = Decimal(data["source_value"])
+            self._source_value = Decimal(data["source_value"]) if data.get("source_value") else None
 
 
 class TimeMeter(MeasureItMeter):
@@ -201,8 +201,8 @@ class TimeMeter(MeasureItMeter):
         data = super().to_dict()
         return {
             **data,
-            "session_start_value": self._session_start_value,
-            "session_start_measured_value": self._session_start_measured_value,
+            "session_start_value": str(self._session_start_value),
+            "session_start_measured_value": str(self._session_start_measured_value),
         }
 
     def from_dict(self, data: dict) -> None:

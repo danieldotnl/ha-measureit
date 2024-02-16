@@ -391,7 +391,7 @@ def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
     day_sensor.on_time_window_change(True)
     day_sensor.on_value_change(200)
     stored_data = day_sensor.extra_restore_state_data
-    assert stored_data.meter_data["measured_value"] == 100
+    assert stored_data.meter_data["measured_value"] == "100"
     assert stored_data.condition_active is True
     assert stored_data.time_window_active is True
     day_sensor.on_condition_template_change(False)
