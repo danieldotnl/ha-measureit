@@ -1,0 +1,74 @@
+"""Tests for sensors with a forever pattern."""
+
+from custom_components.measureit.const import DOMAIN
+from tests import setup_with_mock_config, unload_with_mock_config
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.core import HomeAssistant
+
+
+FOREVER_ENTRY = MockConfigEntry(
+    domain=DOMAIN,
+    options={
+        "config_name": "test",
+        "meter_type": "counter",
+        "when_days": ["0", "1", "2", "3", "4", "5", "6"],
+        "counter_template": "{{ states('sensor.test_counter') | float % 2 == 0 }}",
+        "when_from": "00:00:00",
+        "when_till": "00:00:00",
+        "sensor": [
+            {
+                "unit_of_measurement": "counts",
+                "state_class": "total",
+                "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110002",
+                "sensor_name": "forever",
+                "cron": "forever",
+                "period": "forever",
+            },
+        ],
+    },
+)
+
+
+async def test_forever_meter_setup(hass: HomeAssistant):
+    """Test MeasureIt setup."""
+
+    await setup_with_mock_config(hass, FOREVER_ENTRY)
+
+    sensor = "sensor.test_forever"
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+    assert state.attributes.get("last_reset") is None
+    assert state.attributes["next_reset"] is None
+    assert state.attributes["unit_of_measurement"] == "counts"
+    assert state.attributes["state_class"] == "total"
+
+    await unload_with_mock_config(hass, FOREVER_ENTRY)
+
+
+async def test_forever_meter_reset(hass: HomeAssistant):
+    """Test MeasureIt reset."""
+    hass.states.async_set("sensor.test_counter", "3")
+    await hass.async_block_till_done()
+
+    await setup_with_mock_config(hass, FOREVER_ENTRY)
+
+    sensor = "sensor.test_forever"
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+
+    hass.states.async_set("sensor.test_counter", "4")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "1"
+
+    await hass.services.async_call(DOMAIN, "reset", {"entity_id": sensor})
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+    assert state.attributes["next_reset"] is None
+    assert state.attributes["last_reset"] is not None
+    assert state.attributes["prev_period"] == "1"
+
+    await unload_with_mock_config(hass, FOREVER_ENTRY)

@@ -248,6 +248,52 @@ async def test_reset_end_of_period(hass: HomeAssistant):
         assert Decimal(state.attributes["prev_period"]) == Decimal(2 * 60 * 60)
 
 
+async def test_service_reset_with_datetime(hass: HomeAssistant):
+    """Test if meter resets when triggered by a service with a reset_datetime."""
+    hass.states.async_set("switch.test_switch", "on")
+    await hass.async_block_till_done()
+
+    sensor = "sensor.test_day"
+    current_time = datetime(2024, 2, 12, 6, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    with freeze_time(current_time) as mock_time:
+        async_fire_time_changed(hass, current_time)
+        await hass.async_block_till_done()
+
+        await setup_with_mock_config(hass, TIME_ENTRY)
+
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert Decimal(state.state) == 0  # 0 because frozen
+
+        current_time = datetime(2024, 2, 12, 8, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        mock_time.move_to(current_time)
+        async_fire_time_changed_exact(hass, current_time)
+        await hass.async_block_till_done()
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert Decimal(state.state) == 2 * 60 * 60
+
+        await hass.services.async_call(
+            DOMAIN,
+            "reset",
+            {"entity_id": sensor, "reset_datetime": "2024-02-12T10:00:00"},
+        )
+        await hass.async_block_till_done()
+
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert Decimal(state.state) == 2 * 60 * 60
+
+        current_time = datetime(2024, 2, 12, 10, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        mock_time.move_to(current_time)
+        async_fire_time_changed_exact(hass, current_time)
+        await hass.async_block_till_done()
+        state = hass.states.get(sensor)
+        assert state.attributes["status"] == SensorState.MEASURING
+        assert Decimal(state.state) == 0
+        assert Decimal(state.attributes["prev_period"]) == Decimal(4 * 60 * 60)
+
+
 async def test_format_time_with_template(hass: HomeAssistant):
     """Test formatting time with a value_template and no state class."""
 
