@@ -233,7 +233,7 @@ async def get_add_sensor_suggested_values(
                 "Couldn't retrieve properties from source sensor in config_flow: %s", ex
             )
     elif handler.options[CONF_METER_TYPE] == MeterType.COUNTER:
-        suggested[CONF_STATE_CLASS : SensorStateClass.TOTAL_INCREASING]
+        suggested[CONF_STATE_CLASS] = SensorStateClass.TOTAL_INCREASING
     return suggested
 
 
