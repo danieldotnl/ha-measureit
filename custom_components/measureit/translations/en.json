@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Choose what you want to measure (what)",
-        "description": "Thank you for setting up MeasureIt!\nIf you need help with the configuration have a look at the [readme](https://github.com/danieldotnl/ha-measureit) or ask a question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).\n\n**Time:** measures the elapsed time while a condition are met.\n**Source:** measures the value changes of a source entity, while conditions are met.\n**Counter:** measure the number of times something (described in a template) occurs.",
+        "description": "Thank you for setting up MeasureIt!\nIf you need help with the configuration have a look at the [readme](https://github.com/danieldotnl/ha-measureit) or ask a question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).\n\n**Time:** measures the elapsed time while conditions are met.\n**Source:** measures the value changes of a source entity, while conditions are met.\n**Counter:** measure the number of times something (described in a template) occurs, while conditions are met.",
         "menu_options": {
           "time": "Time",
           "source": "Source",
