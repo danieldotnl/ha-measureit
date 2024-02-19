@@ -270,8 +270,8 @@ MAIN_CONFIG = {
 }
 
 SENSOR_CONFIG = {
-    vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
     vol.Optional(CONF_VALUE_TEMPLATE): selector.TemplateSelector(),
+    vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
     vol.Optional(CONF_DEVICE_CLASS, default=None): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=[cls.value for cls in SensorDeviceClass],
