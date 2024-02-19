@@ -134,7 +134,7 @@
     }
   },
   "services": {
-    "reset_sensor": {
+    "reset": {
       "name": "Reset a MeasureIt sensor",
       "description": "Reset a sensor at a given time. If no time is given, the sensor will be reset immediately.",
       "fields": {
