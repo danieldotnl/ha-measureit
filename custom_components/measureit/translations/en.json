@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Choose what you want to measure (what)",
-        "description": "Thank you for setting up MeasureIt!\nIf you need help with the configuration have a look at the [readme](https://github.com/danieldotnl/ha-measureit) or ask a question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).\n\n**Time:** measures the elapsed time while conditions are met.\n**Source:** measures the value changes of a source entity, while conditions are met.\n**Counter:** measure the number of times something (described in a template) occurs, while conditions are met.",
+        "description": "Thank you for setting up MeasureIt!\nIf you need help with the configuration have a look at the [readme](https://github.com/danieldotnl/ha-measureit) or ask a question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).\n\nChoose what you want to measure:\n**Time:** Measure the elapsed time while conditions are met.\n**Source:** Measure the state changes of a source entity, while conditions are met.\n**Counter:** Measure the number of times something (described in a template) occurs, while conditions are met.",
         "menu_options": {
           "time": "Time",
           "source": "Source",
@@ -12,14 +12,14 @@
       },
       "time": {
         "title": "Configure time meter (what)",
-        "description": "Configure the configuration name (used for sensor names and logging).",
+        "description": "Provide a name for this configuration. It used for sensor names and logging.",
         "data": {
-          "name": "Configuration name"
+          "config_name": "Configuration name"
         }
       },
       "source": {
         "title": "Configure source meter (what)",
-        "description": "Configure the configuration name (used for sensor names and logging) and the source to measure.",
+        "description": "Provide a name for this configuration and a source entity. The name is used for sensor names and logging.",
         "data": {
           "config_name": "Configuration name",
           "source_entity": "Source entity"
@@ -35,17 +35,17 @@
       },
       "when": {
         "title": "When do you want to measure? (when)",
-        "description": "Configure an optional condition (template) and/or the days and time when you want to measure. Default: always measure. When the from time is later than the till time, it is assumed that the time window crosses midnight.",
+        "description": "Configure an optional condition (template). We will only measure when this template evaluates to 'True'.\nThen configure the days and time when you want to measure. *Default: always measure.*\nWhen the from time is later than the till time, it is assumed that the time window crosses midnight.",
         "data": {
-          "condition": "Condition template",
+          "condition": "Condition template:",
           "when_days": "Days:",
-          "when_from": "From time",
-          "when_till": "Till time"
+          "when_from": "From time:",
+          "when_till": "Till time:"
         }
       },
       "sensors": {
-        "title": "Configure the periods to measure (how)",
-        "description": "Select the periods you want to measure (when the meter will reset) and optionally provide other fields. Each period becomes a sensor.",
+        "title": "Configure the sensors (how)",
+        "description": "**Periods:** Select the periods you want to measure (when the meter will reset) and optionally provide other fields. Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
         "menu_options": {
           "5m": "5 Minutes",
           "hour": "Hour",
@@ -56,9 +56,9 @@
           "forever": "No reset"
         },
         "data": {
-          "period": "Periods",
+          "periods": "Periods:",
           "unit_of_measurement": "Unit of measurement",
-          "value_template": "Value template (for sensor value)",
+          "value_template": "Value template:",
           "state_class": "State class",
           "device_class": "Device class"
         }
