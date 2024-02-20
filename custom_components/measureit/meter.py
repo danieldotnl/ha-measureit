@@ -135,7 +135,7 @@ class SourceMeter(MeasureItMeter):
             **data,
             "session_start_value": str(self._session_start_value),
             "session_start_measured_value": str(self._session_start_measured_value),
-            "source_value": self._source_value,
+            "source_value": str(self._source_value),
         }
 
     def from_dict(self, data: dict) -> None:
