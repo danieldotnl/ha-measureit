@@ -225,7 +225,7 @@ async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor reset."""
     assert none_sensor.next_reset is None
     none_sensor.reset()
-    assert none_sensor.meter.reset.called_once
+    none_sensor.meter.reset.assert_called_once()
     assert none_sensor.next_reset is None
     assert none_sensor.last_reset == test_now
 
