@@ -1,7 +1,7 @@
 """Meter logic for MeasureIt."""
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 class MeasureItMeter:
@@ -163,7 +163,7 @@ class TimeMeter(MeasureItMeter):
 
     def get_timestamp(self) -> Decimal:
         """Get timestamp."""
-        return Decimal(datetime.utcnow().timestamp())
+        return Decimal(datetime.now(UTC).timestamp())
 
     def start(self):
         """Start the meter."""
