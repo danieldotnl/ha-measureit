@@ -41,7 +41,7 @@ def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
             lambda x: x,
             SensorStateClass.TOTAL,
             SensorDeviceClass.DURATION,
-            "hours",
+            "h",
         )
         sensor.entity_id = "sensor.test_sensor_day"
         yield sensor
@@ -135,7 +135,7 @@ def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
 def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor initialization."""
     assert day_sensor.native_value == 0
-    assert day_sensor.unit_of_measurement == "hours"
+    assert day_sensor.unit_of_measurement == "h"
     assert day_sensor.state_class == SensorStateClass.TOTAL
     assert day_sensor.device_class == SensorDeviceClass.DURATION
 
