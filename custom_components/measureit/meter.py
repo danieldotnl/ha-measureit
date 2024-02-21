@@ -3,9 +3,13 @@
 from decimal import Decimal
 from datetime import UTC, datetime
 
+from custom_components.measureit.const import MeterType
+
 
 class MeasureItMeter:
     """Abstract meter implementation to be derived by concrete meters."""
+
+    _meter_type: MeterType
 
     def __init__(self) -> None:
         """Initialize meter."""
@@ -27,6 +31,11 @@ class MeasureItMeter:
     def measuring(self) -> bool:
         """Get the measuring state."""
         return self._measuring
+
+    @property
+    def meter_type(self) -> MeterType:
+        """Get the meter type."""
+        return self._meter_type
 
     def start(self):
         """Start the meter."""
@@ -62,6 +71,8 @@ class MeasureItMeter:
 class CounterMeter(MeasureItMeter):
     """Counter meter implementation."""
 
+    _meter_type = MeterType.COUNTER
+
     def __init__(self):
         """Initialize meter."""
         super().__init__()
@@ -88,6 +99,8 @@ class CounterMeter(MeasureItMeter):
 
 class SourceMeter(MeasureItMeter):
     """Source meter implementation."""
+
+    _meter_type = MeterType.SOURCE
 
     def __init__(self):
         """Initialize meter."""
@@ -154,6 +167,8 @@ class SourceMeter(MeasureItMeter):
 
 class TimeMeter(MeasureItMeter):
     """Time meter implementation."""
+
+    _meter_type = MeterType.TIME
 
     def __init__(self):
         """Initialize meter."""

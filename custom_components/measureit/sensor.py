@@ -310,6 +310,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the state of the sensor."""
+        if self.meter.meter_type == MeterType.TIME:
+            return self._value_template_renderer(round(self.meter.measured_value))
         return self._value_template_renderer(self.meter.measured_value)
 
     @property

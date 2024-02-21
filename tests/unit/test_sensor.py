@@ -247,7 +247,7 @@ def test_on_value_change_for_time(day_sensor: MeasureItSensor):
     day_sensor.on_condition_template_change(True)
     day_sensor.on_time_window_change(True)
     day_sensor.on_value_change()
-    assert day_sensor.native_value > 0
+    assert day_sensor.meter.measured_value > 0
 
 
 def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
