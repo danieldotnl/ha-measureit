@@ -63,7 +63,7 @@ PERIOD_OPTIONS = [
     selector.SelectOptionDict(value="week", label="week"),
     selector.SelectOptionDict(value="month", label="month"),
     selector.SelectOptionDict(value="year", label="year"),
-    selector.SelectOptionDict(value="forever", label="forever (or service-operated)"),
+    selector.SelectOptionDict(value="forever", label="forever"),
 ]
 
 DAY_OPTIONS = [
@@ -230,7 +230,7 @@ async def get_add_sensor_suggested_values(
             )
         except Exception as ex:
             LOGGER.warning(
-                "Couldn't retrieve properties from source sensor in config_flow: %s", ex
+                "Couldn't retrieve properties from source entity in config_flow: %s", ex
             )
     elif handler.options[CONF_METER_TYPE] == MeterType.COUNTER:
         suggested[CONF_STATE_CLASS] = SensorStateClass.TOTAL_INCREASING
@@ -272,13 +272,13 @@ MAIN_CONFIG = {
 SENSOR_CONFIG = {
     vol.Optional(CONF_VALUE_TEMPLATE): selector.TemplateSelector(),
     vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
-    vol.Optional(CONF_DEVICE_CLASS, default=None): selector.SelectSelector(
+    vol.Optional(CONF_DEVICE_CLASS): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=[cls.value for cls in SensorDeviceClass],
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     ),
-    vol.Optional(CONF_STATE_CLASS, default=None): selector.SelectSelector(
+    vol.Optional(CONF_STATE_CLASS): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=[SensorStateClass.TOTAL, SensorStateClass.TOTAL_INCREASING],
             mode=selector.SelectSelectorMode.DROPDOWN,
