@@ -290,6 +290,7 @@ WHEN_CONFIG = {
     vol.Optional(CONF_CONDITION): selector.TemplateSelector(),
     vol.Required(CONF_TW_DAYS, default=DEFAULT_DAYS): selector.SelectSelector(
         selector.SelectSelectorConfig(
+            translation_key="day_selector",
             options=DAY_OPTIONS,
             multiple=True,
             mode=selector.SelectSelectorMode.LIST,
@@ -302,6 +303,7 @@ WHEN_CONFIG = {
 SENSORS_CONFIG = {
     vol.Required(CONF_PERIODS): selector.SelectSelector(
         selector.SelectSelectorConfig(
+            translation_key="period_selector",
             options=PERIOD_OPTIONS,
             multiple=True,
             custom_value=False,
