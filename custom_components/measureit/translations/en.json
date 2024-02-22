@@ -27,10 +27,10 @@
       },
       "count": {
         "title": "Configure a counting meter (what)",
-        "description": "Configure the configuration name (used for sensor names and logging) and the source to measure.",
+        "description": "Configure the configuration name (used for sensor names and logging) and the counter template.",
         "data": {
           "config_name": "Configuration name",
-          "source_entity": "Source entity"
+          "counter_template": "Counter template:"
         }
       },
       "when": {
@@ -75,32 +75,23 @@
         }
       },
       "add_sensors": {
-        "title": "Add sensors",
-        "description": "Select the periods you want to measure (when the meter will reset) and optionally provide other fields. Each period becomes a sensor.",
-        "menu_options": {
-          "5m": "5 Minutes",
-          "hour": "Hour",
-          "day": "Day",
-          "week": "Week",
-          "month": "Month",
-          "year": "Year"
-        },
+        "title": "Add sensor(s)",
+        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
         "data": {
-          "period": "Periods",
+          "period": "Periods:",
           "unit_of_measurement": "Unit of measurement",
-          "value_template": "Value template (for sensor value)",
+          "value_template": "Value template:",
           "state_class": "State class",
           "device_class": "Device class"
         }
       },
       "edit_main": {
-        "title": "Edit main configuration",
+        "title": "Configure an optional condition (template). We will only measure when this template evaluates to `True`.\nThen configure the days and time when you want to measure. *Default: always measure.*\nWhen the *from* is later than the *till* time, it is assumed that the time window crosses midnight.",
         "data": {
-          "config_name": "Name",
-          "condition": "Condition template",
+          "condition": "Condition template:",
           "when_days": "Days:",
-          "when_from": "From time",
-          "when_till": "Till time"
+          "when_from": "From time:",
+          "when_till": "Till time:"
         }
       },
       "thank_you": {
@@ -111,9 +102,8 @@
         "title": "Edit sensor",
         "description": "Edit the configuration of the selected sensor.",
         "data": {
-          "sensor_name": "Name",
-          "unit_of_measurement": "Unit of measurement",
-          "value_template": "Value template",
+          "unit_of_measurement": "Unit of measurement:",
+          "value_template": "Value template:",
           "state_class": "State class",
           "device_class": "Device class"
         }
