@@ -1,23 +1,19 @@
 """Tests for MeasureIt config_flow class."""
 
 from unittest.mock import patch
-from homeassistant.core import HomeAssistant
-from homeassistant import config_entries, data_entry_flow
-from homeassistant.data_entry_flow import FlowResultType
+
 import pytest
+from homeassistant import config_entries, data_entry_flow
+from homeassistant.const import CONF_DEVICE_CLASS, CONF_UNIT_OF_MEASUREMENT
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
 
-from homeassistant.const import CONF_UNIT_OF_MEASUREMENT, CONF_DEVICE_CLASS
-
-from custom_components.measureit.const import (
-    CONF_CONDITION,
-    CONF_CONFIG_NAME,
-    CONF_PERIODS,
-    CONF_TW_DAYS,
-    CONF_TW_FROM,
-    CONF_TW_TILL,
-    CONF_STATE_CLASS,
-    DOMAIN,
-)
+from custom_components.measureit.const import (CONF_CONDITION,
+                                               CONF_CONFIG_NAME,
+                                               CONF_COUNTER_TEMPLATE,
+                                               CONF_PERIODS, CONF_STATE_CLASS,
+                                               CONF_TW_DAYS, CONF_TW_FROM,
+                                               CONF_TW_TILL, DOMAIN)
 
 
 # This fixture bypasses the actual setup of the integration
@@ -34,6 +30,77 @@ def bypass_setup_fixture():
         return_value=True,
     ):
         yield
+
+
+async def test_counter_config_flow(hass: HomeAssistant) -> None:
+    """Test the config flow for setting up a config with counter meters."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    # Check that the config flow shows the menu as the first step
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "user"
+
+    # Choose config for a time config
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"next_step_id": "count"}
+    )
+
+    # Check that the config flow shows the form for the config name
+    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+
+    # Fill config name
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_CONFIG_NAME: "test_config_counter",
+            CONF_COUNTER_TEMPLATE: "{{ True }}",
+        },
+    )
+
+    assert result["errors"] is None
+    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["step_id"] == "when"
+
+    # Fill the when config step
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_CONDITION: "{{ is_state('binary_sensor.test_sensor', 'on') }}",
+            CONF_TW_DAYS: ["1", "2", "3"],
+            CONF_TW_FROM: "00:00",
+            CONF_TW_TILL: "00:00",
+        },
+    )
+
+    assert result["errors"] is None
+    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["step_id"] == "sensors"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_PERIODS: ["day", "week", "forever"],
+            CONF_UNIT_OF_MEASUREMENT: "clicks",
+        },
+    )
+
+    assert result["errors"] is None
+    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["step_id"] == "thank_you"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={}
+    )
+
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+
+    config_entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert config_entry.data == {}
+    assert config_entry.options.get(CONF_CONFIG_NAME) == "test_config_counter"
+    assert config_entry.options.get(CONF_COUNTER_TEMPLATE) == "{{ True }}"
+    assert config_entry.title == "test_config_counter"
 
 
 async def test_time_config_flow(hass: HomeAssistant) -> None:
