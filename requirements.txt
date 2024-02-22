@@ -4,3 +4,4 @@ pip>=21.0,<23.4
 ruff==0.1.14
 pytest-homeassistant-custom-component==0.13.99
 croniter==2.0.1
+isort==5.13.2
