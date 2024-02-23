@@ -3,25 +3,28 @@ MeasureIt can measure all kind of things happening in Home Assistant based on ti
 
 Some examples of use cases:
 - Measure the daily shower duration
-- Measure the number of planes during the night flying over your home (e.g. in combination with [this awesome integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)).
+- Measure the number of planes during the night flying over your home
 - Measure the time your kids are watching tv every day
 - Measure how many times the door opens when the AC is on
 
-MeasureIt has overlap with `history_stats` and `utility_meter` but in easier to set up and can measure based on conditions and time windows.
+MeasureIt has overlap with `history_stats` and `utility_meter` but provides other features as well, is easier to set up and can measure based on conditions and time windows.
 
-You do require some Home Assistant templating knowledge for most use cases. If you need help with this, do not request a Github issue but ask your question on [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).
+Note: you do require some Home Assistant templating knowledge for most use cases. If you need help with this, do not create a Github issue but ask your question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).
 
 ## How does it work?
-MeasureIt currently offer 3 different 'meter types' that you can choose from: **time**, **source**, **counter**.
+MeasureIt currently offers 3 different 'meter types' which you can choose from: **time**, **source**, **counter**.
 
 ### Time
-Time is basically just a timer that runs when all the conditions that you provide in a template are met. You can also configure to only measure during specific times. E.g. only in the weekend, or only during the night. Time meters measure in seconds but the sensors update every minute.
+Time is basically just a timer that runs when all the conditions that you provide in a template are met. You can also configure to only measure during specific times. E.g. only in the weekend, or only during the night. Time meters measure in seconds but the sensors update every minute. E.g. measure when the following template applies `{{ is_state('media_player.tv', 'on') }}`.
 
 ### Source
 Source meters do listen for state changes in another entity and measure the difference. E.g. listen to the gas consumption sensor, and keep track of how much it changes when the shower is on.
 
 ### Counter
 A counter meter counts how many times a configured template changes to True. E.g. `{{ is_state('binary_sensor.front_door', 'on') }}` counts each time the front door opens.
+
+The measurements are kept in sensors for different periods that can be configured. So a day sensor will reset each day and a year sensor each year. You can also choose for a sensor that does not reset automatically.\
+You can manually reset a sensor at a given time with the `measureit.reset` service.
 
 ## Installation (using HACS)
 
@@ -36,28 +39,27 @@ MeasureIt is included the standard HACS repositories. Install it via the standar
 * Restart HomeAssistant to complete the installation.
 
 ## Configuration
-I spent a lot of time on the config flow to make it as clear and simple as possible, but I will provide some further explanation here.
+Go to Settings -> Devices & services, and hit the '+ add integration' button. Search for MeasureIt and click it to start the configuration flow. 
+The config flow is descriptive and hopefully as clear and simple as possible.
 
-![4f11475e065068a10f4b3ba958ffd2a79d1047a6](https://github.com/danieldotnl/ha-measureit/assets/2983203/e2d8cafb-12bc-4987-9d89-e330a2903220)
+Do keep in mind that the config flow is guiding you through 3 important steps:
+- **What** do you want to measure?
+- **When** do you want to measure?
+- **How** do you want to measure?
 
-1. In this first screen you can choose WHAT you want to measure. You choose if you want to create a time meter that measure everything time related, or if you want to measure the change of a value of another sensor (e.g. m3 gas consumption).
+The *what* is the time, source or counter described above, plus the details required for those. The *when* is all about the conditions that should be met for measuring. And the *how* is about the sensors that will be created. Here you pick the periods (e.g. per day/week/year) and for each of those a sensor will be created.\
+For the additional sensor properties like unit of measurement, state class and device class, defaults are picked as good as possible. Only change those when you know what you are doing.\
+If you want different properties per sensor, you can add additional sensor after setting up MeasureIt, by choosing 'configure' (the options flow) behind you MeasureIt configuration in 'Devices & services'.
 
-![efd53d1770af2e4f22de8dc98c5b4259ce06bd9b](https://github.com/danieldotnl/ha-measureit/assets/2983203/1140dab9-3809-4a2e-b97c-1fc851e5dfce)
+## FAQ
 
+#### How do I show time sensors in a different format?
+By default, the device class `duration` is applied on time sensors. This, in combination with the unit of measurement `s` (seconds) lets Home Assistant know what this sensor is about. HA will automatically apply an applicable format in the frontend (the format changes depending on the amount). I recommend using this.
 
-2. After clicking next you provide a name for the meter, which will be used for logging and as a prefix for the sensor names. If you choose to measure a source sensor, you can configure it here.
+If you really think you need a different format, you can do so  by providing a value template for the sensor (in the 'how' part of the config). E.g. if you want to show hours, you can divide the state by 3600: `{{ value / 3600 | round }}`. This is still numeric and supports long term statistics.\
+You can also change the format in a string format like 'HH:MM'. E.g. with this value template: `{{ value | float | timestamp_custom('%H:%M', false) }}`.\
+**Attention**: if you really want this, do not use a device class or a state class. This will format the state in a string and statistics cannot be calculated.
 
-![35cdd851781ea60cefe174c30171c3e69d13d7a8](https://github.com/danieldotnl/ha-measureit/assets/2983203/6a27a383-5b40-4def-8f24-378cd4773766)
+#### How can I reset a sensor when I need to?
+You can reset a sensor manually/via an automation, with the `measureit.reset` service. This service takes the entity ids of the sensors you want to reset, and optionally a future reset datetime. By default, it will reset the sensor immediatly.
 
-3. The next screen is the most interesting. Here you configure WHEN your want to measure. First of all a template condition can be provided. E.g.:
-```yaml
-{{ is_state('media_player.tv', 'on') and is_state('person.daniel', 'away') }}
-```
-You can also select on which days you want to measure (e.g. only during the week) and a time window.
-
-![061bfae57ef30b2d736fcf6534fef06b7f19319a](https://github.com/danieldotnl/ha-measureit/assets/2983203/3586c5c2-b9d6-4274-979e-4f2b4916b000)
-
-4. After that you configure which sensor you want to create. A sensor shows the measurement for a certain period. E.g. per day/week/month/year.
-A `value_template` can be provided like in other sensor to manipulate the value of the sensor, and the usual classes like the `unit_of_measurement`, `device_class`, etc.
-
-Finally, you hit next and the integration will be set up! You will now have your new sensors available. There is also a flow for configuring MeasureIt after it has been set up. You can add/remove sensor or change the main config.
