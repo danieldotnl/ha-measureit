@@ -1,12 +1,9 @@
 """Utilities for MeasureIt."""
+
 import logging
-from decimal import Decimal
-from typing import Union
 
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers.template import Template
-
-NumberType = Union[float, Decimal, int]  # noqa: UP007
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 

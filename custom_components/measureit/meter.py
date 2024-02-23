@@ -1,93 +1,229 @@
 """Meter logic for MeasureIt."""
-from __future__ import annotations
-from datetime import datetime
-from enum import Enum
-from .reading import ReadingData
-from .period import Period
-from .const import LOGGER
+
+from decimal import Decimal
+from datetime import UTC, datetime
+
+from custom_components.measureit.const import MeterType
 
 
-class MeterState(str, Enum):
-    """Enum with possible meter states."""
+class MeasureItMeter:
+    """Abstract meter implementation to be derived by concrete meters."""
 
-    MEASURING = "measuring"
-    WAITING_FOR_CONDITION = "waiting for condition"
-    WAITING_FOR_TIME_WINDOW = "waiting for time window"
+    _meter_type: MeterType
 
-
-class Meter:
-    """Meter implementation."""
-
-    def __init__(self, name: str, period: Period):
+    def __init__(self) -> None:
         """Initialize meter."""
-        self.name: str = name
-        self._period: Period = period
-
-        self.state: MeterState | None = None
-        self.measured_value: float = 0
-        self.prev_measured_value: float = 0
-        self._session_start_reading: float | None = None
-        self._start_measured_value: float | None = None
-
-        self._template_active: bool = False
-        self._time_window_active: bool = False
+        self._measured_value = Decimal(0)
+        self._prev_measured_value = Decimal(0)
+        self._measuring: bool = False
 
     @property
-    def last_reset(self):
-        """Last reset property."""
-        return self._period.last_reset
+    def measured_value(self) -> Decimal:
+        """Get the measured value."""
+        return self._measured_value
 
     @property
-    def next_reset(self) -> datetime:
-        """Next reset property."""
-        return self._period.end
+    def prev_measured_value(self) -> Decimal:
+        """Get the previous measured value."""
+        return self._prev_measured_value
 
-    @next_reset.setter
-    def next_reset(self, value: datetime):
-        self._period.end = value
+    @property
+    def measuring(self) -> bool:
+        """Get the measuring state."""
+        return self._measuring
 
-    def on_update(self, reading: ReadingData):
-        """Update the meter with reading data."""
-        if self.state == MeterState.MEASURING:
-            self._update(reading.value)
-        self._period.update(reading.reading_datetime, self._reset, reading.value)
-        self._template_active = reading.template_active
-        self._time_window_active = reading.timewindow_active
-        self._update_state(reading.value)
+    @property
+    def meter_type(self) -> MeterType:
+        """Get the meter type."""
+        return self._meter_type
 
-        LOGGER.debug(
-            "New state - measured value: %s, start_measured_value: %s, session_start_reading: %s, state: %s",
-            self.measured_value,
-            self._start_measured_value,
-            self._session_start_reading,
-            self.state,
+    def start(self):
+        """Start the meter."""
+        raise NotImplementedError()
+
+    def stop(self):
+        """Stop the meter."""
+        raise NotImplementedError()
+
+    def update(self, value: Decimal | None = None):
+        """Update the meter."""
+        raise NotImplementedError()
+
+    def reset(self):
+        """Reset the meter."""
+        raise NotImplementedError()
+
+    def to_dict(self) -> dict:
+        """Return the meter as a dictionary."""
+        return {
+            "measured_value": str(self.measured_value),
+            "prev_measured_value": str(self.prev_measured_value),
+            "measuring": self.measuring,
+        }
+
+    def from_dict(self, data: dict) -> None:
+        """Restore the meter from a dictionary."""
+        self._measured_value = Decimal(data["measured_value"])
+        self._prev_measured_value = Decimal(data["prev_measured_value"])
+        self._measuring = bool(data["measuring"])
+
+
+class CounterMeter(MeasureItMeter):
+    """Counter meter implementation."""
+
+    _meter_type = MeterType.COUNTER
+
+    def __init__(self):
+        """Initialize meter."""
+        super().__init__()
+
+    def start(self):
+        """Start the meter."""
+        self._measuring = True
+
+    def stop(self):
+        """Stop the meter."""
+        self._measuring = False
+
+    def update(self, value: Decimal | None = None):
+        """Update the meter."""
+        if self._measuring:
+            self._measured_value += value
+
+    def reset(self):
+        """Reset the meter."""
+        self._prev_measured_value, self._measured_value = self._measured_value, Decimal(
+            0
         )
 
-    def _update_state(self, reading: float) -> MeterState:
-        if self._template_active is True and self._time_window_active is True:
-            new_state = MeterState.MEASURING
-        elif self._time_window_active is False:
-            new_state = MeterState.WAITING_FOR_TIME_WINDOW
-        elif self._template_active is False:
-            new_state = MeterState.WAITING_FOR_CONDITION
+
+class SourceMeter(MeasureItMeter):
+    """Source meter implementation."""
+
+    _meter_type = MeterType.SOURCE
+
+    def __init__(self):
+        """Initialize meter."""
+        super().__init__()
+        self._session_start_value = Decimal(0)
+        self._session_start_measured_value = Decimal(0)
+        self._source_value = None
+
+    def start(self):
+        """Start the meter."""
+        self._measuring = True
+        self._session_start_value = self._source_value
+        self._session_start_measured_value = self.measured_value
+
+    def stop(self):
+        """Stop the meter."""
+        self._measuring = False
+        self._session_total = self._source_value - self._session_start_value
+        self._measured_value = self._session_start_measured_value + self._session_total
+
+    def update(self, value: Decimal | None = None):
+        """Update the meter."""
+        self._source_value = value
+        if self._measuring:
+            self._session_total = self._source_value - self._session_start_value
+            self._measured_value = (
+                self._session_start_measured_value + self._session_total
+            )
+
+    def reset(self):
+        """Reset the meter."""
+        if self._measuring:
+            self.stop()
+            self._prev_measured_value = self._measured_value
+            self._measured_value = Decimal(0)
+            self.start()
         else:
-            raise ValueError("Invalid state determined.")
+            self._prev_measured_value = self._measured_value
+            self._measured_value = Decimal(0)
 
-        if new_state == self.state:
-            return
-        if new_state == MeterState.MEASURING:
-            self._start(reading)
-        self.state = new_state
+    def to_dict(self) -> dict:
+        """Return the meter as a dictionary."""
+        data = super().to_dict()
+        return {
+            **data,
+            "session_start_value": str(self._session_start_value),
+            "session_start_measured_value": str(self._session_start_measured_value),
+            "source_value": str(self._source_value),
+        }
 
-    def _start(self, reading):
-        self._session_start_reading = reading
-        self._start_measured_value = self.measured_value
+    def from_dict(self, data: dict) -> None:
+        """Restore the meter from a dictionary."""
+        super().from_dict(data)
+        self._session_start_value = Decimal(data["session_start_value"])
+        self._session_start_measured_value = Decimal(
+            data["session_start_measured_value"]
+        )
 
-    def _update(self, reading: float):
-        session_value = reading - self._session_start_reading
-        self.measured_value = self._start_measured_value + session_value
+        if self._source_value:
+            self.update(self._source_value)
+        else:
+            self._source_value = Decimal(data["source_value"]) if data.get("source_value") else None
 
-    def _reset(self, reading):
-        self.prev_measured_value, self.measured_value = self.measured_value, 0
-        self._session_start_reading = reading
-        self._start_measured_value = self.measured_value
+
+class TimeMeter(MeasureItMeter):
+    """Time meter implementation."""
+
+    _meter_type = MeterType.TIME
+
+    def __init__(self):
+        """Initialize meter."""
+        super().__init__()
+        self._session_start_value = Decimal(0)
+        self._session_start_measured_value = Decimal(0)
+
+    def get_timestamp(self) -> Decimal:
+        """Get timestamp."""
+        return Decimal(datetime.now(UTC).timestamp())
+
+    def start(self):
+        """Start the meter."""
+        self._measuring = True
+        self._session_start_value = self.get_timestamp()
+        self._session_start_measured_value = self.measured_value
+
+    def stop(self):
+        """Stop the meter."""
+        self._measuring = False
+        self._session_total = self.get_timestamp() - self._session_start_value
+        self._measured_value = self._session_start_measured_value + self._session_total
+
+    def update(self, value: Decimal | None = None):
+        """Update the meter."""
+        if self._measuring:
+            self._session_total = self.get_timestamp() - self._session_start_value
+            self._measured_value = (
+                self._session_start_measured_value + self._session_total
+            )
+
+    def reset(self):
+        """Reset the meter."""
+        if self._measuring:
+            self.stop()
+            self._prev_measured_value = self._measured_value
+            self._measured_value = Decimal(0)
+            self.start()
+        else:
+            self._prev_measured_value = self._measured_value
+            self._measured_value = Decimal(0)
+
+    def to_dict(self) -> dict:
+        """Return the meter as a dictionary."""
+        data = super().to_dict()
+        return {
+            **data,
+            "session_start_value": str(self._session_start_value),
+            "session_start_measured_value": str(self._session_start_measured_value),
+        }
+
+    def from_dict(self, data: dict) -> None:
+        """Restore the meter from a dictionary."""
+        super().from_dict(data)
+        self._session_start_value = Decimal(data["session_start_value"])
+        self._session_start_measured_value = Decimal(
+            data["session_start_measured_value"]
+        )

@@ -1,6 +1,6 @@
 {
   "name": "danieldotnl/measureit",
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12-bullseye",
   "postCreateCommand": "scripts/setup",
   "forwardPorts": [8123],
   "portsAttributes": {
@@ -22,14 +22,13 @@
         "editor.tabSize": 4,
         "python.pythonPath": "/usr/bin/python3",
         "python.analysis.autoSearchPaths": false,
-        "python.linting.pylintEnabled": true,
-        "python.linting.enabled": true,
         "python.formatting.provider": "black",
         "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
         "editor.formatOnPaste": false,
         "editor.formatOnSave": true,
         "editor.formatOnType": true,
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": true,
+        "python.experiments.optOutFrom": ["pythonTestAdapter"]
       }
     }
   },

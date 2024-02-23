@@ -1,4 +1,5 @@
 """Global fixtures for Vaillant vSMART integration."""
+
 # Fixtures allow you to replace functions with a Mock object. You can perform
 # many options via the Mock to reflect a particular behavior from the original
 # function that you want to see without going through the function's actual logic.
@@ -14,9 +15,16 @@
 #
 # See here for more info: https://docs.pytest.org/en/latest/fixture.html (note that
 # pytest includes fixtures OOB which you can use as defined on this page)
+from typing import Any
 from unittest.mock import patch
 
 import pytest
+from homeassistant.config_entries import SOURCE_USER
+from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+from custom_components.measureit.const import (CONF_CONFIG_NAME,
+                                               CONF_METER_TYPE, DOMAIN)
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 
@@ -41,24 +49,45 @@ def skip_notifications_fixture():
         yield
 
 
-# # This fixture, when used, will result in calls to async_get_data to return None. To have the call
-# # return a value, we would add the `return_value=<VALUE_TO_RETURN>` parameter to the patch call.
-# @pytest.fixture(name="bypass_get_data")
-# def bypass_get_data_fixture():
-#     """Skip calls to get data from API."""
-#     with patch(
-#         "custom_components.vaillant_vsmart.VaillantApiClient.async_get_data"
-#     ):
-#         yield
+@pytest.fixture(name="get_time_config")
+async def get_time_config_to_integration_load() -> dict[str, Any]:
+    """Return default minimal time configuration.
+
+    To override the config, tests can be marked with:
+    @pytest.mark.parametrize("get_time_config", [{...}])
+    """
+    return {
+        CONF_CONFIG_NAME: "time_config",
+        CONF_METER_TYPE: "time",
+        "sensor": [
+            {
+                "unit_of_measurement": "s",
+                "state_class": "total",
+                "device_class": "duration",
+                "unique_id": "ca100892-b6bb-11ee-923e-0242ac110002",
+                "sensor_name": "day",
+                "cron": "0 0 * * *",
+                "period": "day",
+            },
+        ],
+    }
 
 
-# # In this fixture, we are forcing calls to async_get_data to raise an Exception. This is useful
-# # for exception handling.
-# @pytest.fixture(name="error_on_get_data")
-# def error_get_data_fixture():
-#     """Simulate error when retrieving data from API."""
-#     with patch(
-#         "custom_components.vaillant_vsmart.VaillantApiClient.async_get_data",
-#         side_effect=Exception,
-#     ):
-#         yield
+@pytest.fixture(name="loaded_entry")
+async def load_integration(
+    hass: HomeAssistant, get_time_config: dict[str, Any]
+) -> MockConfigEntry:
+    """Set up the Scrape integration in Home Assistant."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        source=SOURCE_USER,
+        options=get_time_config,
+        entry_id="1",
+    )
+
+    config_entry.add_to_hass(hass)
+
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    return config_entry

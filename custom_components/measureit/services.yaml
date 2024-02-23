@@ -1,4 +1,4 @@
-reset_sensor:
+reset:
   target:
     entity:
       domain: sensor

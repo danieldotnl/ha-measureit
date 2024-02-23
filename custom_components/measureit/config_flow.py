@@ -1,65 +1,43 @@
 """Adds config flow for MeasureIt."""
+
 # Handling multiple sensors was inspired by the config_flow for the HA scrape sensor.
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Mapping
 from typing import Any
-import uuid
 
 import voluptuous as vol
-from homeassistant.const import (
-    CONF_UNIT_OF_MEASUREMENT,
-    CONF_VALUE_TEMPLATE,
-    CONF_DEVICE_CLASS,
-    CONF_UNIQUE_ID,
-)
-
-from homeassistant.components.sensor import (
-    CONF_STATE_CLASS,
-    DOMAIN as SENSOR_DOMAIN,
-    SensorDeviceClass,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import CONF_STATE_CLASS
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import (CONF_DEVICE_CLASS, CONF_UNIQUE_ID,
+                                 CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE)
+from homeassistant.core import async_get_hass
+from homeassistant.exceptions import TemplateError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
-from homeassistant.helpers import config_validation as cv, entity_registry as er
-
 from homeassistant.helpers.schema_config_entry_flow import (
-    SchemaConfigFlowHandler,
-    SchemaFlowFormStep,
-    SchemaFlowMenuStep,
-    SchemaCommonFlowHandler,
-)
+    SchemaCommonFlowHandler, SchemaConfigFlowHandler, SchemaFlowError,
+    SchemaFlowFormStep, SchemaFlowMenuStep)
+from homeassistant.helpers.template import Template
 
-from .const import (
-    CONF_CONDITION,
-    CONF_CONFIG_NAME,
-    CONF_CRON,
-    CONF_INDEX,
-    CONF_METER_TYPE,
-    CONF_PERIOD,
-    CONF_PERIODS,
-    CONF_SENSOR_NAME,
-    CONF_SOURCE,
-    CONF_TW_DAYS,
-    CONF_TW_FROM,
-    CONF_TW_TILL,
-    DOMAIN,
-    LOGGER,
-    METER_TYPE_SOURCE,
-    METER_TYPE_TIME,
-    PREDEFINED_PERIODS,
-)
+from .const import (CONF_CONDITION, CONF_CONFIG_NAME, CONF_COUNTER_TEMPLATE,
+                    CONF_CRON, CONF_INDEX, CONF_METER_TYPE, CONF_PERIOD,
+                    CONF_PERIODS, CONF_SENSOR_NAME, CONF_SOURCE, CONF_TW_DAYS,
+                    CONF_TW_FROM, CONF_TW_TILL, DOMAIN, LOGGER,
+                    PREDEFINED_PERIODS, MeterType)
 
 PERIOD_OPTIONS = [
     # selector.SelectOptionDict(value="none", label="none (no reset)"),
-    selector.SelectOptionDict(value="5m", label="5m"),
     selector.SelectOptionDict(value="hour", label="hour"),
     selector.SelectOptionDict(value="day", label="day"),
     selector.SelectOptionDict(value="week", label="week"),
     selector.SelectOptionDict(value="month", label="month"),
     selector.SelectOptionDict(value="year", label="year"),
-    selector.SelectOptionDict(value="forever", label="forever (or service-operated)"),
+    selector.SelectOptionDict(value="forever", label="forever"),
 ]
 
 DAY_OPTIONS = [
@@ -121,7 +99,7 @@ async def validate_time_config(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate time config."""
-    user_input[CONF_METER_TYPE] = METER_TYPE_TIME
+    user_input[CONF_METER_TYPE] = MeterType.TIME
     return user_input
 
 
@@ -129,7 +107,15 @@ async def validate_source_config(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate source config."""
-    user_input[CONF_METER_TYPE] = METER_TYPE_SOURCE
+    user_input[CONF_METER_TYPE] = MeterType.SOURCE
+    return user_input
+
+
+async def validate_count_config(
+    handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
+) -> dict[str, Any]:
+    """Validate source config."""
+    user_input[CONF_METER_TYPE] = MeterType.COUNTER
     return user_input
 
 
@@ -137,6 +123,16 @@ async def validate_when(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate when config."""
+    if len(user_input[CONF_TW_DAYS]) == 0:
+        raise SchemaFlowError("tw_days_minimum")
+    if user_input.get(CONF_CONDITION):
+        template = Template(user_input[CONF_CONDITION])
+        template.hass = async_get_hass()
+        try:
+            template.ensure_valid()
+            template.async_render()
+        except TemplateError as ex:
+            raise SchemaFlowError("condition_invalid") from ex
     return user_input
 
 
@@ -194,11 +190,12 @@ async def get_add_sensor_suggested_values(
     handler: SchemaCommonFlowHandler,
 ) -> dict[str, Any]:
     """Return suggested values for adding sensors."""
-    suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL_INCREASING}
-    if handler.options[CONF_METER_TYPE] == METER_TYPE_TIME:
+    suggested = {CONF_STATE_CLASS: SensorStateClass.TOTAL, CONF_PERIODS: ["day"]}
+    if handler.options[CONF_METER_TYPE] == MeterType.TIME:
         suggested[CONF_DEVICE_CLASS] = SensorDeviceClass.DURATION
         suggested[CONF_UNIT_OF_MEASUREMENT] = "s"
-    elif handler.options[CONF_METER_TYPE] == METER_TYPE_SOURCE:
+        suggested[CONF_STATE_CLASS] = SensorStateClass.TOTAL_INCREASING
+    elif handler.options[CONF_METER_TYPE] == MeterType.SOURCE:
         try:
             state = handler.parent_handler.hass.states.get(handler.options[CONF_SOURCE])
             suggested[CONF_DEVICE_CLASS] = state.attributes.get("device_class")
@@ -207,8 +204,10 @@ async def get_add_sensor_suggested_values(
             )
         except Exception as ex:
             LOGGER.warning(
-                "Couldn't retrieve properties from source sensor in config_flow: %s", ex
+                "Couldn't retrieve properties from source entity in config_flow: %s", ex
             )
+    elif handler.options[CONF_METER_TYPE] == MeterType.COUNTER:
+        suggested[CONF_STATE_CLASS] = SensorStateClass.TOTAL_INCREASING
     return suggested
 
 
@@ -245,8 +244,8 @@ MAIN_CONFIG = {
 }
 
 SENSOR_CONFIG = {
-    vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
     vol.Optional(CONF_VALUE_TEMPLATE): selector.TemplateSelector(),
+    vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
     vol.Optional(CONF_DEVICE_CLASS): selector.SelectSelector(
         selector.SelectSelectorConfig(
             options=[cls.value for cls in SensorDeviceClass],
@@ -255,7 +254,7 @@ SENSOR_CONFIG = {
     ),
     vol.Optional(CONF_STATE_CLASS): selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=[cls.value for cls in SensorStateClass],
+            options=[SensorStateClass.TOTAL, SensorStateClass.TOTAL_INCREASING],
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     ),
@@ -263,8 +262,9 @@ SENSOR_CONFIG = {
 
 WHEN_CONFIG = {
     vol.Optional(CONF_CONDITION): selector.TemplateSelector(),
-    vol.Optional(CONF_TW_DAYS, default=DEFAULT_DAYS): selector.SelectSelector(
+    vol.Required(CONF_TW_DAYS, default=DEFAULT_DAYS): selector.SelectSelector(
         selector.SelectSelectorConfig(
+            translation_key="day_selector",
             options=DAY_OPTIONS,
             multiple=True,
             mode=selector.SelectSelectorMode.LIST,
@@ -275,8 +275,9 @@ WHEN_CONFIG = {
 }
 
 SENSORS_CONFIG = {
-    vol.Optional(CONF_PERIODS): selector.SelectSelector(
+    vol.Required(CONF_PERIODS): selector.SelectSelector(
         selector.SelectSelectorConfig(
+            translation_key="period_selector",
             options=PERIOD_OPTIONS,
             multiple=True,
             custom_value=False,
@@ -293,6 +294,12 @@ DATA_SCHEMA_SOURCE = vol.Schema(
         vol.Required(CONF_SOURCE): selector.EntitySelector(),
     }
 )
+DATA_SCHEMA_COUNT = vol.Schema(
+    {
+        **MAIN_CONFIG,
+        vol.Required(CONF_COUNTER_TEMPLATE): selector.TemplateSelector(),
+    }
+)
 DATA_SCHEMA_WHEN = vol.Schema(WHEN_CONFIG)
 DATA_SCHEMA_EDIT_SENSOR = vol.Schema(
     {vol.Required(CONF_SENSOR_NAME): selector.TextSelector(), **SENSOR_CONFIG}
@@ -301,7 +308,6 @@ DATA_SCHEMA_SENSORS = vol.Schema(SENSORS_CONFIG)
 
 DATA_SCHEMA_EDIT_MAIN = vol.Schema(
     {
-        **MAIN_CONFIG,
         **WHEN_CONFIG,
     }
 )
@@ -310,7 +316,7 @@ DATA_SCHEMA_THANK_YOU = vol.Schema({})
 
 
 CONFIG_FLOW = {
-    "user": SchemaFlowMenuStep(["time", "source"]),
+    "user": SchemaFlowMenuStep(["time", "source", "count"]),
     "time": SchemaFlowFormStep(
         schema=DATA_SCHEMA_TIME,
         next_step="when",
@@ -320,6 +326,11 @@ CONFIG_FLOW = {
         schema=DATA_SCHEMA_SOURCE,
         next_step="when",
         validate_user_input=validate_source_config,
+    ),
+    "count": SchemaFlowFormStep(
+        schema=DATA_SCHEMA_COUNT,
+        next_step="when",
+        validate_user_input=validate_count_config,
     ),
     "when": SchemaFlowFormStep(
         schema=DATA_SCHEMA_WHEN,

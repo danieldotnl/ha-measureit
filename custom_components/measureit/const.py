@@ -1,4 +1,5 @@
 """Constants for MeasureIt."""
+
 from enum import Enum
 from logging import Logger, getLogger
 
@@ -34,9 +35,9 @@ CONF_TW_TILL = "when_till"
 CONF_CONFIG_NAME = "config_name"
 CONF_SENSOR_NAME = "sensor_name"
 CONF_INDEX = "index"
+CONF_COUNTER_TEMPLATE = "counter_template"
 
-METER_TYPE_TIME = "time"
-METER_TYPE_SOURCE = "source"
+EVENT_TYPE_RESET = "measureit_reset"
 
 # Attributes
 ATTR_PREV = "prev_period"
@@ -50,11 +51,21 @@ PREDEFINED_PERIODS = {
     "week": "0 0 * * 1",
     "month": "0 0 1 * *",
     "year": "0 0 1 1 *",
-    "forever": "none",
+    "forever": "forever",
 }
+
 
 class MeterType(str, Enum):
     """Enum with possible meter states."""
 
     TIME = "time"
     SOURCE = "source"
+    COUNTER = "counter"
+
+
+class SensorState(str, Enum):
+    """Enum with possible meter states."""
+
+    MEASURING = "measuring"
+    WAITING_FOR_CONDITION = "waiting for condition"
+    WAITING_FOR_TIME_WINDOW = "waiting for time window"

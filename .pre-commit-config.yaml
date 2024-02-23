@@ -5,13 +5,13 @@ repos:
       - id: ruff
         args:
           - --fix
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.7.0
-    hooks:
-      - id: black
-        args:
-          - --quiet
-        files: ^((homeassistant|pylint|script|tests)/.+)?[^/]+\.py$
+  # - repo: https://github.com/psf/black-pre-commit-mirror
+  #   rev: 23.7.0
+  #   hooks:
+  #     - id: black
+  #       args:
+  #         - --quiet
+  #       files: ^((homeassistant|pylint|script|tests)/.+)?[^/]+\.py$
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.2
     hooks:
@@ -52,3 +52,16 @@ repos:
         language: script
         types: [python]
         files: ^homeassistant/.+\.py$
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
