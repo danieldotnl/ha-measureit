@@ -1,6 +1,6 @@
 colorlog==6.8.0
 homeassistant==2024.2.0
-pip>=21.0,<23.4
+pip>=24,<25
 ruff==0.1.14
 pytest-homeassistant-custom-component==0.13.99
 croniter==2.0.1
