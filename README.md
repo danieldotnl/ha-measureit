@@ -7,9 +7,23 @@ Some examples of use cases:
 - Measure the time your kids are watching tv every day
 - Measure how many times the door opens when the AC is on
 
-Some of the use cases can also be achieved with the `history_stats` integration, but MeasureIt is much simpler to set up, and can measure only when a template evaluates to true. There are also some similarities with the way the `utility_meter` is working.
+MeasureIt has overlap with `history_stats` and `utility_meter` but in easier to set up and can measure based on conditions and time windows.
 
-## Automated Installation Using HACS
+You do require some Home Assistant templating knowledge for most use cases. If you need help with this, do not request a Github issue but ask your question on [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).
+
+## How does it work?
+MeasureIt currently offer 3 different 'meter types' that you can choose from: **time**, **source**, **counter**.
+
+### Time
+Time is basically just a timer that runs when all the conditions that you provide in a template are met. You can also configure to only measure during specific times. E.g. only in the weekend, or only during the night. Time meters measure in seconds but the sensors update every minute.
+
+### Source
+Source meters do listen for state changes in another entity and measure the difference. E.g. listen to the gas consumption sensor, and keep track of how much it changes when the shower is on.
+
+### Counter
+A counter meter counts how many times a configured template changes to True. E.g. `{{ is_state('binary_sensor.front_door', 'on') }}` counts each time the front door opens.
+
+## Installation (using HACS)
 
 ![hacs_badge](https://img.shields.io/badge/HACS-Default-orange)
 ![hacs installs](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Flauwbier.nl%2Fhacs%2Fmeasureit)
@@ -22,7 +36,7 @@ MeasureIt is included the standard HACS repositories. Install it via the standar
 * Restart HomeAssistant to complete the installation.
 
 ## Configuration
-I spent a lot of time on the config flow to make it as convenient as possible, but I will provide some further explanation here.
+I spent a lot of time on the config flow to make it as clear and simple as possible, but I will provide some further explanation here.
 
 ![4f11475e065068a10f4b3ba958ffd2a79d1047a6](https://github.com/danieldotnl/ha-measureit/assets/2983203/e2d8cafb-12bc-4987-9d89-e330a2903220)
 
