@@ -1,0 +1,140 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Vyberte si, čo chcete merať",
+        "description": "Ďakujeme, že ste nastavili MeasureIt! Ak potrebujete pomoc s konfiguráciou, pozrite sa sem: https://github.com/danieldotnl/ha-measureit.\nČas meria trvanie, zatiaľ čo podmienka (šablóna) je pravdivá. Zdroj bude merať zmeny hodnoty inej entity, pričom podmienka (šablóna) sa rovná true.",
+        "menu_options": {
+          "time": "Čas",
+          "source": "Zdrojový snímač"
+        }
+      },
+      "time": {
+        "title": "Konfigurácia merača času",
+        "description": "Nakonfigurujte názov konfigurácie (používaný pre názvy snímačov a protokolovanie) a jednotku merania.",
+        "data": {
+          "name": "Názov konfigurácie"
+        }
+      },
+      "source": {
+        "title": "Konfigurácia zdrojového merača",
+        "description": "Nakonfigurujte názov konfigurácie (používa sa pre názvy snímačov a protokolovanie), zdroj na meranie a jednotku merania.",
+        "data": {
+          "config_name": "Názov konfigurácie",
+          "source_entity": "Zdrojová entita"
+        }
+      },
+      "when": {
+        "title": "Kedy chcete merať?",
+        "description": "Nakonfigurujte voliteľnú podmienku (šablónu) a/alebo dni a čas, kedy chcete merať. Predvolené: vždy merať. Ak je čas od neskorší ako čas do, predpokladá sa, že časové okno prekročí polnoc.",
+        "data": {
+          "condition": "Šablóna stavu",
+          "when_days": "Dni:",
+          "when_from": "Od času",
+          "when_till": "Do času"
+        }
+      },
+      "sensors": {
+        "title": "Nakonfigurujte obdobia na meranie",
+        "description": "Vyberte periódy, ktoré chcete merať (keď sa glukomer vynuluje) a voliteľne zadajte ďalšie polia. Každá perióda sa stáva senzorom.",
+        "menu_options": {
+          "5m": "5 minút",
+          "hour": "Hodina",
+          "day": "Deň",
+          "week": "Týždeň",
+          "month": "Mesiac",
+          "year": "Rok"
+        },
+        "data": {
+          "period": "Obdobia",
+          "unit_of_measurement": "Jednotka merania",
+          "value_template": "Šablóna hodnoty (pre hodnotu senzora)",
+          "state_class": "Trieda stavu",
+          "device_class": "Trieda zariadenia"
+        }
+      },
+      "thank_you": {
+        "title": "Ďakujeme, že ste si nastavili MeasureIt!",
+        "description": "Vedeli ste, že ma neskutočne motivuje káva? ☕\nAk radi používate MeasureIt, zvážte nákup kávy!\nhttps://www.buymeacoffee.com/danieldotnl 🙏"
+      }
+    },
+    "error": {
+      "auth": "Používateľské meno/heslo je nesprávne.",
+      "connection": "Nedá sa pripojiť k serveru.",
+      "unknown": "Vyskytla sa neznáma chyba."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Vyberte akciu",
+        "menu_options": {
+          "edit_main": "Upravte hlavnú konfiguráciu",
+          "add_sensors": "Pridajte nové senzory",
+          "remove_sensor": "Odstráňte snímač",
+          "select_edit_sensor": "Upravte konfiguráciu snímača"
+        }
+      },
+      "add_sensors": {
+        "title": "Pridajte senzory",
+        "description": "Vyberte periódy, ktoré chcete merať (keď sa glukomer vynuluje) a voliteľne zadajte ďalšie polia. Každá perióda sa stáva senzorom.",
+        "menu_options": {
+          "5m": "5 Minút",
+          "hour": "Hodina",
+          "day": "Deň",
+          "week": "Týždeň",
+          "month": "Mesiac",
+          "year": "Rok"
+        },
+        "data": {
+          "period": "Obdobia",
+          "unit_of_measurement": "Jednotka merania",
+          "value_template": "Šablóna hodnoty (pre hodnotu senzora)",
+          "state_class": "Trieda stavu",
+          "device_class": "Trieda zariadenia"
+        }
+      },
+      "edit_main": {
+        "title": "Upravte hlavnú konfiguráciu",
+        "data": {
+          "config_name": "Názov",
+          "condition": "Šablóna stavu",
+          "when_days": "Dni:",
+          "when_from": "Od času",
+          "when_till": "Do času"
+        }
+      },
+      "thank_you": {
+        "title": "Ďakujeme, že ste si nastavili MeasureIt!",
+        "description": "Vedeli ste, že ma neskutočne motivuje káva?☕\nAk radi používate MeasureIt, zvážte nákup kávy!\nhttps://www.buymeacoffee.com/danieldotnl 🙏"
+      },
+      "edit_sensor": {
+        "title": "Upraviť senzor",
+        "description": "Upravte konfiguráciu vybraného snímača.",
+        "data": {
+          "sensor_name": "Názov",
+          "unit_of_measurement": "Jednotka merania",
+          "value_template": "Šablóna hodnoty",
+          "state_class": "Trieda stavu",
+          "device_class": "Trieda zariadenia"
+        }
+      },
+      "remove_sensor": {
+        "title": "Odstráňte senzor(y)",
+        "description": "Vyberte senzory, ktoré chcete odstrániť."
+      }
+    }
+  },
+  "services": {
+    "reset_sensor": {
+      "name": "Resetujte senzor MeasureIt",
+      "description": "Resetujte senzor v danom čase. Ak nie je daný čas, snímač sa okamžite resetuje.",
+      "fields": {
+        "reset_datetime": {
+          "name": "Obnoviť dátum a čas",
+          "description": "Čas, kedy sa má senzor resetovať. Ak nie je daný čas, snímač sa okamžite resetuje."
+        }
+      }
+    }
+  }
+}
