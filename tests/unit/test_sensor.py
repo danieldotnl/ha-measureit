@@ -3,17 +3,17 @@
 from datetime import datetime, timedelta
 from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from custom_components.measureit.const import PREDEFINED_PERIODS, SensorState
-from custom_components.measureit.meter import CounterMeter, SourceMeter, TimeMeter
-from custom_components.measureit.sensor import (
-    MeasureItSensor,
-    MeasureItSensorStoredData,
-)
+from custom_components.measureit.meter import (CounterMeter, SourceMeter,
+                                               TimeMeter)
+from custom_components.measureit.sensor import (MeasureItSensor,
+                                                MeasureItSensorStoredData)
 
 
 @pytest.fixture(name="test_now")
@@ -356,6 +356,30 @@ def test_restore_old_format_state_not_measuring():
     assert restored.meter_data["session_start_measured_value"] == 0
     assert restored.meter_data["prev_measured_value"] == 180.00166988372803
     assert restored.meter_data["session_start_value"] == 1705914000.004058
+
+def test_restore_old_format_state_with_null_values():
+    """Test sensor restore with old format."""
+    data = {
+        "measured_value": 0,
+        "start_measured_value": None,
+        "prev_measured_value": 0,
+        "session_start_reading": None,
+        "period_last_reset": 1705914000.004091,
+        "period_end": 1706119200.0,
+        "state": "waiting_for_time_window",
+    }
+    restored = MeasureItSensorStoredData.from_dict(data)
+    assert restored.time_window_active is False
+    assert restored.condition_active is False
+    assert restored.next_reset == datetime(
+        2024, 1, 24, 10, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    assert restored.last_reset is not None
+    assert restored.meter_data["measured_value"] == 0
+    assert restored.meter_data["measuring"] is False
+    assert restored.meter_data["session_start_measured_value"] == 0
+    assert restored.meter_data["prev_measured_value"] == 0
+    assert restored.meter_data["session_start_value"] == 0
 
 
 async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):

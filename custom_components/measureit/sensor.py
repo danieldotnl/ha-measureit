@@ -151,6 +151,11 @@ class MeasureItSensorStoredData(ExtraStoredData):
             "prev_measured_value": restored["prev_measured_value"],
             "measuring": True if restored["state"] == SensorState.MEASURING else False,
         }
+        if meter_data["session_start_value"] is None:
+            meter_data["session_start_value"] = 0
+        if meter_data["session_start_measured_value"] is None:
+            meter_data["session_start_measured_value"] = 0
+
         last_reset = temp_parse_timestamp_or_string(restored["period_last_reset"])
         next_reset = temp_parse_timestamp_or_string(restored["period_end"])
 

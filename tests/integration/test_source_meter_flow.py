@@ -266,6 +266,11 @@ async def test_reset_now(hass: HomeAssistant):
     state = hass.states.get(sensor)
     assert state.state == "0"
 
+    await hass.services.async_call("measureit", "reset", {"entity_id": sensor})
+    await hass.async_block_till_done()
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+
     hass.states.async_set("sensor.test_source", "6")
     await hass.async_block_till_done()
 
