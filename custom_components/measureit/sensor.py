@@ -1,52 +1,33 @@
 """Sensor platform for MeasureIt."""
 
 from __future__ import annotations
-import logging
-from decimal import Decimal
-from datetime import datetime
-from typing import Any
-from dataclasses import dataclass
-from croniter import croniter
 
-from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import SensorStateClass
+import logging
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+from typing import Any
+
+from croniter import croniter
+from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
+                                             SensorStateClass)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_UNIQUE_ID,
-    CONF_VALUE_TEMPLATE,
-    CONF_DEVICE_CLASS,
-    CONF_UNIT_OF_MEASUREMENT,
-)
-from homeassistant.const import ATTR_ENTITY_ID
-from homeassistant.core import callback
-from homeassistant.helpers.event import async_track_point_in_time
-from homeassistant.core import HomeAssistant
+from homeassistant.const import (ATTR_ENTITY_ID, CONF_DEVICE_CLASS,
+                                 CONF_UNIQUE_ID, CONF_UNIT_OF_MEASUREMENT,
+                                 CONF_VALUE_TEMPLATE)
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.restore_state import RestoreEntity, ExtraStoredData
+from homeassistant.helpers.event import async_track_point_in_time
+from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.util import dt as dt_util
 
-from .const import (
-    ATTR_NEXT_RESET,
-    CONF_CONFIG_NAME,
-    CONF_CRON,
-    CONF_SENSOR,
-    CONF_SENSOR_NAME,
-    CONF_STATE_CLASS,
-    EVENT_TYPE_RESET,
-    MeterType,
-    SensorState,
-)
-from .const import ATTR_PREV
-from .const import ATTR_STATUS
-from .const import CONF_METER_TYPE
-from .const import COORDINATOR
-from .const import DOMAIN_DATA
-from .const import ICON
+from .const import (ATTR_NEXT_RESET, ATTR_PREV, ATTR_STATUS, CONF_CONFIG_NAME,
+                    CONF_CRON, CONF_METER_TYPE, CONF_SENSOR, CONF_SENSOR_NAME,
+                    CONF_STATE_CLASS, COORDINATOR, DOMAIN_DATA,
+                    EVENT_TYPE_RESET, ICON, MeterType, SensorState)
 from .coordinator import MeasureItCoordinator, MeasureItCoordinatorEntity
 from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
-
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -167,6 +148,11 @@ class MeasureItSensorStoredData(ExtraStoredData):
             "prev_measured_value": restored["prev_measured_value"],
             "measuring": True if restored["state"] == SensorState.MEASURING else False,
         }
+        if meter_data["session_start_value"] is None:
+            meter_data["session_start_value"] = 0
+        if meter_data["session_start_measured_value"] is None:
+            meter_data["session_start_measured_value"] = 0
+
         last_reset = temp_parse_timestamp_or_string(restored["period_last_reset"])
         next_reset = temp_parse_timestamp_or_string(restored["period_end"])
 

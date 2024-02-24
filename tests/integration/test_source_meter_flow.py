@@ -1,9 +1,9 @@
 """Test source meter flow."""
 
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 from homeassistant.core import HomeAssistant
-from custom_components.measureit.const import DOMAIN, SensorState
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.measureit.const import DOMAIN, SensorState
 from tests import setup_with_mock_config, unload_with_mock_config
 
 SOURCE_ENTRY = MockConfigEntry(
@@ -250,6 +250,11 @@ async def test_reset_now(hass: HomeAssistant):
     await setup_with_mock_config(hass, SOURCE_ENTRY)
 
     sensor = "sensor.test_day"
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+
+    await hass.services.async_call("measureit", "reset", {"entity_id": sensor})
+    await hass.async_block_till_done()
     state = hass.states.get(sensor)
     assert state.state == "0"
 
