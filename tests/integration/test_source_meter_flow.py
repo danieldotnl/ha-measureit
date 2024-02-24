@@ -1,9 +1,9 @@
 """Test source meter flow."""
 
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 from homeassistant.core import HomeAssistant
-from custom_components.measureit.const import DOMAIN, SensorState
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.measureit.const import DOMAIN, SensorState
 from tests import setup_with_mock_config, unload_with_mock_config
 
 SOURCE_ENTRY = MockConfigEntry(
@@ -24,6 +24,7 @@ SOURCE_ENTRY = MockConfigEntry(
                 "sensor_name": "hour",
                 "cron": "0 * * * *",
                 "period": "hour",
+                "value_template": "{{ value }}"
             },
             {
                 "unit_of_measurement": "items",
@@ -32,6 +33,7 @@ SOURCE_ENTRY = MockConfigEntry(
                 "sensor_name": "day",
                 "cron": "0 0 * * *",
                 "period": "day",
+                "value_template": "{{ value }}"
             },
             {
                 "unit_of_measurement": "items",
@@ -40,6 +42,15 @@ SOURCE_ENTRY = MockConfigEntry(
                 "sensor_name": "week",
                 "cron": "0 0 * * 1",
                 "period": "week",
+                "value_template": "{{ value }}"
+            },
+            {
+                "unit_of_measurement": "items",
+                "state_class": "total",
+                "unique_id": "ca1009aa-b6bb-11ee-923e-0242ac115002",
+                "sensor_name": "forever",
+                "cron": "forever",
+                "period": "forever"
             },
         ],
     },
@@ -63,6 +74,8 @@ async def test_source_meter_setup(hass: HomeAssistant):
         assert state.attributes.get("device_class") is None
         assert state.attributes["state_class"] == "total"
         assert state.attributes["status"] == SensorState.WAITING_FOR_CONDITION
+
+    assert hass.states.get("sensor.test_forever").state == "0.000"
 
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
