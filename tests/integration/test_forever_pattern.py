@@ -1,10 +1,10 @@
-"""Tests for sensors with a forever pattern."""
+"""Tests for sensors with a noreset pattern."""
+
+from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.measureit.const import DOMAIN
 from tests import setup_with_mock_config, unload_with_mock_config
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-from homeassistant.core import HomeAssistant
-
 
 FOREVER_ENTRY = MockConfigEntry(
     domain=DOMAIN,
@@ -20,21 +20,21 @@ FOREVER_ENTRY = MockConfigEntry(
                 "unit_of_measurement": "counts",
                 "state_class": "total",
                 "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110002",
-                "sensor_name": "forever",
-                "cron": "forever",
-                "period": "forever",
+                "sensor_name": "noreset",
+                "cron": "noreset",
+                "period": "noreset",
             },
         ],
     },
 )
 
 
-async def test_forever_meter_setup(hass: HomeAssistant):
+async def test_noreset_meter_setup(hass: HomeAssistant):
     """Test MeasureIt setup."""
 
     await setup_with_mock_config(hass, FOREVER_ENTRY)
 
-    sensor = "sensor.test_forever"
+    sensor = "sensor.test_noreset"
     state = hass.states.get(sensor)
     assert state.state == "0"
     assert state.attributes.get("last_reset") is None
@@ -45,14 +45,14 @@ async def test_forever_meter_setup(hass: HomeAssistant):
     await unload_with_mock_config(hass, FOREVER_ENTRY)
 
 
-async def test_forever_meter_reset(hass: HomeAssistant):
+async def test_noreset_meter_reset(hass: HomeAssistant):
     """Test MeasureIt reset."""
     hass.states.async_set("sensor.test_counter", "3")
     await hass.async_block_till_done()
 
     await setup_with_mock_config(hass, FOREVER_ENTRY)
 
-    sensor = "sensor.test_forever"
+    sensor = "sensor.test_noreset"
     state = hass.states.get(sensor)
     assert state.state == "0"
 

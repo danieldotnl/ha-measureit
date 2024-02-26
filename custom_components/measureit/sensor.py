@@ -50,7 +50,7 @@ async def async_setup_entry(
         unique_id = sensor.get(CONF_UNIQUE_ID)
         sensor_name = f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
         reset_pattern = (
-            sensor.get(CONF_CRON) if sensor.get(CONF_CRON) not in ["forever", "none"] else None
+            sensor.get(CONF_CRON) if sensor.get(CONF_CRON) not in ["noreset", "forever", "none"] else None
         )
         state_class = sensor.get(CONF_STATE_CLASS)
         device_class = sensor.get(CONF_DEVICE_CLASS)
