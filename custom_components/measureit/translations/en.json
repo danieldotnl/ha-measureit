@@ -112,6 +112,10 @@
         "title": "Remove sensor(s)",
         "description": "Select the sensors you want to remove."
       }
+    },
+    "error": {
+      "tw_days_minimum": "Select at least one day to measure.",
+      "uom_with_device_class_update": "Updating the unit of measurement is not allowed when a device class is set. Remove the sensor and add a new one."
     }
   },
   "selector": {

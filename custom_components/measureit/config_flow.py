@@ -235,7 +235,14 @@ async def validate_sensor_edit(
     # Standard behavior is to merge the result with the options.
     # In this case, we want to add a sub-item so we update the options directly.
     idx: int = handler.flow_state["_idx"]
+    if handler.options[SENSOR_DOMAIN][idx][CONF_UNIT_OF_MEASUREMENT] != user_input.get(CONF_UNIT_OF_MEASUREMENT):
+        if handler.options[SENSOR_DOMAIN][idx][CONF_DEVICE_CLASS] and user_input.get(CONF_DEVICE_CLASS) is not None:
+            raise SchemaFlowError("uom_with_device_class_update")
     handler.options[SENSOR_DOMAIN][idx].update(user_input)
+    for key in DATA_SCHEMA_EDIT_SENSOR.schema:
+        if isinstance(key, vol.Optional) and key not in user_input:
+            # Key not present, delete keys old value (if present) too
+            handler.options[SENSOR_DOMAIN][idx].pop(key, None)
     return {}
 
 
