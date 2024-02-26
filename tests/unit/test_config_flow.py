@@ -81,7 +81,7 @@ async def test_counter_config_flow(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         user_input={
-            CONF_PERIODS: ["day", "week", "forever"],
+            CONF_PERIODS: ["day", "week", "noreset"],
             CONF_UNIT_OF_MEASUREMENT: "clicks",
         },
     )
@@ -148,7 +148,7 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
         user_input={
-            CONF_PERIODS: ["day", "week", "forever"],
+            CONF_PERIODS: ["day", "week", "noreset"],
             CONF_UNIT_OF_MEASUREMENT: "s",
             CONF_DEVICE_CLASS: "duration",
             CONF_STATE_CLASS: "total_increasing",

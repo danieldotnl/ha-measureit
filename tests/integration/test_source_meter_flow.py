@@ -48,9 +48,9 @@ SOURCE_ENTRY = MockConfigEntry(
                 "unit_of_measurement": "items",
                 "state_class": "total",
                 "unique_id": "ca1009aa-b6bb-11ee-923e-0242ac115002",
-                "sensor_name": "forever",
-                "cron": "forever",
-                "period": "forever"
+                "sensor_name": "noreset",
+                "cron": "noreset",
+                "period": "noreset"
             },
         ],
     },
@@ -75,7 +75,7 @@ async def test_source_meter_setup(hass: HomeAssistant):
         assert state.attributes["state_class"] == "total"
         assert state.attributes["status"] == SensorState.WAITING_FOR_CONDITION
 
-    assert hass.states.get("sensor.test_forever").state == "0.000"
+    assert hass.states.get("sensor.test_noreset").state == "0.000"
 
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()

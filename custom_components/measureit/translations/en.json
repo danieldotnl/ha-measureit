@@ -134,7 +134,7 @@
         "week": "Week",
         "month": "Month",
         "year": "Year",
-        "forever": "Manual/no reset"
+        "noreset": "Manual/no reset"
       }
     }
   },
