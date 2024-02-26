@@ -1,7 +1,7 @@
 """Meter logic for MeasureIt."""
 
-from decimal import Decimal
 from datetime import UTC, datetime
+from decimal import Decimal
 
 from custom_components.measureit.const import MeterType
 
@@ -144,12 +144,14 @@ class SourceMeter(MeasureItMeter):
     def to_dict(self) -> dict:
         """Return the meter as a dictionary."""
         data = super().to_dict()
-        return {
+        source_data = {
             **data,
             "session_start_value": str(self._session_start_value),
             "session_start_measured_value": str(self._session_start_measured_value),
-            "source_value": str(self._source_value),
         }
+        if self._source_value:
+            source_data["source_value"] = str(self._source_value)
+        return source_data
 
     def from_dict(self, data: dict) -> None:
         """Restore the meter from a dictionary."""
@@ -162,7 +164,8 @@ class SourceMeter(MeasureItMeter):
         if self._source_value:
             self.update(self._source_value)
         else:
-            self._source_value = Decimal(data["source_value"]) if data.get("source_value") else None
+            source_value = data.get("source_value")
+            self._source_value = Decimal(source_value) if source_value else None
 
 
 class TimeMeter(MeasureItMeter):

@@ -1,29 +1,25 @@
 """Custom coordinator (not derived from the core DataUpdateCoordinator) for the MeasureIt component."""
 
 from __future__ import annotations
-from decimal import Decimal, InvalidOperation
 
 import logging
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
 from collections.abc import Callable
+from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
+from typing import Any
 
-from homeassistant.util import dt as dt_util
-from homeassistant.const import STATE_UNAVAILABLE
-from homeassistant.const import STATE_UNKNOWN
-from homeassistant.core import callback
-from homeassistant.core import HomeAssistant
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import TemplateError
-from homeassistant.helpers.event import async_track_point_in_utc_time
-from homeassistant.helpers.event import (
-    async_track_template,
-    async_track_template_result,
-)
-from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.event import async_track_point_in_time
-from homeassistant.helpers.event import TrackTemplate, TrackTemplateResultInfo
+from homeassistant.helpers.event import (TrackTemplate,
+                                         TrackTemplateResultInfo,
+                                         async_track_point_in_time,
+                                         async_track_point_in_utc_time,
+                                         async_track_state_change_event,
+                                         async_track_template,
+                                         async_track_template_result)
 from homeassistant.helpers.template import Template
+from homeassistant.util import dt as dt_util
 
 from .const import MeterType
 from .time_window import TimeWindow
@@ -105,7 +101,7 @@ class MeasureItCoordinator:
                 new_state = Decimal(source_state)
                 for sensor in self._sensors.values():
                     sensor.on_value_change(new_state)
-            except InvalidOperation:
+            except (InvalidOperation, TypeError):
                 _LOGGER.error(
                     """%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.\n
                     IMPORTANT: Sensor will not start measuring until the source sensor has a valid value and the integration has been restarted.""",
