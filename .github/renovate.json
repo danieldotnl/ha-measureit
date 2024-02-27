@@ -1,0 +1,8 @@
+{
+  "packageRules": [
+    {
+      "matchPackageNames": ["home-assistant", "pytest-homeassistant-custom-component"],
+      "groupName": "home assistant core"
+    }
+  ]
+}
