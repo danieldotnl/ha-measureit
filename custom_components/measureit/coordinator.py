@@ -204,7 +204,7 @@ class MeasureItCoordinator:
     def async_on_source_entity_state_change(self, event):
         """Handle changes in the source entity state."""
         old_state = event.data.get("old_state").state if event.data.get("old_state") else None
-        new_state = event.data.get("new_state").state
+        new_state = event.data.get("new_state").state if event.data.get("new_state") else None
         _LOGGER.debug(
             "%s # Source (%s) state changed, old: %s, new: %s",
             self._config_name,
@@ -212,7 +212,7 @@ class MeasureItCoordinator:
             old_state,
             new_state,
         )
-        if new_state in [STATE_UNKNOWN, STATE_UNAVAILABLE]:
+        if new_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
             _LOGGER.warning(
                 "%s # Source (%s) state is unknown or unavailable, not updating sensors.",
                 self._config_name,
