@@ -238,8 +238,8 @@ class MeasureItCoordinator:
         _LOGGER.debug(
             "%s # Counter template changed from %s to %s due to change of: %s.",
             self._config_name,
-            old_state,
-            new_state,
+            old_state.state,
+            new_state.state,
             entity_id,
         )
         for sensor in self._sensors.values():

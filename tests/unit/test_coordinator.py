@@ -1,17 +1,17 @@
 """Test for the measureit coordinator."""
 
-from unittest.mock import MagicMock, patch
 from datetime import datetime
-from homeassistant.core import HomeAssistant
-from homeassistant.util import dt as dt_util
-from homeassistant.const import STATE_UNKNOWN
-from homeassistant.helpers.template import Template
+from unittest.mock import MagicMock, patch
+
 import pytest
+from homeassistant.const import STATE_UNKNOWN
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.template import Template
+from homeassistant.util import dt as dt_util
+
 from custom_components.measureit.const import MeterType
 from custom_components.measureit.coordinator import (
-    MeasureItCoordinator,
-    MeasureItCoordinatorEntity,
-)
+    MeasureItCoordinator, MeasureItCoordinatorEntity)
 from custom_components.measureit.time_window import TimeWindow
 
 
@@ -160,7 +160,7 @@ def test_async_on_counter_template_update_becomes_true(
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
     coordinator.async_register_sensor(entity)
-    coordinator.async_on_counter_template_update("mock", False, True)
+    coordinator.async_on_counter_template_update("mock", StateMock(False), StateMock(True))
     entity.on_value_change.assert_called_with(1)
 
 
