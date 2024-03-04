@@ -287,6 +287,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
     @property
     def sensor_state(self) -> SensorState:
         """Return the sensor state."""
+        if self.meter.meter_type == MeterType.SOURCE and not self.meter.has_source_value:
+            return SensorState.INITIALIZING_SOURCE
         if self._condition_active is True and self._time_window_active is True:
             return SensorState.MEASURING
         elif self._time_window_active is False:
@@ -384,7 +386,11 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
     @callback
     def on_value_change(self, new_value: Decimal | None = None) -> None:
         """Handle a change in the value."""
+        old_state = self.sensor_state
         self.meter.update(Decimal(new_value)) if new_value else self.meter.update()
+        if old_state == SensorState.INITIALIZING_SOURCE:
+            new_state = self.sensor_state
+            self._on_sensor_state_update(old_state, new_state)
         self._async_write_ha_state()
 
     def _on_sensor_state_update(

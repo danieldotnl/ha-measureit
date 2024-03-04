@@ -66,6 +66,7 @@ class MeterType(str, Enum):
 class SensorState(str, Enum):
     """Enum with possible meter states."""
 
+    INITIALIZING_SOURCE = "initializing source value"
     MEASURING = "measuring"
     WAITING_FOR_CONDITION = "waiting for condition"
     WAITING_FOR_TIME_WINDOW = "waiting for time window"

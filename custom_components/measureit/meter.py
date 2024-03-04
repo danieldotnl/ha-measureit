@@ -109,6 +109,11 @@ class SourceMeter(MeasureItMeter):
         self._session_start_measured_value = Decimal(0)
         self._source_value = None
 
+    @property
+    def has_source_value(self) -> bool:
+        """Check if the meter has a source value."""
+        return self._source_value is not None
+
     def start(self):
         """Start the meter."""
         self._measuring = True
