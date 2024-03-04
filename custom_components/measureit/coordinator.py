@@ -102,9 +102,8 @@ class MeasureItCoordinator:
                 for sensor in self._sensors.values():
                     sensor.on_value_change(new_state)
             except (InvalidOperation, TypeError):
-                _LOGGER.error(
-                    """%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.\n
-                    IMPORTANT: Sensor will not start measuring until the source sensor has a valid value and the integration has been restarted.""",
+                _LOGGER.warning(
+                    "%s # Could not convert source state to a number: %s. Make sure the source sensor is available and numeric. We cannot start measuring until the source entity has a valid state.",
                     self._config_name,
                     source_state,
                 )
@@ -214,7 +213,7 @@ class MeasureItCoordinator:
         )
         if new_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
             _LOGGER.warning(
-                "%s # Source (%s) state is unknown or unavailable, not updating sensors.",
+                "%s # Source (%s) state changed to unknown or unavailable. We cannot update the sensors.",
                 self._config_name,
                 self._source_entity,
             )
@@ -224,8 +223,8 @@ class MeasureItCoordinator:
             new_state = Decimal(new_state)
             for sensor in self._sensors.values():
                 sensor.on_value_change(new_state)
-        except InvalidOperation:
-            _LOGGER.error(
+        except (InvalidOperation, TypeError):
+            _LOGGER.warning(
                 "%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.",
                 self._config_name,
                 new_state,
