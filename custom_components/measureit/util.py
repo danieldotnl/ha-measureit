@@ -13,7 +13,7 @@ def create_renderer(hass, value_template, round_digits_when_none: int|None = Non
     if value_template is None:
         if round_digits_when_none:
             return lambda value: round(value, round_digits_when_none)
-        return lambda value: value
+        return lambda value: round(value)
 
     value_template = Template(value_template, hass)
 
