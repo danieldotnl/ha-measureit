@@ -97,6 +97,13 @@ class MeasureItCoordinator:
             )
             # Update once on startup to get the initial state. After that we're tracking state changes and receive events
             source_state = self._get_sensor_state(self._source_entity)
+            if source_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
+                _LOGGER.warning(
+                    "%s # Source (%s) state is unknown or unavailable. We cannot start measuring until the source entity has a valid state.",
+                    self._config_name,
+                    self._source_entity,
+                )
+
             try:
                 new_state = Decimal(source_state)
                 for sensor in self._sensors.values():
@@ -106,6 +113,7 @@ class MeasureItCoordinator:
                     "%s # Could not convert source state to a number: %s. Make sure the source sensor is available and numeric. We cannot start measuring until the source entity has a valid state.",
                     self._config_name,
                     source_state,
+                    exc_info=True
                 )
 
         if self._time_window.always_active:
