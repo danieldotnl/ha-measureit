@@ -21,10 +21,11 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.util import dt as dt_util
 
-from .const import (ATTR_LAST_RESET, ATTR_NEXT_RESET, ATTR_PREV, ATTR_STATUS, CONF_CONFIG_NAME,
-                    CONF_CRON, CONF_METER_TYPE, CONF_SENSOR, CONF_SENSOR_NAME,
-                    CONF_STATE_CLASS, COORDINATOR, DOMAIN_DATA,
-                    EVENT_TYPE_RESET, ICON, MeterType, SensorState)
+from .const import (ATTR_LAST_RESET, ATTR_NEXT_RESET, ATTR_PREV, ATTR_STATUS,
+                    CONF_CONFIG_NAME, CONF_CRON, CONF_METER_TYPE, CONF_SENSOR,
+                    CONF_SENSOR_NAME, CONF_STATE_CLASS, COORDINATOR,
+                    DOMAIN_DATA, EVENT_TYPE_RESET, ICON, MeterType,
+                    SensorState)
 from .coordinator import MeasureItCoordinator, MeasureItCoordinatorEntity
 from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
@@ -316,11 +317,6 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         return None
 
     @property
-    def next_reset(self) -> datetime | None:
-        """Return the next reset."""
-        return self._next_reset
-
-    @property
     def extra_state_attributes(self) -> dict[str, str]:
         """Return the state attributes."""
         attributes = {
@@ -413,8 +409,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             self.meter.to_dict(),
             self._time_window_active,
             self._condition_active,
-            self.last_reset,
-            self.next_reset,
+            self._last_reset,
+            self._next_reset,
         )
 
     async def async_get_last_sensor_data(self) -> MeasureItSensorStoredData | None:

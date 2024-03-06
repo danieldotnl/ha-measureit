@@ -143,7 +143,7 @@ def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
 def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor initialization."""
     assert none_sensor.native_value == 0
-    assert none_sensor.next_reset is None
+    assert none_sensor._next_reset is None
     assert none_sensor.unit_of_measurement is None
     assert none_sensor.state_class is SensorStateClass.TOTAL
     assert none_sensor.device_class is None
@@ -191,14 +191,14 @@ def test_scheduled_reset_in_future(day_sensor: MeasureItSensor, test_now: dateti
         day_sensor.schedule_next_reset(test_now + timedelta(hours=1))
 
     assert day_sensor.reset.call_count == 0
-    assert day_sensor.next_reset == test_now + timedelta(hours=1)
+    assert day_sensor._next_reset == test_now + timedelta(hours=1)
 
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
         return_value=datetime(2025, 1, 3, 12, 30, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE),
     ):
         day_sensor.schedule_next_reset()
-    assert day_sensor.next_reset == datetime(
+    assert day_sensor._next_reset == datetime(
         2025, 1, 4, 0, 00, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
 
@@ -214,20 +214,20 @@ def test_scheduled_reset_none_sensor(none_sensor: MeasureItSensor):
             datetime(2025, 1, 1, 13, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
         )
     assert none_sensor.reset.call_count == 0
-    assert none_sensor.next_reset == datetime(
+    assert none_sensor._next_reset == datetime(
         2025, 1, 1, 13, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
     none_sensor.schedule_next_reset()
-    assert none_sensor.next_reset is None
+    assert none_sensor._next_reset is None
 
 
 async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor reset."""
-    assert none_sensor.next_reset is None
+    assert none_sensor._next_reset is None
     none_sensor.reset()
     none_sensor.meter.reset.assert_called_once()
-    assert none_sensor.next_reset is None
-    assert none_sensor.last_reset == test_now
+    assert none_sensor._next_reset is None
+    assert none_sensor._last_reset == test_now
 
 
 def test_on_value_change(day_sensor: MeasureItSensor):
@@ -254,8 +254,8 @@ def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
     """Test sensor restore."""
     data = MeasureItSensorStoredData(
         meter_data=none_sensor.meter.to_dict(),
-        last_reset=none_sensor.last_reset,
-        next_reset=none_sensor.next_reset,
+        last_reset=none_sensor._last_reset,
+        next_reset=none_sensor._next_reset,
         time_window_active=none_sensor._time_window_active,
         condition_active=none_sensor._condition_active,
     )
@@ -272,8 +272,8 @@ def test_day_sensor_stored_data(day_sensor: MeasureItSensor):
     """Test sensor restore."""
     data = MeasureItSensorStoredData(
         meter_data=day_sensor.meter.to_dict(),
-        last_reset=day_sensor.last_reset,
-        next_reset=day_sensor.next_reset,
+        last_reset=day_sensor._last_reset,
+        next_reset=day_sensor._next_reset,
         time_window_active=day_sensor._time_window_active,
         condition_active=day_sensor._condition_active,
     )
@@ -283,8 +283,8 @@ def test_day_sensor_stored_data(day_sensor: MeasureItSensor):
     assert data == restored
     assert restored.time_window_active is False
     assert restored.condition_active is False
-    assert restored.next_reset == day_sensor.next_reset
-    assert restored.last_reset == day_sensor.last_reset
+    assert restored.next_reset == day_sensor._next_reset
+    assert restored.last_reset == day_sensor._last_reset
 
 
 def test_restore_from_data():
@@ -386,7 +386,7 @@ async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor added to hass."""
     await day_sensor.async_added_to_hass()
     assert day_sensor._coordinator.async_register_sensor.call_count == 1
-    assert day_sensor.next_reset == (test_now + timedelta(days=1)).replace(
+    assert day_sensor._next_reset == (test_now + timedelta(days=1)).replace(
         hour=0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
 
@@ -394,10 +394,10 @@ async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
 async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
     """Test sensor added to hass."""
     await restore_sensor.async_added_to_hass()
-    assert restore_sensor.last_reset == datetime(
+    assert restore_sensor._last_reset == datetime(
         2025, 1, 1, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
-    assert restore_sensor.next_reset == datetime(
+    assert restore_sensor._next_reset == datetime(
         2025, 1, 2, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
     assert restore_sensor.native_value == 123
