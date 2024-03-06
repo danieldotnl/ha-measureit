@@ -41,7 +41,8 @@ EVENT_TYPE_RESET = "measureit_reset"
 
 # Attributes
 ATTR_PREV = "prev_period"
-ATTR_NEXT_RESET = "next_reset"
+ATTR_LAST_RESET = "sensor_last_reset"
+ATTR_NEXT_RESET = "sensor_next_reset"
 ATTR_STATUS = "status"
 
 PREDEFINED_PERIODS = {

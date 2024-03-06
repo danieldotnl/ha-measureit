@@ -37,8 +37,8 @@ async def test_noreset_meter_setup(hass: HomeAssistant):
     sensor = "sensor.test_noreset"
     state = hass.states.get(sensor)
     assert state.state == "0"
-    assert state.attributes.get("last_reset") is None
-    assert state.attributes["next_reset"] is None
+    assert state.attributes.get("sensor_last_reset") is None
+    assert state.attributes["sensor_next_reset"] is None
     assert state.attributes["unit_of_measurement"] == "counts"
     assert state.attributes["state_class"] == "total"
 
@@ -67,7 +67,8 @@ async def test_noreset_meter_reset(hass: HomeAssistant):
 
     state = hass.states.get(sensor)
     assert state.state == "0"
-    assert state.attributes["next_reset"] is None
+    assert state.attributes["sensor_next_reset"] is None
+    assert state.attributes["sensor_last_reset"] is not None
     assert state.attributes["last_reset"] is not None
     assert state.attributes["prev_period"] == "1"
 

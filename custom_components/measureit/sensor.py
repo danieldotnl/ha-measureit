@@ -21,7 +21,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.util import dt as dt_util
 
-from .const import (ATTR_NEXT_RESET, ATTR_PREV, ATTR_STATUS, CONF_CONFIG_NAME,
+from .const import (ATTR_LAST_RESET, ATTR_NEXT_RESET, ATTR_PREV, ATTR_STATUS, CONF_CONFIG_NAME,
                     CONF_CRON, CONF_METER_TYPE, CONF_SENSOR, CONF_SENSOR_NAME,
                     CONF_STATE_CLASS, COORDINATOR, DOMAIN_DATA,
                     EVENT_TYPE_RESET, ICON, MeterType, SensorState)
@@ -328,7 +328,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             ATTR_PREV: str(  # strange things happen when we parse this one as a Decimal...
                 self._value_template_renderer(self.meter.prev_measured_value)
             ),
-            ATTR_NEXT_RESET: self._next_reset,
+            ATTR_LAST_RESET: self._last_reset.isoformat(timespec="seconds") if self._last_reset else None,
+            ATTR_NEXT_RESET: self._next_reset.isoformat(timespec="seconds") if self._next_reset else None,
         }
         return attributes
 
