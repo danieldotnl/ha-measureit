@@ -42,7 +42,6 @@ async def async_setup_entry(
     entry_id: str = config_entry.entry_id
     meter_type: MeterType = config_entry.options[CONF_METER_TYPE]
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
-    _LOGGER.debug("%s # Options: %s", config_name, config_entry.options)
 
     coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
 
@@ -346,6 +345,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         tznow = dt_util.now()
         if next_reset and next_reset <= tznow:
             self.reset()
+            return
         elif not next_reset:
             if self._reset_pattern:
                 next_reset = croniter(self._reset_pattern, tznow).get_next(datetime)
