@@ -156,7 +156,7 @@ class SourceMeter(MeasureItMeter):
             "session_start_value": str(self._session_start_value),
             "session_start_measured_value": str(self._session_start_measured_value),
         }
-        if self._source_value:
+        if self._source_value is not None:
             source_data["source_value"] = str(self._source_value)
         return source_data
 
@@ -169,7 +169,7 @@ class SourceMeter(MeasureItMeter):
         )
 
         source_value = data.get("source_value")
-        self._source_value = Decimal(source_value) if source_value else None
+        self._source_value = Decimal(source_value) if source_value is not None else None
 
 
 class TimeMeter(MeasureItMeter):
