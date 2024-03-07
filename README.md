@@ -13,6 +13,10 @@ MeasureIt has overlap with `history_stats` and `utility_meter` but provides othe
 
 Note: you do require some Home Assistant templating knowledge for most use cases. If you need help with this, do not create a Github issue but ask your question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).
 
+*Supporting integrations like this one is a lot of work. Please consider supporting me:*
+
+<a href="https://www.buymeacoffee.com/danieldotnl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
+
 ## How does it work?
 
 MeasureIt currently offers 3 different 'meter types' which you can choose from: **time**, **source**, **counter**.
@@ -23,7 +27,8 @@ Time is basically just a timer that runs when all the conditions that you provid
 
 ### Source
 
-Source meters do listen for state changes in another entity and measure the difference. E.g. listen to the gas consumption sensor, and keep track of how much it changes when the shower is on.
+Source meters do listen for state changes in another entity and measure the difference. E.g. listen to the gas consumption sensor, and keep track of how much it changes when the shower is on.\
+*Currently source entities that do reset are not supported (e.g. you cannot yet use MeasureIt to measure the amount of precipation in a week based on a precipation sensor that resets every day).*
 
 ### Counter
 
