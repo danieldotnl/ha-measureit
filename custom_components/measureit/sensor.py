@@ -240,7 +240,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._time_window_active: bool = False
         self._condition_active: bool = False
         self._reset_listener = None
-        self._last_reset: datetime | None = None
+        self._last_reset: datetime = dt_util.now()
         self._next_reset: datetime | None = None
 
     async def async_added_to_hass(self):
