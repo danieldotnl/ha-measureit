@@ -1,13 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "packageRules": [
-    {
-      "matchPackageNames": [
-        "homeassistant",
-        "pytest-homeassistant-custom-component"
-      ],
-      "groupName": "home assistant core"
-    }
-  ]
+  "extends": ["config:recommended"]
 }
