@@ -128,6 +128,8 @@ class SourceMeter(MeasureItMeter):
 
     def update(self, value: Decimal | None = None):
         """Update the meter."""
+        if value is None:
+            raise ValueError("Source meter requires a value to update")
         self._source_value = value
         if self._measuring:
             self._session_total = self._source_value - self._session_start_value

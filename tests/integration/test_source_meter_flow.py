@@ -448,11 +448,6 @@ async def test_reset_when_unavailable(hass: HomeAssistant):
     assert state.attributes["status"] == SensorState.MEASURING
 
 
-
-
-
-
-
 async def test_reload_when_initializing_source(hass: HomeAssistant):
     """Test counter_meter should be counting when condition becomes True."""
 
@@ -497,3 +492,16 @@ async def test_reload_when_initializing_source(hass: HomeAssistant):
     hass.states.async_set("sensor.test_source", "10")
     await hass.async_block_till_done()
     await setup_with_mock_config(hass, SOURCE_ENTRY)
+
+async def test_initializing_00(hass: HomeAssistant):
+    """Test source meter when source sensor is 0.0."""
+
+    hass.states.async_set("sensor.test_source", "0.0")
+    await hass.async_block_till_done()
+
+    await setup_with_mock_config(hass, MINIMAL_SOURCE_ENTRY)
+
+    sensor = "sensor.minimal_source_day"
+    state = hass.states.get(sensor)
+    assert state.state == "0.000"
+    assert state.attributes["status"] == SensorState.MEASURING

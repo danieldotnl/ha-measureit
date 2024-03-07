@@ -384,7 +384,10 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
     def on_value_change(self, new_value: Decimal | None = None) -> None:
         """Handle a change in the value."""
         old_state = self.sensor_state
-        self.meter.update(Decimal(new_value)) if new_value else self.meter.update()
+        if new_value is not None:
+            self.meter.update(new_value)
+        else:
+            self.meter.update()
         if old_state == SensorState.INITIALIZING_SOURCE:
             new_state = self.sensor_state
             self._on_sensor_state_update(old_state, new_state)
