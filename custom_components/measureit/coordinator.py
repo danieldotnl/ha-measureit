@@ -236,6 +236,7 @@ class MeasureItCoordinator:
                 "%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.",
                 self._config_name,
                 new_state,
+                exc_info=True
             )
 
     @callback
