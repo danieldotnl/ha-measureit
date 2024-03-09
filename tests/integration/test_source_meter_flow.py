@@ -101,6 +101,7 @@ async def test_source_meter_setup(hass: HomeAssistant):
         assert state
         assert state.state == "0"
         assert state.attributes["unit_of_measurement"] == "items"
+        assert state.attributes["source_entity"] == "sensor.test_source"
         assert state.attributes.get("device_class") is None
         assert state.attributes["state_class"] == "total"
         assert state.attributes["status"] == SensorState.WAITING_FOR_CONDITION

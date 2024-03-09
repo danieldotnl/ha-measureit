@@ -64,6 +64,11 @@ class MeasureItCoordinator:
         self._source_entity_update_listener: Callable | None = None
         self._heartbeat_listener: Callable | None = None
 
+    @property
+    def source_entity(self) -> str | None:
+        """Return the source entity."""
+        return self._source_entity
+
     @callback
     def async_register_sensor(self, sensor: MeasureItCoordinatorEntity):
         """Register a sensor with the coordinator."""
