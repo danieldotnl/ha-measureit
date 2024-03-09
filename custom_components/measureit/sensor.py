@@ -326,6 +326,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             ATTR_LAST_RESET: self._last_reset.isoformat(timespec="seconds") if self._last_reset else None,
             ATTR_NEXT_RESET: self._next_reset.isoformat(timespec="seconds") if self._next_reset else None,
         }
+        if self.meter.meter_type == MeterType.SOURCE:
+            attributes["source_entity"] = self._coordinator.source_entity
         return attributes
 
     @callback
