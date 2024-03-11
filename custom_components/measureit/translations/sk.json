@@ -6,14 +6,15 @@
         "description": "Ďakujeme, že ste nastavili MeasureIt! Ak potrebujete pomoc s konfiguráciou, pozrite sa sem: https://github.com/danieldotnl/ha-measureit.\nČas meria trvanie, zatiaľ čo podmienka (šablóna) je pravdivá. Zdroj bude merať zmeny hodnoty inej entity, pričom podmienka (šablóna) sa rovná true.",
         "menu_options": {
           "time": "Čas",
-          "source": "Zdrojový snímač"
+          "source": "Zdrojový snímač",
+          "count": "Počítadlo"
         }
       },
       "time": {
         "title": "Konfigurácia merača času",
         "description": "Nakonfigurujte názov konfigurácie (používaný pre názvy snímačov a protokolovanie) a jednotku merania.",
         "data": {
-          "name": "Názov konfigurácie"
+          "config_name": "Názov konfigurácie"
         }
       },
       "source": {
@@ -22,6 +23,14 @@
         "data": {
           "config_name": "Názov konfigurácie",
           "source_entity": "Zdrojová entita"
+        }
+      },
+      "count": {
+        "title": "Nakonfigurujte počítadlo (čo)",
+        "description": "Nakonfigurujte názov konfigurácie (používaný pre názvy snímačov a protokolovanie) a šablónu počítadla.",
+        "data": {
+          "config_name": "Názov konfigurácie",
+          "counter_template": "Šablóna počítadla:"
         }
       },
       "when": {
@@ -37,14 +46,6 @@
       "sensors": {
         "title": "Nakonfigurujte obdobia na meranie",
         "description": "Vyberte periódy, ktoré chcete merať (keď sa glukomer vynuluje) a voliteľne zadajte ďalšie polia. Každá perióda sa stáva senzorom.",
-        "menu_options": {
-          "5m": "5 minút",
-          "hour": "Hodina",
-          "day": "Deň",
-          "week": "Týždeň",
-          "month": "Mesiac",
-          "year": "Rok"
-        },
         "data": {
           "period": "Obdobia",
           "unit_of_measurement": "Jednotka merania",
@@ -59,9 +60,7 @@
       }
     },
     "error": {
-      "auth": "Používateľské meno/heslo je nesprávne.",
-      "connection": "Nedá sa pripojiť k serveru.",
-      "unknown": "Vyskytla sa neznáma chyba."
+      "tw_days_minimum": "Vyberte aspoň jeden deň na meranie."
     }
   },
   "options": {
@@ -78,14 +77,6 @@
       "add_sensors": {
         "title": "Pridajte senzory",
         "description": "Vyberte periódy, ktoré chcete merať (keď sa glukomer vynuluje) a voliteľne zadajte ďalšie polia. Každá perióda sa stáva senzorom.",
-        "menu_options": {
-          "5m": "5 Minút",
-          "hour": "Hodina",
-          "day": "Deň",
-          "week": "Týždeň",
-          "month": "Mesiac",
-          "year": "Rok"
-        },
         "data": {
           "period": "Obdobia",
           "unit_of_measurement": "Jednotka merania",
@@ -97,7 +88,6 @@
       "edit_main": {
         "title": "Upravte hlavnú konfiguráciu",
         "data": {
-          "config_name": "Názov",
           "condition": "Šablóna stavu",
           "when_days": "Dni:",
           "when_from": "Od času",
@@ -112,7 +102,6 @@
         "title": "Upraviť senzor",
         "description": "Upravte konfiguráciu vybraného snímača.",
         "data": {
-          "sensor_name": "Názov",
           "unit_of_measurement": "Jednotka merania",
           "value_template": "Šablóna hodnoty",
           "state_class": "Trieda stavu",
@@ -123,10 +112,38 @@
         "title": "Odstráňte senzor(y)",
         "description": "Vyberte senzory, ktoré chcete odstrániť."
       }
+    },
+    "error": {
+      "tw_days_minimum": "Vyberte aspoň jeden deň na meranie.",
+      "uom_with_device_class_update": "Aktualizácia mernej jednotky nie je povolená, keď je nastavená trieda zariadenia. Vyberte snímač a pridajte nový."
+    }
+  },
+  "selector": {
+    "day_selector": {
+      "options": {
+        "0": "Pondelok",
+        "1": "Utorok",
+        "2": "Streda",
+        "3": "Štvrtok",
+        "4": "Piatok",
+        "5": "Sobota",
+        "6": "Nedeľa"
+      }
+    },
+    "period_selector": {
+      "options": {
+          "5m": "5 minút",
+          "hour": "Hodina",
+          "day": "Deň",
+          "week": "Týždeň",
+          "month": "Mesiac",
+          "year": "Rok",
+          "noreset": "Manuálne/bez resetovania"
+      }
     }
   },
   "services": {
-    "reset_sensor": {
+    "reset": {
       "name": "Resetujte senzor MeasureIt",
       "description": "Resetujte senzor v danom čase. Ak nie je daný čas, snímač sa okamžite resetuje.",
       "fields": {
