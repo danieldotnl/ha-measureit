@@ -451,99 +451,108 @@ def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
     stored_data = day_sensor.extra_restore_state_data
     assert stored_data.condition_active is False
 
-@pytest.mark.skip(reason="Known issue with croniter and DST")
-# related to croniter issue https://github.com/kiorky/croniter/issues/1
-@pytest.mark.parametrize("input,expected",
+@pytest.mark.parametrize("input,expected,tz,cron",
                             [
                                 (
                                  datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
                                  datetime(2024, 3, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 ZoneInfo("America/Los_Angeles"),
+                                 PREDEFINED_PERIODS["month"]
                                 ),
                                 (
                                  datetime(2024, 3, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
                                  datetime(2024, 4, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 ZoneInfo("America/Los_Angeles"),
+                                 PREDEFINED_PERIODS["month"]
                                 ), # start DST
                                 (
                                  datetime(2024, 11, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
                                  datetime(2024, 12, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 ZoneInfo("America/Los_Angeles"),
+                                 PREDEFINED_PERIODS["month"]
                                 ), # end DST
                                 (
                                  datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 3, 1, 0, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["month"]
                                 ),
                                 (
                                  datetime(2024, 3, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 4, 1, 0, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                ) # start DST
-                            ]
-                         )
-def test_next_reset_month(hass: HomeAssistant, input, expected):
-    """Test next reset for month period with DST."""
-    with mock.patch(
-        "homeassistant.helpers.condition.dt_util.now",
-        return_value=input,
-    ):
-        sensor = MeasureItSensor(
-            hass,
-            MagicMock(),
-            CounterMeter(),
-            "test_sensor_month",
-            "test_sensor_month",
-            PREDEFINED_PERIODS["month"],
-            None,
-            None
-        )
-        assert sensor._next_reset is None
-
-        sensor.schedule_next_reset()
-        assert sensor._next_reset == expected
-        sensor.unsub_reset_listener()
-
-@pytest.mark.parametrize("input,expected",
-                            [
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["month"]
+                                ), # start DST
                                 (
                                  datetime(2024, 3, 10, 1, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
                                  datetime(2024, 3, 10, 3, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 ZoneInfo("America/Los_Angeles"),
+                                 PREDEFINED_PERIODS["hour"]
+                                ),
+                                (
+                                 datetime(2024, 11, 3, 1, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 datetime(2024, 11, 3, 2, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 ZoneInfo("America/Los_Angeles"),
+                                 PREDEFINED_PERIODS["hour"]
+                                ),
+                                (
+                                 datetime(2024, 11, 3, 2, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 datetime(2024, 11, 3, 3, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+                                 ZoneInfo("America/Los_Angeles"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                                 (
                                  datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 2, 2, 5, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                                 (
                                  datetime(2024, 3, 31, 1, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 3, 31, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                                 (
                                  datetime(2024, 3, 31, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 3, 31, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                                 (
                                  datetime(2024, 10, 26, 1, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 10, 26, 2, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                                 (
                                  datetime(2024, 10, 26, 2, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 10, 26, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                                 (
                                  datetime(2024, 10, 26, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
                                  datetime(2024, 10, 26, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+                                 ZoneInfo("Europe/Brussels"),
+                                 PREDEFINED_PERIODS["hour"]
                                 ),
                             ]
                          )
-def test_next_reset_hour(hass: HomeAssistant, input, expected):
+def test_next_reset_with_dst(hass: HomeAssistant, input, expected, tz, cron):
     """Test next reset for hour period with DST."""
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
         return_value=input,
     ):
+        dt_util.DEFAULT_TIME_ZONE = tz
         sensor = MeasureItSensor(
             hass,
             MagicMock(),
             CounterMeter(),
             "test_sensor_hour",
             "test_sensor_hour",
-            PREDEFINED_PERIODS["hour"],
+            cron,
             lambda x: x,
             SensorStateClass.TOTAL,
         )
