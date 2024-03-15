@@ -350,6 +350,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             return
         elif not next_reset:
             if self._reset_pattern:
+                # we have a known issue with croniter that does not correctly determine the end of the month/week reset when DST is involved
+                # https://github.com/kiorky/croniter/issues/1
                 next_reset = croniter(self._reset_pattern, tznow).get_next(datetime)
             else:
                 self._next_reset = None
