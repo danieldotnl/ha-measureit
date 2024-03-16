@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import Any
 
 from croniter import croniter
+from dateutil import tz
 from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
                                              SensorStateClass)
 from homeassistant.config_entries import ConfigEntry
@@ -348,7 +349,11 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             return
         elif not next_reset:
             if self._reset_pattern not in [None, "noreset", "forever", "none", "session"]:
-                next_reset = croniter(self._reset_pattern, tznow).get_next(datetime)
+                # we have a known issue with croniter that does not correctly determine the end of the month/week reset when DST is involved
+                # https://github.com/kiorky/croniter/issues/1
+                next_reset = dt_util.as_local(croniter(self._reset_pattern, tznow.replace(tzinfo=None)).get_next(datetime))
+                if not tz.datetime_exists(next_reset):
+                    next_reset = dt_util.as_local(croniter(self._reset_pattern, next_reset.replace(tzinfo=None)).get_next(datetime))
             else:
                 self._next_reset = None
                 return
