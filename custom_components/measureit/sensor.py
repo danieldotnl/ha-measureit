@@ -49,9 +49,7 @@ async def async_setup_entry(
     for sensor in config_entry.options[CONF_SENSOR]:
         unique_id = sensor.get(CONF_UNIQUE_ID)
         sensor_name = f"{config_name}_{sensor[CONF_SENSOR_NAME]}"
-        reset_pattern = (
-            sensor.get(CONF_CRON) if sensor.get(CONF_CRON) not in ["noreset", "forever", "none"] else None
-        )
+        reset_pattern = sensor.get(CONF_CRON)
         state_class = sensor.get(CONF_STATE_CLASS)
         device_class = sensor.get(CONF_DEVICE_CLASS)
         uom = sensor.get(CONF_UNIT_OF_MEASUREMENT)
@@ -349,7 +347,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             self.reset()
             return
         elif not next_reset:
-            if self._reset_pattern:
+            if self._reset_pattern not in [None, "noreset", "forever", "none", "session"]:
                 next_reset = croniter(self._reset_pattern, tznow).get_next(datetime)
             else:
                 self._next_reset = None
@@ -405,6 +403,9 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             self.meter.start()
         if old_state == SensorState.MEASURING:
             self.meter.stop()
+            self._async_write_ha_state()
+            if self._reset_pattern == "session":
+                self.reset()
 
     @property
     def extra_restore_state_data(self) -> MeasureItSensorStoredData:

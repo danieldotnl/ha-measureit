@@ -38,6 +38,7 @@ PERIOD_OPTIONS = [
     selector.SelectOptionDict(value="month", label="month"),
     selector.SelectOptionDict(value="year", label="year"),
     selector.SelectOptionDict(value="noreset", label="noreset"),
+    selector.SelectOptionDict(value="session", label="session"),
 ]
 
 DAY_OPTIONS = [
