@@ -388,12 +388,22 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._on_sensor_state_update(old_state, new_state)
         self._async_write_ha_state()
 
+    def source_has_reset(self, new_value: Decimal) -> bool:
+        """Check if the source has reset."""
+        if self.state_class != SensorStateClass.TOTAL_INCREASING:
+            return False
+        return new_value < self.meter.measured_value * Decimal('0.9')
+
     @callback
     def on_value_change(self, new_value: Decimal | None = None) -> None:
         """Handle a change in the value."""
         old_state = self.sensor_state
         if new_value is not None:
-            self.meter.update(new_value)
+            if self.meter.meter_type == MeterType.SOURCE and self.source_has_reset(new_value):
+                meter: SourceMeter = self.meter
+                meter.handle_source_reset(new_value)
+            else:
+                self.meter.update(new_value)
         else:
             self.meter.update()
         if old_state == SensorState.INITIALIZING_SOURCE:
