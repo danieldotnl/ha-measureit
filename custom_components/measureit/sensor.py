@@ -354,7 +354,6 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
                 next_reset = dt_util.as_local(croniter(self._reset_pattern, tznow.replace(tzinfo=None)).get_next(datetime))
                 if not tz.datetime_exists(next_reset):
                     next_reset = dt_util.as_local(croniter(self._reset_pattern, next_reset.replace(tzinfo=None)).get_next(datetime))
-
             else:
                 self._next_reset = None
                 return
