@@ -53,6 +53,7 @@ PREDEFINED_PERIODS = {
     "month": "0 0 1 * *",
     "year": "0 0 1 1 *",
     "noreset": "noreset",
+    "session": "session",
 }
 
 

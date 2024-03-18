@@ -45,9 +45,9 @@
       },
       "sensors": {
         "title": "Configure the sensors (how)",
-        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
+        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
         "data": {
-          "periods": "Periods:",
+          "periods": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
           "value_template": "Value template:",
           "state_class": "State class",
@@ -76,9 +76,9 @@
       },
       "add_sensors": {
         "title": "Add sensor(s)",
-        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
+        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
         "data": {
-          "period": "Periods:",
+          "period": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
           "value_template": "Value template:",
           "state_class": "State class",
@@ -138,7 +138,8 @@
         "week": "Week",
         "month": "Month",
         "year": "Year",
-        "noreset": "Manual/no reset"
+        "noreset": "Manual/no reset",
+        "session": "After each session"
       }
     }
   },
