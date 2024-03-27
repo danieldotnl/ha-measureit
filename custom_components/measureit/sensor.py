@@ -25,8 +25,7 @@ from homeassistant.util import dt as dt_util
 from .const import (ATTR_LAST_RESET, ATTR_NEXT_RESET, ATTR_PREV, ATTR_STATUS,
                     CONF_CONFIG_NAME, CONF_CRON, CONF_METER_TYPE, CONF_SENSOR,
                     CONF_SENSOR_NAME, CONF_STATE_CLASS, COORDINATOR,
-                    DOMAIN_DATA, EVENT_TYPE_RESET, ICON, MeterType,
-                    SensorState)
+                    DOMAIN_DATA, EVENT_TYPE_RESET, MeterType, SensorState)
 from .coordinator import MeasureItCoordinator, MeasureItCoordinatorEntity
 from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
@@ -233,8 +232,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._attr_state_class = state_class
         self._attr_device_class = device_class
 
-        self._attr_icon = ICON
         self._attr_should_poll = False
+        self._set_translation_key()
 
         self._time_window_active: bool = False
         self._condition_active: bool = False
@@ -313,6 +312,15 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         if self.state_class == SensorStateClass.TOTAL:
             return self._last_reset
         return None
+
+    def _set_translation_key(self) -> None:
+        """Set the translation key."""
+        if self.meter.meter_type == MeterType.SOURCE:
+            self._attr_translation_key = "source-meter"
+        elif self.meter.meter_type == MeterType.TIME:
+            self._attr_translation_key = "time-meter"
+        elif self.meter.meter_type == MeterType.COUNTER:
+            self._attr_translation_key = "counter-meter"
 
     @property
     def extra_state_attributes(self) -> dict[str, str]:
