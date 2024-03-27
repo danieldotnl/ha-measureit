@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
@@ -16,7 +17,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (ATTR_ENTITY_ID, CONF_DEVICE_CLASS,
                                  CONF_UNIQUE_ID, CONF_UNIT_OF_MEASUREMENT,
                                  CONF_VALUE_TEMPLATE)
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
@@ -264,9 +265,13 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self.async_on_remove(self.unsub_reset_listener)
 
         @callback
-        def event_filter(event):
+        def event_filter(event_data: Mapping[str, Any] | Event):
             """Filter events."""
-            return self.entity_id in event.data.get(ATTR_ENTITY_ID)
+
+            # Breaking change in 2024.4.0, check for Event for versions prior to this
+            if type(event_data) is Event:  # Intentionally avoid `isinstance` because it's slow and we trust `Event` is not subclassed
+                event_data = event_data.data
+            return self.entity_id in event_data.get(ATTR_ENTITY_ID)
 
         @callback
         def on_reset_event(event):
