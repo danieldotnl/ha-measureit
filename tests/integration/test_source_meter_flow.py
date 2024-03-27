@@ -37,7 +37,7 @@ SOURCE_ENTRY = MockConfigEntry(
             },
             {
                 "unit_of_measurement": "items",
-                "state_class": "total",
+                "state_class": "total_increasing",
                 "unique_id": "ca1009aa-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "week",
                 "cron": "0 0 * * 1",
@@ -76,7 +76,7 @@ MINIMAL_SOURCE_ENTRY = MockConfigEntry(
             },
             {
                 "unit_of_measurement": "items",
-                "state_class": "total",
+                "state_class": "total_increasing",
                 "unique_id": "ca100892-b6bb-11ee-923e-0242ac110002",
                 "sensor_name": "day",
                 "cron": "0 0 * * *",
@@ -95,7 +95,7 @@ async def test_source_meter_setup(hass: HomeAssistant):
 
     await setup_with_mock_config(hass, SOURCE_ENTRY)
 
-    expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
+    expected_sensors = ["sensor.test_hour", "sensor.test_day"]
     for entity_id in expected_sensors:
         state = hass.states.get(entity_id)
         assert state
@@ -128,7 +128,7 @@ async def test_source_meter_measuring(hass: HomeAssistant):
     assert hass.states.get("sensor.test_source").state == "3"
     await setup_with_mock_config(hass, SOURCE_ENTRY)
 
-    expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
+    expected_sensors = ["sensor.test_hour", "sensor.test_day"]
     for entity_id in expected_sensors:
         state = hass.states.get(entity_id)
         assert state
@@ -506,3 +506,93 @@ async def test_initializing_00(hass: HomeAssistant):
     state = hass.states.get(sensor)
     assert state.state == "0.000"
     assert state.attributes["status"] == SensorState.MEASURING
+
+async def test_source_reset_total_increasing(hass: HomeAssistant):
+    """Test continue measuring when source sensor resets."""
+
+    hass.states.async_set("sensor.test_source", "7", {"device_class": "total_increasing"})
+    await hass.async_block_till_done()
+
+    await setup_with_mock_config(hass, MINIMAL_SOURCE_ENTRY)
+
+    sensor = "sensor.minimal_source_day"
+    state = hass.states.get(sensor)
+    assert state.state == "0.000"
+    assert state.attributes["status"] == SensorState.MEASURING
+
+    hass.states.async_set("sensor.test_source", "10")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "3.000"
+
+    hass.states.async_set("sensor.test_source", "0")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "3.000"
+
+    hass.states.async_set("sensor.test_source", "200")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "203.000"
+
+    hass.states.async_set("sensor.test_source", "199") # change is less than 10%
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "202.000"
+
+    hass.states.async_set("sensor.test_source", "10") # should assume it was reset to 0 and then became 10
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "212.000"
+
+async def test_source_reset_total_increasing_when_not_measuring(hass: HomeAssistant):
+    """Test handling source sensor reset when not measuring."""
+
+    hass.states.async_set("sensor.test_source", "7", {"device_class": "total_increasing"})
+    hass.states.async_set("switch.test_switch", "on")
+    await hass.async_block_till_done()
+
+    await setup_with_mock_config(hass, SOURCE_ENTRY)
+
+    sensor = "sensor.test_week"
+    state = hass.states.get(sensor)
+    assert state.state == "0"
+    assert state.attributes["status"] == SensorState.MEASURING
+
+    hass.states.async_set("sensor.test_source", "10")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "3"
+
+    hass.states.async_set("switch.test_switch", "off")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("sensor.test_source", "0")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "3"
+
+    hass.states.async_set("sensor.test_source", "20")
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "3"
+
+    hass.states.async_set("switch.test_switch", "on")
+    await hass.async_block_till_done()
+
+    hass.states.async_set("sensor.test_source", "25") # change is less than 10%
+    await hass.async_block_till_done()
+
+    state = hass.states.get(sensor)
+    assert state.state == "8"
+
+
+

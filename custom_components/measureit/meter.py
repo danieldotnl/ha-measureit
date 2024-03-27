@@ -148,6 +148,16 @@ class SourceMeter(MeasureItMeter):
             self._prev_measured_value = self._measured_value
             self._measured_value = Decimal(0)
 
+    def handle_source_reset(self, value: Decimal):
+        """Handle source reset."""
+        if self._measuring:
+            self.stop()
+            self._source_value = Decimal(0)
+            self.start()
+            self.update(value)
+        else:
+            self._source_value = value
+
     def to_dict(self) -> dict:
         """Return the meter as a dictionary."""
         data = super().to_dict()

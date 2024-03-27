@@ -28,7 +28,9 @@ Time is basically just a timer that runs when all the conditions that you provid
 ### Source
 
 Source meters do listen for state changes in another entity and measure the difference. E.g. listen to the gas consumption sensor, and keep track of how much it changes when the shower is on.\
-*Currently source entities that do reset are not supported (e.g. you cannot yet use MeasureIt to measure the amount of precipation in a week based on a precipation sensor that resets every day).*
+Source sensors that do reset are supported if they have `state_class`: `total_increasing`. In this case we will assume that the source entity was reset when an updated source value is lower than 90% of the previous value (similar to what is used by HA when calculating long term statistics).
+This enables you for example to measure the weekly precipitation based on a precipitation sensor that resets daily.\
+*Source entities that do reset and have `state_class` `total` are not yet supported.*
 
 ### Counter
 
