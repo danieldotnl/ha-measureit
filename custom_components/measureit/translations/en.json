@@ -45,7 +45,7 @@
       },
       "sensors": {
         "title": "Configure the sensors (how)",
-        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
+        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select a predefined period to measure (when the meter will reset). Alternatively, provide a custom cron expression. Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
         "data": {
           "periods": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
@@ -60,7 +60,8 @@
       }
     },
     "error": {
-      "tw_days_minimum": "Select at least one day to measure."
+      "tw_days_minimum": "Select at least one day to measure.",
+      "invalid_cron": "One of the periods is not a valid cron expression."
     }
   },
   "options": {
