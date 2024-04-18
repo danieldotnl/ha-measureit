@@ -90,6 +90,10 @@ class CounterMeter(MeasureItMeter):
         if self._measuring:
             self._measured_value += value
 
+    def calibrate(self, value: Decimal):
+        """Calibrate the meter."""
+        self._measured_value = value
+
     def reset(self):
         """Reset the meter."""
         self._prev_measured_value, self._measured_value = self._measured_value, Decimal(
