@@ -102,6 +102,17 @@ async def async_setup_entry(
         "calibrate",
     )
 
+    platform.async_register_entity_service(
+        "reset",
+        vol.Schema(
+            {
+                vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+                vol.Optional("reset_datetime"): cv.datetime,
+            }
+        ),
+        "on_reset_service_triggered"
+    )
+
 
 def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime | None:
     """Parse a timestamp or string into a datetime object."""
@@ -375,6 +386,16 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
 
         self.schedule_next_reset()
         self._async_write_ha_state()
+
+    @callback
+    def on_reset_service_triggered(self, reset_datetime: datetime|None = None):
+        """Handle a reset service call."""
+        _LOGGER.debug("Reset sensor with: %s", reset_datetime)
+        if reset_datetime is None:
+            reset_datetime = dt_util.now()
+        if not reset_datetime.tzinfo:
+            reset_datetime = reset_datetime.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        self.schedule_next_reset(reset_datetime)
 
     @callback
     def schedule_next_reset(self, next_reset: datetime | None = None):
