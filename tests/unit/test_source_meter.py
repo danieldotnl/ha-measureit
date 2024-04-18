@@ -1,6 +1,7 @@
 """Test the SourceMeter class."""
 
 from decimal import Decimal
+
 from custom_components.measureit.meter import SourceMeter
 
 
@@ -145,3 +146,27 @@ def test_store_and_restore():
     meter3.update(Decimal(500))
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(400)
+
+def test_calibrate_while_measuring():
+    """Test calibrating a source meter while measuring."""
+    meter = SourceMeter()
+    meter.update(Decimal(100))
+    meter.start()
+    meter.update(Decimal(200))
+    assert meter.measuring is True
+    assert meter.measured_value == Decimal(100)
+    meter.calibrate(Decimal(95))
+    assert meter.measured_value == Decimal(95)
+    meter.update(Decimal(300))
+    assert meter.measured_value == Decimal(195)
+    meter.stop()
+    assert meter.measured_value == Decimal(195)
+    meter.update(Decimal(400))
+    assert meter.measured_value == Decimal(195)
+    meter.calibrate(Decimal(90))
+    assert meter.measured_value == Decimal(90)
+    meter.calibrate(Decimal(85))
+    assert meter.measured_value == Decimal(85)
+    meter.start()
+    meter.update(Decimal(500))
+    assert meter.measured_value == Decimal(185)
