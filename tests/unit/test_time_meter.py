@@ -1,6 +1,7 @@
 """Test the TimeMeter class."""
-from decimal import Decimal
 from datetime import datetime, timedelta
+from decimal import Decimal
+
 from custom_components.measureit.meter import TimeMeter
 
 HOUR = 3600
@@ -130,3 +131,24 @@ def test_store_and_restore():
     meter3.from_dict(data)
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(HOUR * 4)
+
+def test_calibrate():
+    """Test calibrating a time meter."""
+    meter = TimeMeter()
+    mock = DatetimeMock(datetime.now(), timedelta(hours=1))
+    meter.get_timestamp = mock.get_timestamp
+
+    meter.start()
+    meter.update()
+    assert meter.measuring is True
+    assert meter.measured_value == Decimal(HOUR)
+    meter.calibrate(Decimal(HOUR)*3)
+    assert meter.measured_value == Decimal(HOUR*3)
+    meter.update()
+    assert meter.measured_value == Decimal(HOUR*4)
+    meter.stop()
+    assert meter.measuring is False
+    assert meter.measured_value == Decimal(HOUR*5)
+    meter.calibrate(Decimal(HOUR)*6)
+    assert meter.measured_value == Decimal(HOUR*6)
+
