@@ -144,6 +144,16 @@
     }
   },
   "services": {
+    "calibrate": {
+      "name": "Calibrate a MeasureIt sensor",
+      "description": "Calibrate one or more MeasureIt sensors to the given value.",
+      "fields": {
+        "value": {
+          "name": "Value",
+          "description": "The value to which the sensor should be set."
+        }
+      }
+    },
     "reset": {
       "name": "Reset a MeasureIt sensor",
       "description": "Reset one or more MeasureIt sensors at a given time. If no time is given, the sensor will be reset immediately.",

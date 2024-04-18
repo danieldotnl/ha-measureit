@@ -9,6 +9,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+import voluptuous as vol
 from croniter import croniter
 from dateutil import tz
 from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
@@ -18,6 +19,8 @@ from homeassistant.const import (ATTR_ENTITY_ID, CONF_DEVICE_CLASS,
                                  CONF_UNIQUE_ID, CONF_UNIT_OF_MEASUREMENT,
                                  CONF_VALUE_TEMPLATE)
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
@@ -85,6 +88,19 @@ async def async_setup_entry(
         sensors.append(sensor_entity)
 
     async_add_entities(sensors)
+
+    platform = entity_platform.async_get_current_platform()
+
+    platform.async_register_entity_service(
+        "calibrate",
+        vol.Schema(
+            {
+                vol.Required(ATTR_ENTITY_ID): vol.All(cv.ensure_list, [cv.entity_id]),
+                vol.Required("value"): cv.Number
+            }
+        ),
+        "calibrate",
+    )
 
 
 def temp_parse_timestamp_or_string(timestamp_or_string: str) -> datetime | None:
@@ -279,6 +295,13 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self.async_on_remove(
             self.hass.bus.async_listen(EVENT_TYPE_RESET, on_reset_event, event_filter)
         )
+
+    @callback
+    def calibrate(self, value):
+        """Calibrate the meter with a given value."""
+        _LOGGER.info("%s # Calibrate with value: %s", self._attr_name, value)
+        self.meter.calibrate(Decimal(value))
+        self.async_write_ha_state()
 
     @callback
     def unsub_reset_listener(self):
