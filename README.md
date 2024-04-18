@@ -73,7 +73,7 @@ If you want different properties per sensor, you can add additional sensor after
 
 By default, the device class `duration` is applied on time sensors. This, in combination with the unit of measurement `s` (seconds) lets Home Assistant know what this sensor is about. HA will automatically apply an applicable format in the frontend (the format changes depending on the amount). I recommend using this.
 
-If you really think you need a different format, you can do so by providing a value template for the sensor (in the 'how' part of the config). E.g. if you want to show hours, you can divide the state by 3600: `{{ value / 3600 | round }}`. This is still numeric and supports long term statistics.\
+If you really think you need a different format, you can do so by providing a value template for the sensor (in the 'how' part of the config). E.g. if you want to show hours, you can divide the state by 3600: `{{ (value / 3600) | round }}`. This is still numeric and supports long term statistics.\
 You can also change the format in a string format like 'HH:MM'. E.g. with this value template: `{{ value | float | timestamp_custom('%H:%M', false) }}`.\
 **Attention**: if you really want this, do not use a device class or a state class. This will format the state in a string and statistics cannot be calculated.
 
