@@ -8,3 +8,13 @@ reset:
       selector:
         datetime:
       example: "2025-01-01 00:00:00"
+calibrate:
+  target:
+    entity:
+      domain: sensor
+      integration: measureit
+  fields:
+    value:
+      selector:
+        number:
+      example: 0.0

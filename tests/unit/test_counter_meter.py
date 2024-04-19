@@ -1,5 +1,6 @@
 """Test the CounterMeter class."""
 from decimal import Decimal
+
 from custom_components.measureit.meter import CounterMeter
 
 
@@ -91,3 +92,24 @@ def test_store_and_restore():
     meter3.from_dict(data)
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(2)
+
+def test_calibrate():
+    """Test calibrating a counter meter while measuring."""
+    meter = CounterMeter()
+    meter.start()
+    meter.update(1)
+    assert meter.measured_value == Decimal(1)
+    meter.calibrate(2)
+    assert meter.measured_value == Decimal(2)
+    meter.update(1)
+    assert meter.measured_value == Decimal(3)
+    meter.stop()
+    meter.calibrate(2)
+    assert meter.measured_value == Decimal(2)
+    meter.start()
+    meter.update(1)
+    assert meter.measured_value == Decimal(3)
+    meter.calibrate(2)
+    assert meter.measured_value == Decimal(2)
+    meter.stop()
+    assert meter.measured_value == Decimal(2)

@@ -38,6 +38,7 @@ CONF_INDEX = "index"
 CONF_COUNTER_TEMPLATE = "counter_template"
 
 EVENT_TYPE_RESET = "measureit_reset"
+EVENT_TYPE_CALIBRATE = "measureit_calibrate"
 
 # Attributes
 ATTR_PREV = "prev_period"
