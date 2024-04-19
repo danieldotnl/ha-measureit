@@ -23,9 +23,6 @@ from custom_components.measureit.const import (CONF_CONDITION,
 def bypass_setup_fixture():
     """Prevent setup."""
     with patch(
-        "custom_components.measureit.async_setup",
-        return_value=True,
-    ), patch(
         "custom_components.measureit.async_setup_entry",
         return_value=True,
     ):
