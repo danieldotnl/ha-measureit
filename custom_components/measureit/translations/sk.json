@@ -60,7 +60,8 @@
       }
     },
     "error": {
-      "tw_days_minimum": "Vyberte aspoň jeden deň na meranie."
+      "tw_days_minimum": "Vyberte aspoň jeden deň na meranie.",
+      "invalid_cron": "Jedno z období nie je platným cronovým výrazom."
     }
   },
   "options": {
@@ -138,11 +139,22 @@
           "week": "Týždeň",
           "month": "Mesiac",
           "year": "Rok",
-          "noreset": "Manuálne/bez resetovania"
+          "noreset": "Manuálne/bez resetovania",
+          "session": "Po každej relácii"
       }
     }
   },
   "services": {
+    "calibrate": {
+      "name": "Kalibrujte senzor MeasureIt",
+      "description": "Kalibrujte jeden alebo viac senzorov MeasureIt na danú hodnotu.",
+      "fields": {
+        "value": {
+          "name": "Hodnota",
+          "description": "Hodnota, na ktorú má byť senzor nastavený."
+        }
+      }
+    },
     "reset": {
       "name": "Resetujte senzor MeasureIt",
       "description": "Resetujte senzor v danom čase. Ak nie je daný čas, snímač sa okamžite resetuje.",
