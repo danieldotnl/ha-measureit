@@ -14,7 +14,11 @@
         "title": "Configure time meter (what)",
         "description": "Provide a name for this configuration. It is used for sensor names and logging.",
         "data": {
-          "config_name": "Configuration name"
+          "config_name": "Configuration name",
+          "device_id": "Device"
+        },
+        "data_description": {
+          "device_id": "Select a device to link the sensor(s) to."
         }
       },
       "source": {
@@ -22,6 +26,7 @@
         "description": "Provide a name for this configuration and a source entity. The name is used for sensor names and logging.",
         "data": {
           "config_name": "Configuration name",
+          "device_id": "Device",
           "source_entity": "Source entity"
         }
       },
@@ -30,6 +35,7 @@
         "description": "Configure the configuration name (used for sensor names and logging) and the counter template.",
         "data": {
           "config_name": "Configuration name",
+          "device_id": "Device",
           "counter_template": "Counter template:"
         }
       },

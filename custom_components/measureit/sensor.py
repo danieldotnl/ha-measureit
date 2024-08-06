@@ -16,11 +16,13 @@ from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
                                              SensorStateClass)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (ATTR_ENTITY_ID, CONF_DEVICE_CLASS,
-                                 CONF_UNIQUE_ID, CONF_UNIT_OF_MEASUREMENT,
-                                 CONF_VALUE_TEMPLATE)
+                                 CONF_DEVICE_ID, CONF_UNIQUE_ID,
+                                 CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE)
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform
+from homeassistant.helpers.device import \
+    async_device_info_to_link_from_device_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
@@ -46,6 +48,7 @@ async def async_setup_entry(
     entry_id: str = config_entry.entry_id
     meter_type: MeterType = config_entry.options[CONF_METER_TYPE]
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
+    device_id = config_entry.options.get(CONF_DEVICE_ID)
 
     coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
 
@@ -84,6 +87,7 @@ async def async_setup_entry(
             state_class,
             device_class,
             uom,
+            device_id,
         )
         sensors.append(sensor_entity)
 
@@ -240,6 +244,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         state_class: SensorStateClass,
         device_class: SensorDeviceClass | None = None,
         unit_of_measurement: str | None = None,
+        device_id: str | None = None,
     ):
         """Initialize a sensor entity."""
         self.hass = hass
@@ -262,6 +267,11 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
 
         self._attr_should_poll = False
         self._set_translation_key()
+
+        self._attr_device_info = async_device_info_to_link_from_device_id(
+            hass,
+            device_id,
+        )
 
         self._time_window_active: bool = False
         self._condition_active: bool = False

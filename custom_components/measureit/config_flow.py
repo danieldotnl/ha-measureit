@@ -13,8 +13,9 @@ from croniter import croniter
 from homeassistant.components.sensor import CONF_STATE_CLASS
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import (CONF_DEVICE_CLASS, CONF_UNIQUE_ID,
-                                 CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE)
+from homeassistant.const import (CONF_DEVICE_CLASS, CONF_DEVICE_ID,
+                                 CONF_UNIQUE_ID, CONF_UNIT_OF_MEASUREMENT,
+                                 CONF_VALUE_TEMPLATE)
 from homeassistant.core import async_get_hass
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import config_validation as cv
@@ -269,6 +270,7 @@ async def validate_sensor_edit(
 
 MAIN_CONFIG = {
     vol.Required(CONF_CONFIG_NAME): selector.TextSelector(),
+    vol.Optional(CONF_DEVICE_ID): selector.DeviceSelector()
 }
 
 SENSOR_CONFIG = {
