@@ -3,15 +3,15 @@
     "step": {
       "user": {
         "title": "Vyberte si, čo chcete merať",
-        "description": "Ďakujeme, že ste nastavili MeasureIt! Ak potrebujete pomoc s konfiguráciou, pozrite sa sem: https://github.com/danieldotnl/ha-measureit.\nČas meria trvanie, zatiaľ čo podmienka (šablóna) je pravdivá. Zdroj bude merať zmeny hodnoty inej entity, pričom podmienka (šablóna) sa rovná true.",
+        "description": "Ďakujeme, že ste nastavili MeasureIt!\nAk potrebujete pomoc s konfiguráciou, pozrite si [readme](https://github.com/danieldotnl/ha-measureit) alebo položte otázku na [komunitnom fóre](https ://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).\n\nVyberte, čo chcete merať:\n** Čas:** Zmerajte uplynutý čas, kým sú splnené podmienky.\n**Zdroj:** Zmerajte zmeny stavu zdrojovej entity pri splnení podmienok.\n**Počítadlo:** Zmerajte, koľkokrát niečo ( popísané v šablóne), kým sú splnené podmienky.",
         "menu_options": {
           "time": "Čas",
-          "source": "Zdrojový snímač",
+          "source": "Zdroj",
           "count": "Počítadlo"
         }
       },
       "time": {
-        "title": "Konfigurácia merača času",
+        "title": "Konfigurácia merača času (čo)",
         "description": "Nakonfigurujte názov konfigurácie (používaný pre názvy snímačov a protokolovanie) a jednotku merania.",
         "data": {
           "config_name": "Názov konfigurácie"
@@ -47,9 +47,9 @@
         "title": "Nakonfigurujte obdobia na meranie",
         "description": "Vyberte periódy, ktoré chcete merať (keď sa glukomer vynuluje) a voliteľne zadajte ďalšie polia. Každá perióda sa stáva senzorom.",
         "data": {
-          "period": "Obdobia",
+          "periods": "Reset obdobia",
           "unit_of_measurement": "Jednotka merania",
-          "value_template": "Šablóna hodnoty (pre hodnotu senzora)",
+          "value_template": "Šablóna hodnoty",
           "state_class": "Trieda stavu",
           "device_class": "Trieda zariadenia"
         }
@@ -60,7 +60,8 @@
       }
     },
     "error": {
-      "tw_days_minimum": "Vyberte aspoň jeden deň na meranie."
+      "tw_days_minimum": "Vyberte aspoň jeden deň na meranie.",
+      "invalid_cron": "Jedno z období nie je platným cron výrazom."
     }
   },
   "options": {
@@ -75,7 +76,7 @@
         }
       },
       "add_sensors": {
-        "title": "Pridajte senzory",
+        "title": "Pridajte senzor(y)",
         "description": "Vyberte periódy, ktoré chcete merať (keď sa glukomer vynuluje) a voliteľne zadajte ďalšie polia. Každá perióda sa stáva senzorom.",
         "data": {
           "period": "Obdobia",
@@ -138,14 +139,25 @@
           "week": "Týždeň",
           "month": "Mesiac",
           "year": "Rok",
-          "noreset": "Manuálne/bez resetovania"
+          "noreset": "Manuálne/bez resetovania",
+          "session": "Po každej relácii"
       }
     }
   },
   "services": {
-    "reset": {
+    "calibrate": {
       "name": "Resetujte senzor MeasureIt",
       "description": "Resetujte senzor v danom čase. Ak nie je daný čas, snímač sa okamžite resetuje.",
+      "fields": {
+        "value": {
+          "name": "Hodnota",
+          "description": "Hodnota, na ktorú má byť senzor nastavený."
+        }
+      }
+    },
+    "reset": {
+      "name": "Resetovať senzor MeasureIt",
+      "description": "Resetujte jeden alebo viac senzorov MeasureIt v danom čase. Ak nie je daný čas, snímač sa okamžite resetuje.",
       "fields": {
         "reset_datetime": {
           "name": "Obnoviť dátum a čas",
