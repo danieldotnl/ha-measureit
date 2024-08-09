@@ -1,6 +1,8 @@
 """Test counter meter flow."""
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.measureit.const import DOMAIN, SensorState
@@ -196,3 +198,56 @@ async def test_continue_after_condition_entity_unavailable(
         assert state.state == "1"
 
     await unload_with_mock_config(hass, COUNTER_ENTRY)
+
+async def test_device_id(hass: HomeAssistant, device_registry: dr.DeviceRegistry, entity_registry: er.EntityRegistry):
+    """Test device_id is set correctly."""
+
+    device_config_entry = MockConfigEntry()
+    device_config_entry.add_to_hass(hass)
+    device_entry = device_registry.async_get_or_create(
+        config_entry_id=device_config_entry.entry_id,
+        identifiers={("sensor", "identifier_test")},
+        connections={("mac", "30:31:32:33:34:35")},
+        name="MyDevice",
+    )
+    await hass.async_block_till_done()
+    assert device_entry is not None
+    assert device_entry.id is not None
+
+    config_entry = MockConfigEntry(
+        data={},
+        domain=DOMAIN,
+        options=
+        {
+            "config_name": "test",
+            "meter_type": "counter",
+            "condition": "{{ is_state('switch.test_switch', 'on') }}",
+            "when_days": ["0", "1", "2", "3", "4", "5", "6"],
+            "counter_template": "{{ states('sensor.test_counter') | float % 2 == 0 }}",
+            "when_from": "00:00:00",
+            "when_till": "00:00:00",
+            "device_id": device_entry.id,
+            "sensor": [
+                {
+                    "unit_of_measurement": "s",
+                    "device_class": "duration",
+                    "state_class": "total",
+                    "unique_id": "ca0fce86-b6bb-11ee-923e-0242ac110002",
+                    "sensor_name": "hour",
+                    "cron": "0 * * * *",
+                    "period": "hour",
+                }
+            ],
+        },
+        title="My MeasureIt device link"
+    )
+
+    await setup_with_mock_config(hass, config_entry)
+
+    sensor = entity_registry.async_get("sensor.mydevice_test_hour")
+    assert sensor is not None
+    assert sensor.device_id == device_entry.id
+
+    await unload_with_mock_config(hass, config_entry)
+
+
