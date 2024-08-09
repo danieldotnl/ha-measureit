@@ -28,6 +28,9 @@
           "config_name": "Configuration name",
           "device_id": "Device",
           "source_entity": "Source entity"
+        },
+        "data_description": {
+          "device_id": "Select a device to link the sensor(s) to."
         }
       },
       "count": {
@@ -37,6 +40,9 @@
           "config_name": "Configuration name",
           "device_id": "Device",
           "counter_template": "Counter template:"
+        },
+        "data_description": {
+          "device_id": "Select a device to link the sensor(s) to."
         }
       },
       "when": {
