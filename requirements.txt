@@ -1,6 +1,6 @@
 colorlog==6.8.2
 pip>=24,<25
 ruff==0.5.7
-pytest-homeassistant-custom-component==0.13.152
+pytest-homeassistant-custom-component==0.13.153
 croniter==3.0.3
 isort==5.13.2
