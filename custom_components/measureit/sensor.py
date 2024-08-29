@@ -21,6 +21,7 @@ from homeassistant.const import (ATTR_ENTITY_ID, CONF_DEVICE_CLASS,
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform
+from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
@@ -93,18 +94,18 @@ async def async_setup_entry(
 
     platform.async_register_entity_service(
         "calibrate",
-        vol.Schema(
-            {
-                vol.Required(ATTR_ENTITY_ID): vol.All(cv.ensure_list, [cv.entity_id]),
-                vol.Required("value"): cv.Number
-            }
+        make_entity_service_schema(
+                {
+                    vol.Required(ATTR_ENTITY_ID): vol.All(cv.ensure_list, [cv.entity_id]),
+                    vol.Required("value"): cv.Number
+                }
         ),
         "calibrate",
     )
 
     platform.async_register_entity_service(
         "reset",
-        vol.Schema(
+        make_entity_service_schema(
             {
                 vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
                 vol.Optional("reset_datetime"): cv.datetime,
