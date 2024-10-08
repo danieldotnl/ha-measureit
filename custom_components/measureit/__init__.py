@@ -26,11 +26,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     meter_type: str = entry.options[CONF_METER_TYPE]
 
     if condition_template := entry.options.get(CONF_CONDITION):
-        condition_template = Template(condition_template)
+        condition_template = Template(condition_template, hass)
         condition_template.ensure_valid()
 
     if counter_template := entry.options.get(CONF_COUNTER_TEMPLATE):
-        counter_template = Template(counter_template)
+        counter_template = Template(counter_template, hass)
         counter_template.ensure_valid()
 
     source_entity = None
