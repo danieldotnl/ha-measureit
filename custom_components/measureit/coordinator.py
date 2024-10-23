@@ -135,7 +135,6 @@ class MeasureItCoordinator:
             sensor.on_time_window_change(time_window_active)
 
         if self._condition_template:
-            self._condition_template.hass = self.hass
             self._condition_template_listener = async_track_template_result(
                 self.hass,
                 [TrackTemplate(self._condition_template, None)],
@@ -153,7 +152,6 @@ class MeasureItCoordinator:
         if self._meter_type == MeterType.COUNTER:
             if not self._counter_template:
                 raise AssertionError("Counter template is required for counter meters.")
-            self._counter_template.hass = self.hass
             self._counter_template_listener = async_track_template(
                 self.hass,
                 self._counter_template,
