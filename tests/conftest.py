@@ -23,8 +23,7 @@ from homeassistant.config_entries import SOURCE_USER
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.measureit.const import (CONF_CONFIG_NAME,
-                                               CONF_METER_TYPE, DOMAIN)
+from custom_components.measureit.const import CONF_CONFIG_NAME, CONF_METER_TYPE, DOMAIN
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 
@@ -34,7 +33,7 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     """TODO."""
-    yield
+    return
 
 
 # This fixture is used to prevent HomeAssistant from attempting to create and dismiss persistent
@@ -43,15 +42,17 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 @pytest.fixture(name="skip_notifications", autouse=True)
 def skip_notifications_fixture():
     """Skip notification calls."""
-    with patch("homeassistant.components.persistent_notification.async_create"), patch(
-        "homeassistant.components.persistent_notification.async_dismiss"
+    with (
+        patch("homeassistant.components.persistent_notification.async_create"),
+        patch("homeassistant.components.persistent_notification.async_dismiss"),
     ):
         yield
 
 
 @pytest.fixture(name="get_time_config")
 async def get_time_config_to_integration_load() -> dict[str, Any]:
-    """Return default minimal time configuration.
+    """
+    Return default minimal time configuration.
 
     To override the config, tests can be marked with:
     @pytest.mark.parametrize("get_time_config", [{...}])

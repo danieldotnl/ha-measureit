@@ -11,10 +11,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 from custom_components.measureit.const import PREDEFINED_PERIODS, SensorState
-from custom_components.measureit.meter import (CounterMeter, SourceMeter,
-                                               TimeMeter)
-from custom_components.measureit.sensor import (MeasureItSensor,
-                                                MeasureItSensorStoredData)
+from custom_components.measureit.meter import CounterMeter, SourceMeter, TimeMeter
+from custom_components.measureit.sensor import (
+    MeasureItSensor,
+    MeasureItSensorStoredData,
+)
 
 
 @pytest.fixture(name="test_now")
@@ -48,6 +49,7 @@ def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
         yield sensor
         sensor.unsub_reset_listener()
 
+
 @pytest.fixture(name="month_sensor")
 def fixture_month_sensor(hass: HomeAssistant, test_now: datetime):
     """Fixture for creating a MeasureIt sensor which resets monthly."""
@@ -72,6 +74,7 @@ def fixture_month_sensor(hass: HomeAssistant, test_now: datetime):
         sensor.entity_id = "sensor.test_sensor_month"
         yield sensor
         sensor.unsub_reset_listener()
+
 
 @pytest.fixture(name="real_meter_sensor")
 def fixture_real_meter_sensor(hass: HomeAssistant, test_now: datetime):
@@ -164,6 +167,7 @@ def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
     assert day_sensor.state_class == SensorStateClass.TOTAL
     assert day_sensor.device_class == SensorDeviceClass.DURATION
 
+
 def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor initialization."""
     assert none_sensor.native_value == 0
@@ -192,6 +196,7 @@ def test_sensor_state_on_condition_timewindow_change(
     sensor.on_condition_template_change(True)
     assert sensor.sensor_state == SensorState.WAITING_FOR_TIME_WINDOW
     assert sensor.meter.measuring is False
+
 
 def test_scheduled_reset_in_past(day_sensor: MeasureItSensor, test_now: datetime):
     """Test sensor reset when scheduled in past."""
@@ -380,6 +385,7 @@ def test_restore_old_format_state_not_measuring():
     assert restored.meter_data["prev_measured_value"] == 180.00166988372803
     assert restored.meter_data["session_start_value"] == 1705914000.004058
 
+
 def test_restore_old_format_state_with_null_values():
     """Test sensor restore with old format."""
     data = {
@@ -413,12 +419,21 @@ async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
         hour=0, tzinfo=dt_util.DEFAULT_TIME_ZONE
     )
 
-async def test_added_to_hass_with_month_period(month_sensor: MeasureItSensor, test_now: datetime):
+
+async def test_added_to_hass_with_month_period(
+    month_sensor: MeasureItSensor, test_now: datetime
+):
     """Test sensor added to hass."""
     await month_sensor.async_added_to_hass()
     assert month_sensor._coordinator.async_register_sensor.call_count == 1
-    assert month_sensor._next_reset == datetime(2025, 2, 1, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
-    assert month_sensor.extra_state_attributes["sensor_next_reset"] == "2025-02-01T00:00:00-08:00"
+    assert month_sensor._next_reset == datetime(
+        2025, 2, 1, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+    assert (
+        month_sensor.extra_state_attributes["sensor_next_reset"]
+        == "2025-02-01T00:00:00-08:00"
+    )
+
 
 async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
     """Test sensor added to hass."""
@@ -451,94 +466,96 @@ def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
     stored_data = day_sensor.extra_restore_state_data
     assert stored_data.condition_active is False
 
-@pytest.mark.parametrize("input,expected,tz,cron",
-                            [
-                                (
-                                 datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 datetime(2024, 3, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 ZoneInfo("America/Los_Angeles"),
-                                 PREDEFINED_PERIODS["month"]
-                                ),
-                                (
-                                 datetime(2024, 3, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 datetime(2024, 4, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 ZoneInfo("America/Los_Angeles"),
-                                 PREDEFINED_PERIODS["month"]
-                                ), # start DST
-                                (
-                                 datetime(2024, 11, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 datetime(2024, 12, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 ZoneInfo("America/Los_Angeles"),
-                                 PREDEFINED_PERIODS["month"]
-                                ), # end DST
-                                (
-                                 datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 3, 1, 0, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["month"]
-                                ),
-                                (
-                                 datetime(2024, 3, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 4, 1, 0, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["month"]
-                                ), # start DST
-                                (
-                                 datetime(2024, 3, 10, 1, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 datetime(2024, 3, 10, 3, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 ZoneInfo("America/Los_Angeles"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 11, 3, 1, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 datetime(2024, 11, 3, 2, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 ZoneInfo("America/Los_Angeles"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 11, 3, 2, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 datetime(2024, 11, 3, 3, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
-                                 ZoneInfo("America/Los_Angeles"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 2, 2, 5, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 3, 31, 1, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 3, 31, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 3, 31, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 3, 31, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 10, 26, 1, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 10, 26, 2, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 10, 26, 2, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 10, 26, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                                (
-                                 datetime(2024, 10, 26, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 datetime(2024, 10, 26, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
-                                 ZoneInfo("Europe/Brussels"),
-                                 PREDEFINED_PERIODS["hour"]
-                                ),
-                            ]
-                         )
+
+@pytest.mark.parametrize(
+    "input,expected,tz,cron",
+    [
+        (
+            datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            datetime(2024, 3, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            ZoneInfo("America/Los_Angeles"),
+            PREDEFINED_PERIODS["month"],
+        ),
+        (
+            datetime(2024, 3, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            datetime(2024, 4, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            ZoneInfo("America/Los_Angeles"),
+            PREDEFINED_PERIODS["month"],
+        ),  # start DST
+        (
+            datetime(2024, 11, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            datetime(2024, 12, 1, 0, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            ZoneInfo("America/Los_Angeles"),
+            PREDEFINED_PERIODS["month"],
+        ),  # end DST
+        (
+            datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 3, 1, 0, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["month"],
+        ),
+        (
+            datetime(2024, 3, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 4, 1, 0, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["month"],
+        ),  # start DST
+        (
+            datetime(2024, 3, 10, 1, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            datetime(2024, 3, 10, 3, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            ZoneInfo("America/Los_Angeles"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 11, 3, 1, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            datetime(2024, 11, 3, 2, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            ZoneInfo("America/Los_Angeles"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 11, 3, 2, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            datetime(2024, 11, 3, 3, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
+            ZoneInfo("America/Los_Angeles"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 2, 2, 5, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 3, 31, 1, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 3, 31, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 3, 31, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 3, 31, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 10, 26, 1, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 10, 26, 2, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 10, 26, 2, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 10, 26, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+        (
+            datetime(2024, 10, 26, 3, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            datetime(2024, 10, 26, 4, 0, tzinfo=ZoneInfo("Europe/Brussels")),
+            ZoneInfo("Europe/Brussels"),
+            PREDEFINED_PERIODS["hour"],
+        ),
+    ],
+)
 def test_next_reset_with_dst(hass: HomeAssistant, input, expected, tz, cron):
     """Test next reset for hour period with DST."""
     with mock.patch(
@@ -561,6 +578,3 @@ def test_next_reset_with_dst(hass: HomeAssistant, input, expected, tz, cron):
         sensor.schedule_next_reset()
         assert sensor._next_reset == expected
         sensor.unsub_reset_listener()
-
-
-

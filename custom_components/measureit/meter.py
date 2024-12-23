@@ -39,23 +39,23 @@ class MeasureItMeter:
 
     def start(self):
         """Start the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def stop(self):
         """Stop the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def update(self, value: Decimal | None = None):
         """Update the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def calibrate(self, value: Decimal):
         """Calibrate the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def reset(self):
         """Reset the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def to_dict(self) -> dict:
         """Return the meter as a dictionary."""
@@ -100,8 +100,9 @@ class CounterMeter(MeasureItMeter):
 
     def reset(self):
         """Reset the meter."""
-        self._prev_measured_value, self._measured_value = self._measured_value, Decimal(
-            0
+        self._prev_measured_value, self._measured_value = (
+            self._measured_value,
+            Decimal(0),
         )
 
 

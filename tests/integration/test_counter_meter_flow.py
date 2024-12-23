@@ -50,7 +50,6 @@ COUNTER_ENTRY = MockConfigEntry(
 
 async def test_counter_meter_setup(hass: HomeAssistant):
     """Test MeasureIt setup."""
-
     await setup_with_mock_config(hass, COUNTER_ENTRY)
 
     expected_sensors = ["sensor.test_hour", "sensor.test_day", "sensor.test_week"]
@@ -138,6 +137,7 @@ async def test_counter_should_not_count_positive_template_on_startup(
         assert state
         assert state.state == "1"
 
+
 async def test_counter_calibrate(hass: HomeAssistant):
     """Test calibration of counter meter."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
@@ -157,7 +157,6 @@ async def test_counter_calibrate(hass: HomeAssistant):
         assert state
         assert state.state == "0"
 
-
     hass.states.async_set("sensor.test_counter", "6")
     await hass.async_block_till_done()
 
@@ -168,7 +167,9 @@ async def test_counter_calibrate(hass: HomeAssistant):
         assert state
         assert state.state == "1"
 
-    await hass.services.async_call(DOMAIN, "calibrate", {"entity_id": sensor, "value": 100})
+    await hass.services.async_call(
+        DOMAIN, "calibrate", {"entity_id": sensor, "value": 100}
+    )
     await hass.async_block_till_done()
 
     state = hass.states.get(sensor)
@@ -191,6 +192,3 @@ async def test_counter_calibrate(hass: HomeAssistant):
         state = hass.states.get(entity_id)
         assert state
         assert state.state == "2"
-
-
-

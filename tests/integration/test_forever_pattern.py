@@ -31,7 +31,6 @@ FOREVER_ENTRY = MockConfigEntry(
 
 async def test_noreset_meter_setup(hass: HomeAssistant):
     """Test MeasureIt setup."""
-
     await setup_with_mock_config(hass, FOREVER_ENTRY)
 
     sensor = "sensor.test_noreset"

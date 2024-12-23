@@ -8,12 +8,17 @@ from homeassistant.const import CONF_DEVICE_CLASS, CONF_UNIT_OF_MEASUREMENT
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.measureit.const import (CONF_CONDITION,
-                                               CONF_CONFIG_NAME,
-                                               CONF_COUNTER_TEMPLATE,
-                                               CONF_PERIODS, CONF_STATE_CLASS,
-                                               CONF_TW_DAYS, CONF_TW_FROM,
-                                               CONF_TW_TILL, DOMAIN)
+from custom_components.measureit.const import (
+    CONF_CONDITION,
+    CONF_CONFIG_NAME,
+    CONF_COUNTER_TEMPLATE,
+    CONF_PERIODS,
+    CONF_STATE_CLASS,
+    CONF_TW_DAYS,
+    CONF_TW_FROM,
+    CONF_TW_TILL,
+    DOMAIN,
+)
 
 
 # This fixture bypasses the actual setup of the integration
@@ -165,7 +170,6 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
 
 async def test_flow_with_errors(hass: HomeAssistant) -> None:
     """Test flow with input that doesn't validate."""
-
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )

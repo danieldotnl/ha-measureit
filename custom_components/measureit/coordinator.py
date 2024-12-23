@@ -11,13 +11,15 @@ from typing import Any
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import TemplateError
-from homeassistant.helpers.event import (TrackTemplate,
-                                         TrackTemplateResultInfo,
-                                         async_track_point_in_time,
-                                         async_track_point_in_utc_time,
-                                         async_track_state_change_event,
-                                         async_track_template,
-                                         async_track_template_result)
+from homeassistant.helpers.event import (
+    TrackTemplate,
+    TrackTemplateResultInfo,
+    async_track_point_in_time,
+    async_track_point_in_utc_time,
+    async_track_state_change_event,
+    async_track_template,
+    async_track_template_result,
+)
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
@@ -118,7 +120,7 @@ class MeasureItCoordinator:
                     "%s # Could not convert source state to a number: %s. Make sure the source sensor is available and numeric. We cannot start measuring until the source entity has a valid state.",
                     self._config_name,
                     source_state,
-                    exc_info=True
+                    exc_info=True,
                 )
 
         if self._time_window.always_active:
@@ -215,8 +217,12 @@ class MeasureItCoordinator:
     @callback
     def async_on_source_entity_state_change(self, event):
         """Handle changes in the source entity state."""
-        old_state = event.data.get("old_state").state if event.data.get("old_state") else None
-        new_state = event.data.get("new_state").state if event.data.get("new_state") else None
+        old_state = (
+            event.data.get("old_state").state if event.data.get("old_state") else None
+        )
+        new_state = (
+            event.data.get("new_state").state if event.data.get("new_state") else None
+        )
         _LOGGER.debug(
             "%s # Source (%s) state changed, old: %s, new: %s",
             self._config_name,
@@ -241,7 +247,7 @@ class MeasureItCoordinator:
                 "%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.",
                 self._config_name,
                 new_state,
-                exc_info=True
+                exc_info=True,
             )
 
     @callback
@@ -261,7 +267,6 @@ class MeasureItCoordinator:
     @callback
     def async_on_heartbeat(self, now: datetime | None = None):
         """Configure the coordinator heartbeat."""
-
         for sensor in self._sensors.values():
             sensor.on_value_change()
 

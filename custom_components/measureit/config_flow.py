@@ -10,26 +10,51 @@ from typing import Any
 
 import voluptuous as vol
 from croniter import croniter
-from homeassistant.components.sensor import CONF_STATE_CLASS
+from homeassistant.components.sensor import (
+    CONF_STATE_CLASS,
+    SensorDeviceClass,
+    SensorStateClass,
+)
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import (CONF_DEVICE_CLASS, CONF_UNIQUE_ID,
-                                 CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE)
+from homeassistant.const import (
+    CONF_DEVICE_CLASS,
+    CONF_UNIQUE_ID,
+    CONF_UNIT_OF_MEASUREMENT,
+    CONF_VALUE_TEMPLATE,
+)
 from homeassistant.core import async_get_hass
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
-    SchemaCommonFlowHandler, SchemaConfigFlowHandler, SchemaFlowError,
-    SchemaFlowFormStep, SchemaFlowMenuStep)
+    SchemaCommonFlowHandler,
+    SchemaConfigFlowHandler,
+    SchemaFlowError,
+    SchemaFlowFormStep,
+    SchemaFlowMenuStep,
+)
 from homeassistant.helpers.template import Template
 
-from .const import (CONF_CONDITION, CONF_CONFIG_NAME, CONF_COUNTER_TEMPLATE,
-                    CONF_CRON, CONF_INDEX, CONF_METER_TYPE, CONF_PERIOD,
-                    CONF_PERIODS, CONF_SENSOR_NAME, CONF_SOURCE, CONF_TW_DAYS,
-                    CONF_TW_FROM, CONF_TW_TILL, DOMAIN, LOGGER,
-                    PREDEFINED_PERIODS, MeterType)
+from .const import (
+    CONF_CONDITION,
+    CONF_CONFIG_NAME,
+    CONF_COUNTER_TEMPLATE,
+    CONF_CRON,
+    CONF_INDEX,
+    CONF_METER_TYPE,
+    CONF_PERIOD,
+    CONF_PERIODS,
+    CONF_SENSOR_NAME,
+    CONF_SOURCE,
+    CONF_TW_DAYS,
+    CONF_TW_FROM,
+    CONF_TW_TILL,
+    DOMAIN,
+    LOGGER,
+    PREDEFINED_PERIODS,
+    MeterType,
+)
 
 PERIOD_OPTIONS = [
     # selector.SelectOptionDict(value="none", label="none (no reset)"),
@@ -73,7 +98,6 @@ async def validate_sensor_setup(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Validate sensor input."""
-
     # Standard behavior is to merge the result with the options.
     # In this case, we want to add a sub-item so we update the options directly.
     sensors: list[dict[str, Any]] = handler.options.setdefault(SENSOR_DOMAIN, [])
@@ -96,11 +120,13 @@ async def validate_sensor_setup(
 
     return {}
 
+
 def get_cron_expression(period: str) -> str:
     """Get cron expression ."""
     if period in PREDEFINED_PERIODS:
         return PREDEFINED_PERIODS[period]
     return period
+
 
 def validate_period(period: str) -> str:
     """Validate period input."""
@@ -252,12 +278,16 @@ async def validate_sensor_edit(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Update edited sensor."""
-
     # Standard behavior is to merge the result with the options.
     # In this case, we want to add a sub-item so we update the options directly.
     idx: int = handler.flow_state["_idx"]
-    if handler.options[SENSOR_DOMAIN][idx].get(CONF_UNIT_OF_MEASUREMENT) != user_input.get(CONF_UNIT_OF_MEASUREMENT):
-        if handler.options[SENSOR_DOMAIN][idx].get(CONF_DEVICE_CLASS) and user_input.get(CONF_DEVICE_CLASS) is not None:
+    if handler.options[SENSOR_DOMAIN][idx].get(
+        CONF_UNIT_OF_MEASUREMENT
+    ) != user_input.get(CONF_UNIT_OF_MEASUREMENT):
+        if (
+            handler.options[SENSOR_DOMAIN][idx].get(CONF_DEVICE_CLASS)
+            and user_input.get(CONF_DEVICE_CLASS) is not None
+        ):
             raise SchemaFlowError("uom_with_device_class_update")
     handler.options[SENSOR_DOMAIN][idx].update(user_input)
     for key in DATA_SCHEMA_EDIT_SENSOR.schema:
@@ -308,7 +338,7 @@ SENSORS_CONFIG = {
             translation_key="period_selector",
             options=PERIOD_OPTIONS,
             multiple=True,
-            custom_value=True
+            custom_value=True,
         )
     ),
     **SENSOR_CONFIG,

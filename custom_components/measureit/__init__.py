@@ -9,17 +9,27 @@ from homeassistant.core import CoreState, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.template import Template
 
-from .const import (CONF_CONDITION, CONF_CONFIG_NAME, CONF_COUNTER_TEMPLATE,
-                    CONF_METER_TYPE, CONF_SOURCE, CONF_TW_DAYS, CONF_TW_FROM,
-                    CONF_TW_TILL, COORDINATOR, DOMAIN_DATA, MeterType)
+from .const import (
+    CONF_CONDITION,
+    CONF_CONFIG_NAME,
+    CONF_COUNTER_TEMPLATE,
+    CONF_METER_TYPE,
+    CONF_SOURCE,
+    CONF_TW_DAYS,
+    CONF_TW_FROM,
+    CONF_TW_TILL,
+    COORDINATOR,
+    DOMAIN_DATA,
+    MeterType,
+)
 from .coordinator import MeasureItCoordinator
 from .time_window import TimeWindow
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
-
     _LOGGER.debug("Config entry:\n%s", entry.options)
 
     config_name: str = entry.options[CONF_CONFIG_NAME]

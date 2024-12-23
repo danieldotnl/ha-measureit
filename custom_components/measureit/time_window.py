@@ -1,6 +1,6 @@
 """Time window class for active check and next change time."""
 
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 
 
 class TimeWindow:
@@ -55,12 +55,10 @@ class TimeWindow:
         if self._start < self._end:
             if check_time >= self._start and check_time < self._end:
                 return tznow.weekday() in self._days
-        else:  # crosses midnight
-            if check_time >= self._start or check_time <= self._end:
-                if check_time < self._start:
-                    return prev_weekday(tznow.weekday()) in self._days
-                else:
-                    return tznow.weekday() in self._days
+        elif check_time >= self._start or check_time <= self._end:
+            if check_time < self._start:
+                return prev_weekday(tznow.weekday()) in self._days
+            return tznow.weekday() in self._days
         return False
 
     def next_change(self, tznow: datetime) -> datetime:
@@ -74,20 +72,17 @@ class TimeWindow:
             if tznow.time() < self._end:
                 # End time is today
                 return datetime.combine(tznow.date(), self._end, tznow.tzinfo)
-            else:
-                # End time is tomorrow
-                return datetime.combine(
-                    tznow.date() + timedelta(days=1), self._end, tznow.tzinfo
-                )
-        else:
-            # If currently inactive, find the start time today or the next active day
-            if tznow.time() < self._start and tznow.weekday() in self._days:
-                # Start time is today
-                return datetime.combine(tznow.date(), self._start, tznow.tzinfo)
-            else:
-                # Find the next active day
-                next_active_date = self._find_next_active_day(tznow)
-                return datetime.combine(next_active_date, self._start, tznow.tzinfo)
+            # End time is tomorrow
+            return datetime.combine(
+                tznow.date() + timedelta(days=1), self._end, tznow.tzinfo
+            )
+        # If currently inactive, find the start time today or the next active day
+        if tznow.time() < self._start and tznow.weekday() in self._days:
+            # Start time is today
+            return datetime.combine(tznow.date(), self._start, tznow.tzinfo)
+        # Find the next active day
+        next_active_date = self._find_next_active_day(tznow)
+        return datetime.combine(next_active_date, self._start, tznow.tzinfo)
 
     def _find_next_active_day(self, tznow: datetime):
         """Find the next active day."""
