@@ -45,7 +45,6 @@ from .const import (
     CONF_STATE_CLASS,
     COORDINATOR,
     DOMAIN_DATA,
-    EVENT_TYPE_RESET,
     MeterType,
     SensorState,
 )
@@ -54,7 +53,7 @@ from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -62,7 +61,7 @@ if TYPE_CHECKING:
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
-def validate_is_number(value) -> bool:
+def validate_is_number(value: Any) -> bool:
     """Validate value is a number."""
     if is_number(value):
         return value

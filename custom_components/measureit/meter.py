@@ -228,7 +228,7 @@ class TimeMeter(MeasureItMeter):
         self._session_total = self.get_timestamp() - self._session_start_value
         self._measured_value = self._session_start_measured_value + self._session_total
 
-    def update(self, value: Decimal | None = None) -> None:
+    def update(self, value: Decimal | None = None) -> None:  # noqa: ARG002
         """Update the meter."""
         if self._measuring:
             self._session_total = self.get_timestamp() - self._session_start_value

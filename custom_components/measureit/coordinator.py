@@ -1,4 +1,8 @@
-"""Custom coordinator (not derived from the core DataUpdateCoordinator) for the MeasureIt component."""
+"""
+Custom coordinator for the MeasureIt component.
+
+Note that this coordinator is not derived from the core DataUpdateCoordinator.
+"""
 
 from __future__ import annotations
 
@@ -8,10 +12,11 @@ from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant, State, callback
 from homeassistant.exceptions import TemplateError
 from homeassistant.helpers.event import (
     TrackTemplate,
+    TrackTemplateResult,
     TrackTemplateResultInfo,
     async_track_point_in_time,
     async_track_point_in_utc_time,
@@ -37,7 +42,7 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 class MeasureItCoordinator:
     """MeasureIt Coordinator."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         hass: HomeAssistant,
         config_name: str,
@@ -68,7 +73,7 @@ class MeasureItCoordinator:
         self._sensors: dict[Callable, MeasureItCoordinatorEntity] = {}
         self._time_window_listener: Callable | None = None
         self._condition_template_listener: TrackTemplateResultInfo | None = None
-        self._counter_template_listener: TrackTemplateResultInfo | None = None
+        self._counter_template_listener: Callable | None = None
         self._source_entity_update_listener: Callable | None = None
         self._heartbeat_listener: Callable | None = None
 
@@ -78,7 +83,9 @@ class MeasureItCoordinator:
         return self._source_entity
 
     @callback
-    def async_register_sensor(self, sensor: MeasureItCoordinatorEntity):
+    def async_register_sensor(
+        self, sensor: MeasureItCoordinatorEntity
+    ) -> Callable[[], None]:
         """Register a sensor with the coordinator."""
 
         @callback
@@ -109,11 +116,13 @@ class MeasureItCoordinator:
                 self._source_entity,
                 self.async_on_source_entity_state_change,
             )
-            # Update once on startup to get the initial state. After that we're tracking state changes and receive events
+            # Update once on startup to get the initial state.
+            # After that we're tracking state changes and receive events
             source_state = self._get_sensor_state(self._source_entity)
             if source_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
                 _LOGGER.warning(
-                    "%s # Source (%s) state is unknown or unavailable. We cannot start measuring until the source entity has a valid state.",
+                    """%s # Source (%s) state is unknown or unavailable. We cannot start
+                     measuring until the source entity has a valid state.""",
                     self._config_name,
                     self._source_entity,
                 )
@@ -124,7 +133,9 @@ class MeasureItCoordinator:
                     sensor.on_value_change(new_state)
             except (InvalidOperation, TypeError):
                 _LOGGER.warning(
-                    "%s # Could not convert source state to a number: %s. Make sure the source sensor is available and numeric. We cannot start measuring until the source entity has a valid state.",
+                    """%s # Could not convert source state to a number: %s. Make sure
+                     the source sensor is available and numeric. We cannot start
+                     measuring until the source entity has a valid state.""",
                     self._config_name,
                     source_state,
                     exc_info=True,
@@ -152,7 +163,8 @@ class MeasureItCoordinator:
             self._condition_template_listener.async_refresh()
         else:
             _LOGGER.debug(
-                "%s # No condition template in configuration so we set the condition to True.",
+                """%s # No condition template in configuration
+                 so we set the condition to True.""",
                 self._config_name,
             )
             for sensor in self._sensors.values():
@@ -205,13 +217,18 @@ class MeasureItCoordinator:
         )
 
     @callback
-    def async_on_condition_template_update(self, event, updates) -> None:
+    def async_on_condition_template_update(
+        self,
+        event: Event,  # noqa: ARG002
+        updates: list[TrackTemplateResult],
+    ) -> None:
         """Handle changes in the condition template."""
         result = updates.pop().result
 
         if isinstance(result, TemplateError):
             _LOGGER.error(
-                "%s # Encountered a template error: %s. Could not start or stop measuring!",
+                """%s # Encountered a template error: %s.
+                 Could not start or stop measuring!""",
                 self._config_name,
                 result,
             )
@@ -223,7 +240,7 @@ class MeasureItCoordinator:
                 sensor.on_condition_template_change(active=bool(result))
 
     @callback
-    def async_on_source_entity_state_change(self, event) -> None:
+    def async_on_source_entity_state_change(self, event: Event) -> None:
         """Handle changes in the source entity state."""
         old_state = (
             event.data.get("old_state").state if event.data.get("old_state") else None
@@ -240,7 +257,8 @@ class MeasureItCoordinator:
         )
         if new_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
             _LOGGER.warning(
-                "%s # Source (%s) state changed to unknown or unavailable. We cannot update the sensors.",
+                """%s # Source (%s) state changed to unknown or unavailable.
+                We cannot update the sensors.""",
                 self._config_name,
                 self._source_entity,
             )
@@ -252,14 +270,17 @@ class MeasureItCoordinator:
                 sensor.on_value_change(new_state)
         except (InvalidOperation, TypeError):
             _LOGGER.warning(
-                "%s # Could not convert source state to a number: %s. Make sure the source sensor is numeric.",
+                """%s # Could not convert source state to a number: %s.
+                 Make sure the source sensor is numeric.""",
                 self._config_name,
                 new_state,
                 exc_info=True,
             )
 
     @callback
-    def async_on_counter_template_update(self, entity_id, old_state, new_state) -> None:
+    def async_on_counter_template_update(
+        self, entity_id: str, old_state: State | None, new_state: State | None
+    ) -> None:
         """Handle changes in the counter template."""
         # this function is only called when the counter template became True
         _LOGGER.debug(
@@ -273,7 +294,7 @@ class MeasureItCoordinator:
             sensor.on_value_change(Decimal(1))
 
     @callback
-    def async_on_heartbeat(self, now: datetime | None = None) -> None:
+    def async_on_heartbeat(self, now: datetime | None = None) -> None:  # noqa: ARG002
         """Configure the coordinator heartbeat."""
         for sensor in self._sensors.values():
             sensor.on_value_change()

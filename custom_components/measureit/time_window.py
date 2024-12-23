@@ -21,8 +21,8 @@ class TimeWindow:
                 msg = "Invalid day provided."
                 raise ValueError(msg)
 
-        self._start = datetime.strptime(from_time, "%H:%M:%S").time()
-        self._end = datetime.strptime(till_time, "%H:%M:%S").time()
+        self._start = datetime.strptime(from_time, "%H:%M:%S").time()  # noqa: DTZ007
+        self._end = datetime.strptime(till_time, "%H:%M:%S").time()  # noqa: DTZ007
 
         self._always_active = (
             len(self._days) == 7
