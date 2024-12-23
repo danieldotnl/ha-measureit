@@ -29,6 +29,7 @@ from homeassistant.helpers import entity_platform
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
+from homeassistant.helpers.template import is_number
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -53,12 +54,20 @@ from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
+
+
+def validate_is_number(value) -> bool:
+    """Validate value is a number."""
+    if is_number(value):
+        return value
+    msg = "Value is not a number"
+    raise vol.Invalid(msg)
 
 
 async def async_setup_entry(
@@ -125,7 +134,7 @@ async def async_setup_entry(
         make_entity_service_schema(
             {
                 vol.Required(ATTR_ENTITY_ID): vol.All(cv.ensure_list, [cv.entity_id]),
-                vol.Required("value"): cv.Number,
+                vol.Required("value"): validate_is_number,
             }
         ),
         "calibrate",
@@ -249,7 +258,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         hass: HomeAssistant,
         coordinator: MeasureItCoordinator,
@@ -257,7 +266,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         unique_id: str,
         sensor_name: str,
         reset_pattern: str | None,
-        value_template_renderer,
+        value_template_renderer: Callable[[Any], Any],
         state_class: SensorStateClass,
         device_class: SensorDeviceClass | None = None,
         unit_of_measurement: str | None = None,
@@ -311,26 +320,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self.async_on_remove(self._coordinator.async_register_sensor(self))
         self.async_on_remove(self.unsub_reset_listener)
 
-        @callback
-        def event_filter(event_data: Mapping[str, Any] | Event):
-            """Filter events."""
-            # Breaking change in 2024.4.0, check for Event for versions prior to this
-            if (
-                type(event_data) is Event
-            ):  # Intentionally avoid `isinstance` because it's slow and we trust `Event` is not subclassed
-                event_data = event_data.data
-            return self.entity_id in event_data.get(ATTR_ENTITY_ID)
-
-        @callback
-        def on_reset_event(event) -> None:
-            self.schedule_next_reset(event.data.get("reset_datetime"))
-
-        self.async_on_remove(
-            self.hass.bus.async_listen(EVENT_TYPE_RESET, on_reset_event, event_filter)
-        )
-
     @callback
-    def calibrate(self, value) -> None:
+    def calibrate(self, value: Decimal) -> None:
         """Calibrate the meter with a given value."""
         _LOGGER.info("%s # Calibrate with value: %s", self._attr_name, value)
         self.meter.calibrate(Decimal(value))
@@ -391,8 +382,9 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         """Return the state attributes."""
         attributes = {
             ATTR_STATUS: self.sensor_state,
-            ATTR_PREV: str(  # strange things happen when we parse this one as a Decimal...
+            ATTR_PREV: str(
                 self._value_template_renderer(self.meter.prev_measured_value)
+                # strange things happen when we parse this one as a Decimal...
             ),
             ATTR_LAST_RESET: self._last_reset.isoformat(timespec="seconds")
             if self._last_reset
@@ -406,7 +398,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         return attributes
 
     @callback
-    def reset(self, event=None) -> None:
+    def reset(self, event: Event | None = None) -> None:  # noqa: ARG002
         """Reset the sensor."""
         reset_datetime = dt_util.now()
         _LOGGER.info("Resetting sensor %s at %s", self._attr_name, reset_datetime)
@@ -443,7 +435,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
                 "none",
                 "session",
             ]:
-                # we have a known issue with croniter that does not correctly determine the end of the month/week reset when DST is involved
+                # we have a known issue with croniter that does not correctly determine
+                #  the end of the month/week reset when DST is involved
                 # https://github.com/kiorky/croniter/issues/1
                 next_reset = dt_util.as_local(
                     croniter(self._reset_pattern, tznow.replace(tzinfo=None)).get_next(
