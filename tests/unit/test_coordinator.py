@@ -11,7 +11,9 @@ from homeassistant.util import dt as dt_util
 
 from custom_components.measureit.const import MeterType
 from custom_components.measureit.coordinator import (
-    MeasureItCoordinator, MeasureItCoordinatorEntity)
+    MeasureItCoordinator,
+    MeasureItCoordinatorEntity,
+)
 from custom_components.measureit.time_window import TimeWindow
 
 
@@ -67,15 +69,15 @@ def test_call_multiple_registered_sensors(coordinator: MeasureItCoordinator):
 
     assert len(coordinator._sensors) == 2
     for sensor in coordinator._sensors.values():
-        sensor.on_condition_template_change(True)
-    entity.on_condition_template_change.assert_called_with(True)
-    entity2.on_condition_template_change.assert_called_with(True)
+        sensor.on_condition_template_change(active=True)
+    entity.on_condition_template_change.assert_called_with(active=True)
+    entity2.on_condition_template_change.assert_called_with(active=True)
 
     unregister()
     assert len(coordinator._sensors) == 1
     for sensor in coordinator._sensors.values():
-        sensor.on_condition_template_change(True)
-    entity2.on_condition_template_change.assert_called_with(True)
+        sensor.on_condition_template_change(active=True)
+    entity2.on_condition_template_change.assert_called_with(active=True)
 
 
 def test_async_on_time_window_active_change(coordinator: MeasureItCoordinator):
@@ -87,7 +89,7 @@ def test_async_on_time_window_active_change(coordinator: MeasureItCoordinator):
     coordinator.async_on_time_window_active_change(
         datetime(2022, 1, 1, 10, 30, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     )
-    entity.on_time_window_change.assert_called_with(False)
+    entity.on_time_window_change.assert_called_with(active=False)
     assert coordinator._time_window_listener is not None
 
 
@@ -99,7 +101,7 @@ def test_async_on_condition_template_update(coordinator: MeasureItCoordinator):
     mockTrackTemplateResultInfo = MagicMock()
     mockTrackTemplateResultInfo.result = False
     coordinator.async_on_condition_template_update(None, [mockTrackTemplateResultInfo])
-    entity.on_condition_template_change.assert_called_with(False)
+    entity.on_condition_template_change.assert_called_with(active=False)
 
 
 # rewrite this using propertymock
@@ -160,7 +162,9 @@ def test_async_on_counter_template_update_becomes_true(
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
     coordinator.async_register_sensor(entity)
-    coordinator.async_on_counter_template_update("mock", StateMock(False), StateMock(True))
+    coordinator.async_on_counter_template_update(
+        "mock", StateMock(False), StateMock(True)
+    )
     entity.on_value_change.assert_called_with(1)
 
 

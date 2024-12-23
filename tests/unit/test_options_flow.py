@@ -9,8 +9,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.measureit.const import (CONF_CONFIG_NAME, CONF_INDEX,
-                                               CONF_SENSOR_NAME, DOMAIN)
+from custom_components.measureit.const import (
+    CONF_CONFIG_NAME,
+    CONF_INDEX,
+    CONF_SENSOR_NAME,
+    DOMAIN,
+)
 
 
 # This fixture bypasses the actual setup of the integration
@@ -107,9 +111,13 @@ async def test_edit_sensor_uom_with_device_class(
     # Fill config name
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        user_input={CONF_SENSOR_NAME: "day", CONF_UNIT_OF_MEASUREMENT: "h", CONF_DEVICE_CLASS: "duration"},
+        user_input={
+            CONF_SENSOR_NAME: "day",
+            CONF_UNIT_OF_MEASUREMENT: "h",
+            CONF_DEVICE_CLASS: "duration",
+        },
     )
 
-    assert result["errors"] == {'base': 'uom_with_device_class_update'}
+    assert result["errors"] == {"base": "uom_with_device_class_update"}
     assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
     assert result["step_id"] == "edit_sensor"

@@ -2,8 +2,9 @@
 
 from datetime import datetime
 
-from homeassistant.util import dt as dt_util
 import pytest
+from homeassistant.util import dt as dt_util
+
 from custom_components.measureit.time_window import TimeWindow
 
 TZ = dt_util.DEFAULT_TIME_ZONE
