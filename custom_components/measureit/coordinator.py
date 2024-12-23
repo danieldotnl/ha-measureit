@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, callback
@@ -20,11 +19,16 @@ from homeassistant.helpers.event import (
     async_track_template,
     async_track_template_result,
 )
-from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
 from .const import MeterType
-from .time_window import TimeWindow
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from homeassistant.helpers.template import Template
+
+    from .time_window import TimeWindow
 
 UPDATE_INTERVAL = timedelta(minutes=1)
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -48,11 +52,13 @@ class MeasureItCoordinator:
         self._config_name: str = config_name
 
         if meter_type is None:
-            raise ValueError("Meter type must be provided.")
+            msg = "Meter type must be provided."
+            raise ValueError(msg)
         self._meter_type: MeterType = meter_type
 
         if time_window is None:
-            raise ValueError("Time window must be provided.")
+            msg = "Time window must be provided."
+            raise ValueError(msg)
         self._time_window: TimeWindow = time_window
 
         self._condition_template: Template | None = condition_template
@@ -90,13 +96,14 @@ class MeasureItCoordinator:
             return state.state
         return None
 
-    def start(self):
+    def start(self) -> None:
         """Start the coordinator."""
         tznow = dt_util.now()
 
         if self._meter_type == MeterType.SOURCE:
             if not self._source_entity:
-                raise AssertionError("Source entity is required for source meters.")
+                msg = "Source entity is required for source meters."
+                raise AssertionError(msg)
             self._source_entity_update_listener = async_track_state_change_event(
                 self.hass,
                 self._source_entity,
@@ -153,7 +160,8 @@ class MeasureItCoordinator:
 
         if self._meter_type == MeterType.COUNTER:
             if not self._counter_template:
-                raise AssertionError("Counter template is required for counter meters.")
+                msg = "Counter template is required for counter meters."
+                raise AssertionError(msg)
             self._counter_template_listener = async_track_template(
                 self.hass,
                 self._counter_template,
@@ -163,7 +171,7 @@ class MeasureItCoordinator:
         if self._meter_type == MeterType.TIME:
             self.async_on_heartbeat()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the coordinator."""
         _LOGGER.debug("Stopping coordinator")
         if self._time_window_listener:
@@ -178,7 +186,7 @@ class MeasureItCoordinator:
             self._source_entity_update_listener()
 
     @callback
-    def async_on_time_window_active_change(self, now: datetime):
+    def async_on_time_window_active_change(self, now: datetime) -> None:
         """Check if the time window is active and update the listeners."""
         _LOGGER.debug(
             "%s # Time window active change triggered at: %s. Next change: %s",
@@ -197,7 +205,7 @@ class MeasureItCoordinator:
         )
 
     @callback
-    def async_on_condition_template_update(self, event, updates):
+    def async_on_condition_template_update(self, event, updates) -> None:
         """Handle changes in the condition template."""
         result = updates.pop().result
 
@@ -215,7 +223,7 @@ class MeasureItCoordinator:
                 sensor.on_condition_template_change(active=bool(result))
 
     @callback
-    def async_on_source_entity_state_change(self, event):
+    def async_on_source_entity_state_change(self, event) -> None:
         """Handle changes in the source entity state."""
         old_state = (
             event.data.get("old_state").state if event.data.get("old_state") else None
@@ -251,7 +259,7 @@ class MeasureItCoordinator:
             )
 
     @callback
-    def async_on_counter_template_update(self, entity_id, old_state, new_state):
+    def async_on_counter_template_update(self, entity_id, old_state, new_state) -> None:
         """Handle changes in the counter template."""
         # this function is only called when the counter template became True
         _LOGGER.debug(
@@ -265,7 +273,7 @@ class MeasureItCoordinator:
             sensor.on_value_change(Decimal(1))
 
     @callback
-    def async_on_heartbeat(self, now: datetime | None = None):
+    def async_on_heartbeat(self, now: datetime | None = None) -> None:
         """Configure the coordinator heartbeat."""
         for sensor in self._sensors.values():
             sensor.on_value_change()

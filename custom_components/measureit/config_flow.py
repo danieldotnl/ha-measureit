@@ -5,8 +5,7 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from croniter import croniter
@@ -56,6 +55,9 @@ from .const import (
     PREDEFINED_PERIODS,
     MeterType,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 PERIOD_OPTIONS = [
     selector.SelectOptionDict(value="hour", label="hour"),

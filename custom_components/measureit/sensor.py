@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from croniter import croniter
@@ -17,7 +16,6 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_DEVICE_CLASS,
@@ -29,7 +27,6 @@ from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.config_validation import make_entity_service_schema
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
 from homeassistant.util import dt as dt_util
@@ -54,6 +51,12 @@ from .const import (
 from .coordinator import MeasureItCoordinator, MeasureItCoordinatorEntity
 from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -96,7 +99,8 @@ async def async_setup_entry(
             )
         else:
             _LOGGER.error("%s # Invalid meter type: %s", config_name, meter_type)
-            raise ValueError(f"Invalid meter type: {meter_type}")
+            msg = f"Invalid meter type: {meter_type}"
+            raise ValueError(msg)
 
         sensor_entity = MeasureItSensor(
             hass,
@@ -168,14 +172,13 @@ class MeasureItSensorStoredData(ExtraStoredData):
         """Return a dict representation of the meter data."""
         _LOGGER.debug("Persisting meter data")
 
-        data = {
+        return {
             "meter_data": self.meter_data,
             "time_window_active": self.time_window_active,
             "active": self.active,
             "last_reset": self.last_reset.isoformat() if self.last_reset else None,
             "next_reset": self.next_reset.isoformat() if self.next_reset else None,
         }
-        return data
 
     @classmethod
     def from_old_format_dict(
@@ -198,7 +201,7 @@ class MeasureItSensorStoredData(ExtraStoredData):
             "session_start_value": restored["session_start_reading"],
             "session_start_measured_value": restored["start_measured_value"],
             "prev_measured_value": restored["prev_measured_value"],
-            "measuring": True if restored["state"] == SensorState.MEASURING else False,
+            "measuring": restored["state"] == SensorState.MEASURING,
         }
         if meter_data["session_start_value"] is None:
             meter_data["session_start_value"] = 0
@@ -258,7 +261,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         state_class: SensorStateClass,
         device_class: SensorDeviceClass | None = None,
         unit_of_measurement: str | None = None,
-    ):
+    ) -> None:
         """Initialize a sensor entity."""
         self.hass = hass
         self._coordinator = coordinator
@@ -274,7 +277,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             SensorStateClass.TOTAL_INCREASING,
             None,
         ]:
-            raise TypeError("Only SensorStateClass TOTAL or none is supported.")
+            msg = "Only SensorStateClass TOTAL or none is supported."
+            raise TypeError(msg)
         self._attr_state_class = state_class
         self._attr_device_class = device_class
 
@@ -287,7 +291,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._last_reset: datetime = dt_util.now()
         self._next_reset: datetime | None = None
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Add sensors as a listener for coordinator updates."""
         if (last_sensor_data := await self.async_get_last_sensor_data()) is not None:
             _LOGGER.debug(
@@ -318,7 +322,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             return self.entity_id in event_data.get(ATTR_ENTITY_ID)
 
         @callback
-        def on_reset_event(event):
+        def on_reset_event(event) -> None:
             self.schedule_next_reset(event.data.get("reset_datetime"))
 
         self.async_on_remove(
@@ -326,14 +330,14 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         )
 
     @callback
-    def calibrate(self, value):
+    def calibrate(self, value) -> None:
         """Calibrate the meter with a given value."""
         _LOGGER.info("%s # Calibrate with value: %s", self._attr_name, value)
         self.meter.calibrate(Decimal(value))
         self.async_write_ha_state()
 
     @callback
-    def unsub_reset_listener(self):
+    def unsub_reset_listener(self) -> None:
         """Unsubscribe and remove the reset listener."""
         if self._reset_listener:
             self._reset_listener()
@@ -353,7 +357,8 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             return SensorState.WAITING_FOR_TIME_WINDOW
         if self._active is False:
             return SensorState.WAITING_FOR_CONDITION
-        raise ValueError("Invalid sensor state determined.")
+        msg = "Invalid sensor state determined."
+        raise ValueError(msg)
 
     @property
     def native_value(self) -> str | None:
@@ -401,7 +406,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         return attributes
 
     @callback
-    def reset(self, event=None):
+    def reset(self, event=None) -> None:
         """Reset the sensor."""
         reset_datetime = dt_util.now()
         _LOGGER.info("Resetting sensor %s at %s", self._attr_name, reset_datetime)
@@ -412,7 +417,9 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._async_write_ha_state()
 
     @callback
-    def on_reset_service_triggered(self, reset_datetime: datetime | None = None):
+    def on_reset_service_triggered(
+        self, reset_datetime: datetime | None = None
+    ) -> None:
         """Handle a reset service call."""
         _LOGGER.debug("Reset sensor with: %s", reset_datetime)
         if reset_datetime is None:
@@ -422,7 +429,7 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self.schedule_next_reset(reset_datetime)
 
     @callback
-    def schedule_next_reset(self, next_reset: datetime | None = None):
+    def schedule_next_reset(self, next_reset: datetime | None = None) -> None:
         """Set the next reset moment."""
         tznow = dt_util.now()
         if next_reset and next_reset <= tznow:
