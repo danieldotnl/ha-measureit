@@ -9,14 +9,17 @@ class TimeWindow:
     def __init__(self, days: list[str], from_time: str, till_time: str) -> None:
         """Initialize TimeWindow."""
         if len(days) != len(set(days)):
-            raise ValueError("Duplicate days are not allowed.")
+            msg = "Duplicate days are not allowed."
+            raise ValueError(msg)
         if len(days) == 0:
-            raise ValueError("At least one day must be provided.")
+            msg = "At least one day must be provided."
+            raise ValueError(msg)
 
         self._days = [int(day) for day in days]
         for day in self._days:
             if day < 0 or day > 6:
-                raise ValueError("Invalid day provided.")
+                msg = "Invalid day provided."
+                raise ValueError(msg)
 
         self._start = datetime.strptime(from_time, "%H:%M:%S").time()
         self._end = datetime.strptime(till_time, "%H:%M:%S").time()
@@ -28,26 +31,26 @@ class TimeWindow:
         )
 
     @property
-    def days(self):
+    def days(self) -> list[int]:
         """Return the days the time window is active."""
         return self._days
 
     @property
-    def start(self):
+    def start(self) -> time:
         """Return the start time of the time window."""
         return self._start
 
     @property
-    def end(self):
+    def end(self) -> time:
         """Return the end time of the time window."""
         return self._end
 
     @property
-    def always_active(self):
+    def always_active(self) -> bool:
         """Return if the time window is always active."""
         return self._always_active
 
-    def is_active(self, tznow: datetime):
+    def is_active(self, tznow: datetime) -> bool:
         """Check if a given datetime is inside the time window."""
         if self._always_active:
             return True
@@ -64,9 +67,9 @@ class TimeWindow:
     def next_change(self, tznow: datetime) -> datetime:
         """Return the next time the time window will change state."""
         if self._always_active:
-            raise AssertionError(
-                "Next change should not be called for time windows that are always active."
-            )
+            msg = """Next change should not be called
+                for time windows that are always active."""
+            raise AssertionError(msg)
         if self.is_active(tznow):
             # If currently active, find the end time today or on the next day
             if tznow.time() < self._end:
@@ -84,13 +87,14 @@ class TimeWindow:
         next_active_date = self._find_next_active_day(tznow)
         return datetime.combine(next_active_date, self._start, tznow.tzinfo)
 
-    def _find_next_active_day(self, tznow: datetime):
+    def _find_next_active_day(self, tznow: datetime) -> datetime.date:
         """Find the next active day."""
         for days_ahead in range(1, 8):  # Check the next 7 days
             next_day = tznow + timedelta(days=days_ahead)
             if next_day.weekday() in self._days:
                 return next_day.date()
-        raise ValueError("Invalid time window, could not find the next active day.")
+        msg = "Invalid time window, could not find the next active day."
+        raise ValueError(msg)
 
 
 def prev_weekday(day: int) -> int:

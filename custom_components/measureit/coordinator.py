@@ -134,7 +134,7 @@ class MeasureItCoordinator:
             )
             time_window_active = self._time_window.is_active(tznow)
         for sensor in self._sensors.values():
-            sensor.on_time_window_change(time_window_active)
+            sensor.on_time_window_change(active=time_window_active)
 
         if self._condition_template:
             self._condition_template_listener = async_track_template_result(
@@ -149,7 +149,7 @@ class MeasureItCoordinator:
                 self._config_name,
             )
             for sensor in self._sensors.values():
-                sensor.on_condition_template_change(True)
+                sensor.on_condition_template_change(active=True)
 
         if self._meter_type == MeterType.COUNTER:
             if not self._counter_template:
@@ -188,7 +188,7 @@ class MeasureItCoordinator:
         )
         active = self._time_window.is_active(now)
         for sensor in self._sensors.values():
-            sensor.on_time_window_change(active)
+            sensor.on_time_window_change(active=active)
 
         self._time_window_listener = async_track_point_in_time(
             self.hass,
@@ -212,7 +212,7 @@ class MeasureItCoordinator:
                 "%s # Condition template changed to: %s.", self._config_name, result
             )
             for sensor in self._sensors.values():
-                sensor.on_condition_template_change(bool(result))
+                sensor.on_condition_template_change(active=bool(result))
 
     @callback
     def async_on_source_entity_state_change(self, event):
@@ -285,18 +285,19 @@ class MeasureItCoordinatorEntity:
     """Coordinator entity for the MeasureIt component."""
 
     @callback
-    def on_condition_template_change(self, condition_active: bool) -> None:
+    def on_condition_template_change(self, *, active: bool) -> None:
         """Abstract method for handling changes in the condition template."""
-        raise NotImplementedError(
-            "Entity should implement on_condition_template_change()"
-        )
+        msg = "Entity should implement on_condition_template_change()"
+        raise NotImplementedError(msg)
 
     @callback
-    def on_time_window_change(self, time_window_active: bool) -> None:
+    def on_time_window_change(self, *, active: bool) -> None:
         """Abstract method for handling changes in the time window."""
-        raise NotImplementedError("Entity should implement on_time_window_change()")
+        msg = "Entity should implement on_time_window_change()"
+        raise NotImplementedError(msg)
 
     @callback
     def on_value_change(self, new_value: Decimal | None = None) -> None:
         """Abstract method for handling changes in the value."""
-        raise NotImplementedError("Entity should implement on_value_change()")
+        msg = "Entity should implement on_value_change()"
+        raise NotImplementedError(msg)

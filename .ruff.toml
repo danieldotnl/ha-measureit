@@ -22,3 +22,28 @@ keep-runtime-typing = true
 
 [lint.mccabe]
 max-complexity = 25
+
+[lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+    # at least this three should be fine in tests:
+    "S101", # asserts allowed in tests...
+    "ARG", # Unused function args -> fixtures nevertheless are functionally relevant...
+    "FBT", # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+    # The below are debateable
+    "PLR2004", # Magic value used in comparison, ...
+    "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+    # Remove these when fixed:
+    "ANN201", # Missing return type
+    "PT011", # ValueError is too broad
+    "SLF001", # Private member accessed
+    "ANN001", # Missing type annotation for function argument
+    "E501", # Line too long
+    "INP001", # File is part of an implicit namespace package
+    "DTZ007", # Naive datatime constructed
+    "ERA001", # "Found commented-out code
+    "DTZ005", # datetime.now() called without a `tz` argument
+    "A002", # Wrong type passed to first argument; expected tuple
+    "PT006", # Function argument `input` is shadowing a Python builtin
+    "N806",
+
+]
