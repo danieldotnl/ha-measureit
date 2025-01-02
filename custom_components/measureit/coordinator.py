@@ -108,41 +108,13 @@ class MeasureItCoordinator:
         tznow = dt_util.now()
 
         if self._meter_type == MeterType.SOURCE:
-            if not self._source_entity:
-                msg = "Source entity is required for source meters."
-                raise AssertionError(msg)
-            self._source_entity_update_listener = async_track_state_change_event(
-                self.hass,
-                self._source_entity,
-                self.async_on_source_entity_state_change,
-            )
-            # Update once on startup to get the initial state.
-            # After that we're tracking state changes and receive events
-            source_state = self._get_sensor_state(self._source_entity)
-            if source_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
-                _LOGGER.warning(
-                    """%s # Source (%s) state is unknown or unavailable. We cannot start
-                     measuring until the source entity has a valid state.""",
-                    self._config_name,
-                    self._source_entity,
-                )
-
-            try:
-                new_state = Decimal(source_state)
-                for sensor in self._sensors.values():
-                    sensor.on_value_change(new_state)
-            except (InvalidOperation, TypeError):
-                _LOGGER.warning(
-                    """%s # Could not convert source state to a number: %s. Make sure
-                     the source sensor is available and numeric. We cannot start
-                     measuring until the source entity has a valid state.""",
-                    self._config_name,
-                    source_state,
-                    exc_info=True,
-                )
+            self._setup_source_meter()
+        elif self._meter_type == MeterType.COUNTER:
+            self._setup_counter_meter()
+        elif self._meter_type == MeterType.TIME:
+            self._setup_time_meter()
 
         if self._time_window.always_active:
-            # we don't need to listen for time window changes if it's always active
             time_window_active = True
         else:
             self._time_window_listener = async_track_point_in_time(
@@ -170,18 +142,53 @@ class MeasureItCoordinator:
             for sensor in self._sensors.values():
                 sensor.on_condition_template_change(active=True)
 
-        if self._meter_type == MeterType.COUNTER:
-            if not self._counter_template:
-                msg = "Counter template is required for counter meters."
-                raise AssertionError(msg)
-            self._counter_template_listener = async_track_template(
-                self.hass,
-                self._counter_template,
-                self.async_on_counter_template_update,
+    def _setup_source_meter(self) -> None:
+        """Set up source meter."""
+        if not self._source_entity:
+            msg = "Source entity is required for source meters."
+            raise AssertionError(msg)
+        self._source_entity_update_listener = async_track_state_change_event(
+            self.hass,
+            self._source_entity,
+            self.async_on_source_entity_state_change,
+        )
+        source_state = self._get_sensor_state(self._source_entity)
+        if source_state in [STATE_UNKNOWN, STATE_UNAVAILABLE, None]:
+            _LOGGER.warning(
+                """%s # Source (%s) state is unknown or unavailable. We cannot start
+                 measuring until the source entity has a valid state.""",
+                self._config_name,
+                self._source_entity,
             )
 
-        if self._meter_type == MeterType.TIME:
-            self.async_on_heartbeat()
+        try:
+            new_state = Decimal(source_state)
+            for sensor in self._sensors.values():
+                sensor.on_value_change(new_state)
+        except (InvalidOperation, TypeError):
+            _LOGGER.warning(
+                """%s # Could not convert source state to a number: %s. Make sure
+                 the source sensor is available and numeric. We cannot start
+                 measuring until the source entity has a valid state.""",
+                self._config_name,
+                source_state,
+                exc_info=True,
+            )
+
+    def _setup_counter_meter(self) -> None:
+        """Set up counter meter."""
+        if not self._counter_template:
+            msg = "Counter template is required for counter meters."
+            raise AssertionError(msg)
+        self._counter_template_listener = async_track_template(
+            self.hass,
+            self._counter_template,
+            self.async_on_counter_template_update,
+        )
+
+    def _setup_time_meter(self) -> None:
+        """Set up time meter."""
+        self.async_on_heartbeat()
 
     def stop(self) -> None:
         """Stop the coordinator."""
