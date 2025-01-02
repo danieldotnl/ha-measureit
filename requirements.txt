@@ -2,5 +2,5 @@ colorlog==6.9.0
 pip>=24,<25
 ruff==0.8.4
 pytest-homeassistant-custom-component==0.13.199
-croniter==3.0.3
+croniter==3.0.4
 pre-commit==4.0.1
