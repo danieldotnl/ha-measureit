@@ -6,6 +6,5 @@
   "documentation": "https://github.com/danieldotnl/ha-measureit",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/danieldotnl/ha-measureit/issues",
-  "requirements": ["croniter==2.0.2"],
   "version": "0.5.0"
 }

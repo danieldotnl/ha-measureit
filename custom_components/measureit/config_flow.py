@@ -8,7 +8,7 @@ import uuid
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
-from croniter import croniter
+from cronsim import CronSim, CronSimError
 from homeassistant.components.sensor.const import (
     CONF_STATE_CLASS,
     SensorDeviceClass,
@@ -36,6 +36,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowMenuStep,
 )
 from homeassistant.helpers.template import Template
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_CONDITION,
@@ -135,7 +136,11 @@ def validate_period(period: str) -> bool:
     """Validate period input."""
     if period in PREDEFINED_PERIODS:
         return True
-    return croniter.is_valid(period)
+    try:
+        CronSim(period, dt_util.now(dt_util.get_default_time_zone()))
+        return True  # noqa: TRY300
+    except CronSimError:
+        return False
 
 
 async def validate_edit_main_config(

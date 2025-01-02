@@ -9,8 +9,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
-from croniter import croniter
-from dateutil import tz
+from cronsim import CronSim
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -298,6 +297,19 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._last_reset: datetime = dt_util.now()
         self._next_reset: datetime | None = None
 
+        self.scheduler = None
+        if self._reset_pattern not in [
+            None,
+            "noreset",
+            "forever",
+            "none",
+            "session",
+        ]:
+            self.scheduler = CronSim(
+                self._reset_pattern,
+                dt_util.now(dt_util.get_default_time_zone()),
+            )
+
     async def async_added_to_hass(self) -> None:
         """Add sensors as a listener for coordinator updates."""
         if (last_sensor_data := await self.async_get_last_sensor_data()) is not None:
@@ -417,32 +429,15 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             self.reset()
             return
         if not next_reset:
-            if self._reset_pattern not in [
-                None,
-                "noreset",
-                "forever",
-                "none",
-                "session",
-            ]:
-                # we have a known issue with croniter that does not correctly determine
-                #  the end of the month/week reset when DST is involved
-                # https://github.com/kiorky/croniter/issues/1
-                next_reset = dt_util.as_local(
-                    croniter(self._reset_pattern, tznow.replace(tzinfo=None)).get_next(
-                        datetime
-                    )
-                )
-                if not tz.datetime_exists(next_reset):
-                    next_reset = dt_util.as_local(
-                        croniter(
-                            self._reset_pattern, next_reset.replace(tzinfo=None)
-                        ).get_next(datetime)
-                    )
+            if self.scheduler:
+                while (next_reset := next(self.scheduler)) <= tznow:
+                    pass
             else:
                 self._next_reset = None
                 return
 
         self._next_reset = next_reset
+
         if self._reset_listener:
             self._reset_listener()
         self._reset_listener = async_track_point_in_time(

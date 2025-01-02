@@ -168,6 +168,45 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
     assert result["type"] == FlowResultType.CREATE_ENTRY
 
 
+async def test_validate_cron(hass: HomeAssistant) -> None:
+    """Test validate cron in config flow."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    # Choose config for a time config
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"next_step_id": "time"}
+    )
+
+    # Fill config name
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={CONF_CONFIG_NAME: "test_config_time"}
+    )
+
+    # Fill without valid days
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_CONDITION: "{{ is_state('binary_sensor.test_sensor', 'on') }}",
+            CONF_TW_FROM: "00:00",
+            CONF_TW_TILL: "00:00",
+        },
+    )
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_PERIODS: ["123 * * * *"],
+            CONF_UNIT_OF_MEASUREMENT: "s",
+            CONF_DEVICE_CLASS: "duration",
+            CONF_STATE_CLASS: "total_increasing",
+        },
+    )
+
+    assert result["errors"] == {"base": "invalid_cron"}
+
+
 async def test_flow_with_errors(hass: HomeAssistant) -> None:
     """Test flow with input that doesn't validate."""
     result = await hass.config_entries.flow.async_init(
