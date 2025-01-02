@@ -8,7 +8,6 @@ import uuid
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
-from croniter import croniter
 from cronsim import CronSim, CronSimError
 from homeassistant.components.sensor.const import (
     CONF_STATE_CLASS,

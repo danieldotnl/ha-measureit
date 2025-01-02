@@ -169,6 +169,7 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
 
 
 async def test_validate_cron(hass: HomeAssistant) -> None:
+    """Test validate cron in config flow."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
