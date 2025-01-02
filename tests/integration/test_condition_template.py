@@ -41,7 +41,7 @@ COUNTER_ENTRY = MockConfigEntry(
 )
 
 
-async def test_value_template_applied(hass: HomeAssistant):
+async def test_value_template_applied(hass: HomeAssistant) -> None:
     """Test value_template is applied."""
     hass.states.async_set("sensor.test_counter", "4")
     hass.states.async_set("switch.test_switch", "on")
@@ -71,7 +71,7 @@ async def test_value_template_applied(hass: HomeAssistant):
 
 async def test_only_counting_when_condition_met_start_true_and_value_template_applied(
     hass: HomeAssistant,
-):
+) -> None:
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
@@ -106,7 +106,9 @@ async def test_only_counting_when_condition_met_start_true_and_value_template_ap
     await unload_with_mock_config(hass, COUNTER_ENTRY)
 
 
-async def test_only_counting_when_condition_met_start_false(hass: HomeAssistant):
+async def test_only_counting_when_condition_met_start_false(
+    hass: HomeAssistant,
+) -> None:
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
@@ -147,17 +149,18 @@ async def test_only_counting_when_condition_met_start_false(hass: HomeAssistant)
 
     await unload_with_mock_config(hass, COUNTER_ENTRY)
 
+
 async def test_continue_after_condition_entity_unavailable(
     hass: HomeAssistant,
-):
+) -> None:
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
     hass.states.async_set("sensor.test_counter", "4")
-    #hass.states.async_set("switch.test_switch", "on")
+    # hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
     assert hass.states.get("sensor.test_counter").state == "4"
-    #assert hass.states.get("switch.test_switch").state == "on"
+    # assert hass.states.get("switch.test_switch").state == "on"
     await setup_with_mock_config(hass, COUNTER_ENTRY)
 
     expected_sensors = ["sensor.test_hour"]
@@ -169,7 +172,7 @@ async def test_continue_after_condition_entity_unavailable(
     await hass.async_block_till_done()
 
     state = hass.states.get("sensor.test_hour")
-    assert state.state == "0" # because the condition is not met
+    assert state.state == "0"  # because the condition is not met
 
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()

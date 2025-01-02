@@ -27,8 +27,8 @@ def fixture_datetime_now():
 @pytest.fixture(name="day_sensor")
 def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
     """Fixture for creating a MeasureIt sensor."""
-    mockMeter = MagicMock()
-    mockMeter.measured_value = 0
+    mock_meter = MagicMock()
+    mock_meter.measured_value = 0
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
         return_value=test_now,
@@ -36,7 +36,7 @@ def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
         sensor = MeasureItSensor(
             hass,
             MagicMock(),
-            mockMeter,
+            mock_meter,
             "test_sensor_day",
             "test_sensor_day",
             PREDEFINED_PERIODS["day"],
@@ -53,8 +53,8 @@ def fixture_day_sensor(hass: HomeAssistant, test_now: datetime):
 @pytest.fixture(name="month_sensor")
 def fixture_month_sensor(hass: HomeAssistant, test_now: datetime):
     """Fixture for creating a MeasureIt sensor which resets monthly."""
-    mockMeter = MagicMock()
-    mockMeter.measured_value = 0
+    mock_meter = MagicMock()
+    mock_meter.measured_value = 0
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
         return_value=test_now,
@@ -62,7 +62,7 @@ def fixture_month_sensor(hass: HomeAssistant, test_now: datetime):
         sensor = MeasureItSensor(
             hass,
             MagicMock(),
-            mockMeter,
+            mock_meter,
             "test_sensor_month",
             "test_sensor_month",
             PREDEFINED_PERIODS["month"],
@@ -138,9 +138,9 @@ def fixture_restore_sensor(hass: HomeAssistant, test_now: datetime):
 @pytest.fixture(name="none_sensor")
 def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
     """Fixture for creating a MeasureIt sensor."""
-    mockMeter = MagicMock()
-    mockMeter.measured_value = 0
-    mockMeter.prev_measured_value = 0
+    mock_meter = MagicMock()
+    mock_meter.measured_value = 0
+    mock_meter.prev_measured_value = 0
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
         return_value=test_now,
@@ -148,7 +148,7 @@ def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
         sensor = MeasureItSensor(
             hass,
             MagicMock(),
-            mockMeter,
+            mock_meter,
             "test_sensor_day",
             "test_sensor_day",
             None,
@@ -160,7 +160,7 @@ def fixture_none_sensor(hass: HomeAssistant, test_now: datetime):
         sensor.unsub_reset_listener()
 
 
-def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
+def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime) -> None:
     """Test sensor initialization."""
     assert day_sensor.native_value == 0
     assert day_sensor.unit_of_measurement == "h"
@@ -168,7 +168,7 @@ def test_day_sensor_init(day_sensor: MeasureItSensor, test_now: datetime):
     assert day_sensor.device_class == SensorDeviceClass.DURATION
 
 
-def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
+def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime) -> None:
     """Test sensor initialization."""
     assert none_sensor.native_value == 0
     assert none_sensor._next_reset is None
@@ -179,7 +179,7 @@ def test_none_sensor_init(none_sensor: MeasureItSensor, test_now: datetime):
 
 def test_sensor_state_on_condition_timewindow_change(
     real_meter_sensor: MeasureItSensor,
-):
+) -> None:
     """Test sensor state update on condition template change."""
     sensor = real_meter_sensor
     assert sensor.sensor_state == SensorState.WAITING_FOR_TIME_WINDOW
@@ -198,7 +198,9 @@ def test_sensor_state_on_condition_timewindow_change(
     assert sensor.meter.measuring is False
 
 
-def test_scheduled_reset_in_past(day_sensor: MeasureItSensor, test_now: datetime):
+def test_scheduled_reset_in_past(
+    day_sensor: MeasureItSensor, test_now: datetime
+) -> None:
     """Test sensor reset when scheduled in past."""
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
@@ -209,7 +211,9 @@ def test_scheduled_reset_in_past(day_sensor: MeasureItSensor, test_now: datetime
     assert day_sensor.reset.call_count == 1
 
 
-def test_scheduled_reset_in_future(day_sensor: MeasureItSensor, test_now: datetime):
+def test_scheduled_reset_in_future(
+    day_sensor: MeasureItSensor, test_now: datetime
+) -> None:
     """Test sensor reset when scheduled in past."""
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
@@ -231,7 +235,7 @@ def test_scheduled_reset_in_future(day_sensor: MeasureItSensor, test_now: dateti
     )
 
 
-def test_scheduled_reset_none_sensor(none_sensor: MeasureItSensor):
+def test_scheduled_reset_none_sensor(none_sensor: MeasureItSensor) -> None:
     """Test sensor reset when scheduled in past."""
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
@@ -249,7 +253,7 @@ def test_scheduled_reset_none_sensor(none_sensor: MeasureItSensor):
     assert none_sensor._next_reset is None
 
 
-async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
+async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime) -> None:
     """Test sensor reset."""
     assert none_sensor._next_reset is None
     none_sensor.reset()
@@ -258,7 +262,7 @@ async def test_reset_sensor(none_sensor: MeasureItSensor, test_now: datetime):
     assert none_sensor._last_reset == test_now
 
 
-def test_on_value_change(day_sensor: MeasureItSensor):
+def test_on_value_change(day_sensor: MeasureItSensor) -> None:
     """Test sensor value change."""
     day_sensor.meter = CounterMeter()
     day_sensor.on_condition_template_change(active=True)
@@ -269,7 +273,7 @@ def test_on_value_change(day_sensor: MeasureItSensor):
     assert day_sensor.native_value == 2
 
 
-def test_on_value_change_for_time(day_sensor: MeasureItSensor):
+def test_on_value_change_for_time(day_sensor: MeasureItSensor) -> None:
     """Test sensor value change for time."""
     day_sensor.meter = TimeMeter()
     day_sensor.on_condition_template_change(active=True)
@@ -278,7 +282,7 @@ def test_on_value_change_for_time(day_sensor: MeasureItSensor):
     assert day_sensor.meter.measured_value > 0
 
 
-def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
+def test_none_sensor_stored_data(none_sensor: MeasureItSensor) -> None:
     """Test sensor restore."""
     data = MeasureItSensorStoredData(
         meter_data=none_sensor.meter.to_dict(),
@@ -296,7 +300,7 @@ def test_none_sensor_stored_data(none_sensor: MeasureItSensor):
     assert restored.next_reset is None
 
 
-def test_day_sensor_stored_data(day_sensor: MeasureItSensor):
+def test_day_sensor_stored_data(day_sensor: MeasureItSensor) -> None:
     """Test sensor restore."""
     data = MeasureItSensorStoredData(
         meter_data=day_sensor.meter.to_dict(),
@@ -315,7 +319,7 @@ def test_day_sensor_stored_data(day_sensor: MeasureItSensor):
     assert restored.last_reset == day_sensor._last_reset
 
 
-def test_restore_from_data():
+def test_restore_from_data() -> None:
     """Test sensor restore from json."""
     data = {
         "meter_data": {
@@ -338,7 +342,7 @@ def test_restore_from_data():
     assert restored.meter_data["measuring"] is False
 
 
-def test_restore_old_format_state_measuring():
+def test_restore_old_format_state_measuring() -> None:
     """Test sensor restore with old format."""
     data = {
         "measured_value": 2880.001408100128,
@@ -363,7 +367,7 @@ def test_restore_old_format_state_measuring():
     assert restored.meter_data["session_start_value"] == 1705914000.004058
 
 
-def test_restore_old_format_state_not_measuring():
+def test_restore_old_format_state_not_measuring() -> None:
     """Test sensor restore with old format."""
     data = {
         "measured_value": 2880.001408100128,
@@ -386,7 +390,7 @@ def test_restore_old_format_state_not_measuring():
     assert restored.meter_data["session_start_value"] == 1705914000.004058
 
 
-def test_restore_old_format_state_with_null_values():
+def test_restore_old_format_state_with_null_values() -> None:
     """Test sensor restore with old format."""
     data = {
         "measured_value": 0,
@@ -411,7 +415,7 @@ def test_restore_old_format_state_with_null_values():
     assert restored.meter_data["session_start_value"] == 0
 
 
-async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
+async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime) -> None:
     """Test sensor added to hass."""
     await day_sensor.async_added_to_hass()
     assert day_sensor._coordinator.async_register_sensor.call_count == 1
@@ -422,7 +426,7 @@ async def test_added_to_hass(day_sensor: MeasureItSensor, test_now: datetime):
 
 async def test_added_to_hass_with_month_period(
     month_sensor: MeasureItSensor, test_now: datetime
-):
+) -> None:
     """Test sensor added to hass."""
     await month_sensor.async_added_to_hass()
     assert month_sensor._coordinator.async_register_sensor.call_count == 1
@@ -435,7 +439,7 @@ async def test_added_to_hass_with_month_period(
     )
 
 
-async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
+async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor) -> None:
     """Test sensor added to hass."""
     await restore_sensor.async_added_to_hass()
     assert restore_sensor._last_reset == datetime(
@@ -451,7 +455,7 @@ async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor):
     assert restore_sensor.sensor_state == SensorState.WAITING_FOR_CONDITION
 
 
-def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
+def test_extra_restore_state_data_property(day_sensor: MeasureItSensor) -> None:
     """Test getting extra restore state data."""
     day_sensor.meter = SourceMeter()
     day_sensor.meter.update(100)
@@ -468,7 +472,7 @@ def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
 
 
 @pytest.mark.parametrize(
-    "input,expected,tz,cron",
+    ("input_dt", "expected_dt", "tz", "cron"),
     [
         (
             datetime(2024, 2, 2, 4, 0, tzinfo=ZoneInfo("America/Los_Angeles")),
@@ -556,11 +560,17 @@ def test_extra_restore_state_data_property(day_sensor: MeasureItSensor):
         ),
     ],
 )
-def test_next_reset_with_dst(hass: HomeAssistant, input, expected, tz, cron):
+def test_next_reset_with_dst(
+    hass: HomeAssistant,
+    input_dt: datetime,
+    expected_dt: datetime,
+    tz: ZoneInfo,
+    cron: str,
+) -> None:
     """Test next reset for hour period with DST."""
     with mock.patch(
         "homeassistant.helpers.condition.dt_util.now",
-        return_value=input,
+        return_value=input_dt,
     ):
         dt_util.DEFAULT_TIME_ZONE = tz
         sensor = MeasureItSensor(
@@ -576,5 +586,5 @@ def test_next_reset_with_dst(hass: HomeAssistant, input, expected, tz, cron):
         assert sensor._next_reset is None
 
         sensor.schedule_next_reset()
-        assert sensor._next_reset == expected
+        assert sensor._next_reset == expected_dt
         sensor.unsub_reset_listener()

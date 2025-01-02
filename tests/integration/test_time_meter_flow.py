@@ -103,7 +103,7 @@ FORMATTED_TIME_ENTRY = MockConfigEntry(
 )
 
 
-async def test_time_meter_setup(hass: HomeAssistant):
+async def test_time_meter_setup(hass: HomeAssistant) -> None:
     """Test MeasureIt setup for source meter."""
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
@@ -127,7 +127,7 @@ async def test_time_meter_setup(hass: HomeAssistant):
     await unload_with_mock_config(hass, TIME_ENTRY)
 
 
-async def test_time_meter_measuring(hass: HomeAssistant):
+async def test_time_meter_measuring(hass: HomeAssistant) -> None:
     """Test MeasureIt setup for source meter."""
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
@@ -159,7 +159,7 @@ async def test_time_meter_measuring(hass: HomeAssistant):
     await unload_with_mock_config(hass, TIME_ENTRY)
 
 
-async def test_time_meter_start(hass: HomeAssistant):
+async def test_time_meter_start(hass: HomeAssistant) -> None:
     """Test MeasureIt setup for source meter."""
     # "when_days": ["0", "1"],  # Only on Monday and Tuesday
     # "when_from": "00:00:00",
@@ -193,7 +193,7 @@ async def test_time_meter_start(hass: HomeAssistant):
         assert Decimal(state.state) == 30 * 60
 
 
-async def test_time_meter_stop(hass: HomeAssistant):
+async def test_time_meter_stop(hass: HomeAssistant) -> None:
     """Test MeasureIt setup for source meter."""
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
@@ -227,7 +227,7 @@ async def test_time_meter_stop(hass: HomeAssistant):
         assert Decimal(state.state) == 2 * 60 * 60
 
 
-async def test_reset_end_of_period(hass: HomeAssistant):
+async def test_reset_end_of_period(hass: HomeAssistant) -> None:
     """Test if meter resets at end of period."""
     # "when_days": ["0", "1"],  # Only on Monday and Tuesday
     # "when_from": "05:00:00",
@@ -266,7 +266,7 @@ async def test_reset_end_of_period(hass: HomeAssistant):
         assert Decimal(state.attributes["prev_period"]) == Decimal(2 * 60 * 60)
 
 
-async def test_service_reset_with_datetime(hass: HomeAssistant):
+async def test_service_reset_with_datetime(hass: HomeAssistant) -> None:
     """Test if meter resets when triggered by a service with a reset_datetime."""
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
@@ -312,7 +312,7 @@ async def test_service_reset_with_datetime(hass: HomeAssistant):
         assert Decimal(state.attributes["prev_period"]) == Decimal(4 * 60 * 60)
 
 
-async def test_format_time_with_template(hass: HomeAssistant):
+async def test_format_time_with_template(hass: HomeAssistant) -> None:
     """Test formatting time with a value_template and no state class."""
     current_time = datetime(2024, 2, 11, 4, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     with freeze_time(current_time) as mock_time:
@@ -347,7 +347,7 @@ async def test_format_time_with_template(hass: HomeAssistant):
         assert state.state == "13.397"
 
 
-async def test_reset_after_session(hass: HomeAssistant):
+async def test_reset_after_session(hass: HomeAssistant) -> None:
     """Test if meter resets after session."""
     current_time = datetime(2024, 3, 11, 8, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     with freeze_time(current_time) as mock_time:
@@ -392,4 +392,5 @@ async def test_reset_after_session(hass: HomeAssistant):
 #         sensor = "sensor.test_month"
 #         state = hass.states.get(sensor)
 #         assert state.attributes["sensor_last_reset"] == current_time.isoformat()
-#         assert state.attributes["sensor_next_reset"] == datetime(2024, 4, 1, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE).isoformat()
+#         assert state.attributes["sensor_next_reset"] == datetime(2024, 4, 1, 0, 0,
+# tzinfo=dt_util.DEFAULT_TIME_ZONE).isoformat()

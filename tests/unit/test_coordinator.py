@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from homeassistant.const import STATE_UNKNOWN
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_util
 
@@ -30,25 +30,25 @@ def fixture_counter_coordinator(hass: HomeAssistant):
     coordinator.stop()
 
 
-def test_init(coordinator: MeasureItCoordinator):
+def test_init(coordinator: MeasureItCoordinator) -> None:
     """Test the initialization of the MeasureItCoordinator class."""
     assert coordinator._time_window.days == [0, 1, 2]
 
 
-def test_init_should_fail(hass: HomeAssistant):
+def test_init_should_fail(hass: HomeAssistant) -> None:
     """Test the initialization of the MeasureItCoordinator class without timewindow."""
     with pytest.raises(ValueError):
         MeasureItCoordinator(hass, "test", MeterType.COUNTER, None, None)
 
 
-def test_register_sensor(coordinator: MeasureItCoordinator):
+def test_register_sensor(coordinator: MeasureItCoordinator) -> None:
     """Test the registration of a sensor."""
     sensor = MeasureItCoordinatorEntity()
     coordinator.async_register_sensor(sensor)
     assert len(coordinator._sensors) == 1
 
 
-def test_unregister_sensor(coordinator: MeasureItCoordinator):
+def test_unregister_sensor(coordinator: MeasureItCoordinator) -> None:
     """Test the unregistration of a sensor."""
     sensor = MeasureItCoordinatorEntity()
     unregister = coordinator.async_register_sensor(sensor)
@@ -57,7 +57,7 @@ def test_unregister_sensor(coordinator: MeasureItCoordinator):
     assert len(coordinator._sensors) == 0
 
 
-def test_call_multiple_registered_sensors(coordinator: MeasureItCoordinator):
+def test_call_multiple_registered_sensors(coordinator: MeasureItCoordinator) -> None:
     """Test if the coordinator calls the registered sensors."""
     entity = MeasureItCoordinatorEntity()
     entity.on_condition_template_change = MagicMock()
@@ -80,7 +80,7 @@ def test_call_multiple_registered_sensors(coordinator: MeasureItCoordinator):
     entity2.on_condition_template_change.assert_called_with(active=True)
 
 
-def test_async_on_time_window_active_change(coordinator: MeasureItCoordinator):
+def test_async_on_time_window_active_change(coordinator: MeasureItCoordinator) -> None:
     """Test async_on_time_window_active_change."""
     entity = MeasureItCoordinatorEntity()
     entity.on_time_window_change = MagicMock()
@@ -93,14 +93,14 @@ def test_async_on_time_window_active_change(coordinator: MeasureItCoordinator):
     assert coordinator._time_window_listener is not None
 
 
-def test_async_on_condition_template_update(coordinator: MeasureItCoordinator):
+def test_async_on_condition_template_update(coordinator: MeasureItCoordinator) -> None:
     """Test async_on_condition_update."""
     entity = MeasureItCoordinatorEntity()
     entity.on_condition_template_change = MagicMock()
     coordinator.async_register_sensor(entity)
-    mockTrackTemplateResultInfo = MagicMock()
-    mockTrackTemplateResultInfo.result = False
-    coordinator.async_on_condition_template_update(None, [mockTrackTemplateResultInfo])
+    mock_tracktemplateresultinfo = MagicMock()
+    mock_tracktemplateresultinfo.result = False
+    coordinator.async_on_condition_template_update(None, [mock_tracktemplateresultinfo])
     entity.on_condition_template_change.assert_called_with(active=False)
 
 
@@ -108,7 +108,7 @@ def test_async_on_condition_template_update(coordinator: MeasureItCoordinator):
 class StateMock:
     """Mock for the state object."""
 
-    def __init__(self, state) -> None:
+    def __init__(self, state: State) -> None:
         """Initialize the state object."""
         self._state = state
 
@@ -118,7 +118,7 @@ class StateMock:
         return self._state
 
 
-def test_async_on_source_state_change(coordinator: MeasureItCoordinator):
+def test_async_on_source_state_change(coordinator: MeasureItCoordinator) -> None:
     """Test async_on_source_state_change."""
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
@@ -131,7 +131,7 @@ def test_async_on_source_state_change(coordinator: MeasureItCoordinator):
 
 def test_async_on_source_state_change_with_unknown_state(
     coordinator: MeasureItCoordinator,
-):
+) -> None:
     """Test async_on_source_state_change with unknown state."""
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
@@ -144,7 +144,7 @@ def test_async_on_source_state_change_with_unknown_state(
 
 def test_async_on_source_state_change_with_no_number(
     coordinator: MeasureItCoordinator,
-):
+) -> None:
     """Test async_on_source_state_change with unknown state."""
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
@@ -157,7 +157,7 @@ def test_async_on_source_state_change_with_no_number(
 
 def test_async_on_counter_template_update_becomes_true(
     coordinator: MeasureItCoordinator,
-):
+) -> None:
     """Test async_on_counter_template_changed."""
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
@@ -168,7 +168,7 @@ def test_async_on_counter_template_update_becomes_true(
     entity.on_value_change.assert_called_with(1)
 
 
-def test_async_on_heartbeat(coordinator: MeasureItCoordinator):
+def test_async_on_heartbeat(coordinator: MeasureItCoordinator) -> None:
     """Test async_on_heartbeat."""
     entity = MeasureItCoordinatorEntity()
     entity.on_value_change = MagicMock()
@@ -184,7 +184,7 @@ def test_async_on_heartbeat(coordinator: MeasureItCoordinator):
     assert coordinator._heartbeat_listener is not None
 
 
-def test_start_with_counter(coordinator: MeasureItCoordinator):
+def test_start_with_counter(coordinator: MeasureItCoordinator) -> None:
     """Test start."""
     coordinator._condition_template = Template("{{ True }}")
     coordinator._counter_template = Template("{{ True }}")
@@ -197,7 +197,7 @@ def test_start_with_counter(coordinator: MeasureItCoordinator):
     assert coordinator._condition_template_listener is not None
 
 
-def test_start_with_source(coordinator: MeasureItCoordinator):
+def test_start_with_source(coordinator: MeasureItCoordinator) -> None:
     """Test start."""
     coordinator._meter_type = MeterType.SOURCE
     coordinator._condition_template = Template("{{ True }}")
@@ -218,7 +218,7 @@ def test_start_with_source(coordinator: MeasureItCoordinator):
     entity.on_value_change.assert_called_with(123)
 
 
-def test_start_with_time(coordinator: MeasureItCoordinator):
+def test_start_with_time(coordinator: MeasureItCoordinator) -> None:
     """Test start."""
     coordinator._meter_type = MeterType.TIME
     coordinator._condition_template = Template("{{ True }}")

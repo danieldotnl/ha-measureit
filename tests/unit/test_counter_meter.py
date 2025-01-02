@@ -1,10 +1,11 @@
 """Test the CounterMeter class."""
+
 from decimal import Decimal
 
 from custom_components.measureit.meter import CounterMeter
 
 
-def test_init():
+def test_init() -> None:
     """Test initializing a counter meter."""
     meter = CounterMeter()
     assert meter.measured_value == Decimal(0)
@@ -12,7 +13,7 @@ def test_init():
     assert meter.measuring is False
 
 
-def test_start():
+def test_start() -> None:
     """Test starting a counter meter."""
     meter = CounterMeter()
     meter.start()
@@ -20,7 +21,7 @@ def test_start():
     assert meter.measured_value == Decimal(0)
 
 
-def test_stop():
+def test_stop() -> None:
     """Test stopping a counter meter."""
     meter = CounterMeter()
     meter.start()
@@ -29,7 +30,7 @@ def test_stop():
     assert meter.measured_value == Decimal(0)
 
 
-def test_update():
+def test_update() -> None:
     """Test updating a counter meter."""
     meter = CounterMeter()
     meter.start()
@@ -47,7 +48,7 @@ def test_update():
     assert meter.measured_value == Decimal(4)
 
 
-def test_reset_when_measuring():
+def test_reset_when_measuring() -> None:
     """Test resetting a counter meter when measuring."""
     meter = CounterMeter()
     meter.start()
@@ -60,7 +61,7 @@ def test_reset_when_measuring():
     assert meter.prev_measured_value == Decimal(0)
 
 
-def test_reset_when_not_measuring():
+def test_reset_when_not_measuring() -> None:
     """Test resetting a counter meter when not measuring."""
     meter = CounterMeter()
     meter.start()
@@ -71,7 +72,7 @@ def test_reset_when_not_measuring():
     assert meter.prev_measured_value == Decimal(1)
 
 
-def test_store_and_restore():
+def test_store_and_restore() -> None:
     """Test storing and restoring a counter meter."""
     meter = CounterMeter()
     meter.start()
@@ -93,7 +94,8 @@ def test_store_and_restore():
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(2)
 
-def test_calibrate():
+
+def test_calibrate() -> None:
     """Test calibrating a counter meter while measuring."""
     meter = CounterMeter()
     meter.start()

@@ -46,7 +46,7 @@ async def test_edit_sensor_uom(
     )
 
     # Check that the config flow shows the form for choosing a sensor to edit
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "select_edit_sensor"
 
     # Choose the sensor to edit
@@ -55,7 +55,7 @@ async def test_edit_sensor_uom(
     )
 
     # Check that the config flow shows the form with sensor config
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "edit_sensor"
 
     # Fill config name
@@ -65,7 +65,7 @@ async def test_edit_sensor_uom(
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "thank_you"
 
     result = await hass.config_entries.options.async_configure(
@@ -87,7 +87,7 @@ async def test_edit_sensor_uom_with_device_class(
     result = await hass.config_entries.options.async_init(loaded_entry.entry_id)
 
     # Check that the options flow shows the form with actions
-    assert result["type"] == data_entry_flow.RESULT_TYPE_MENU
+    assert result["type"] == data_entry_flow.FlowResultType.MENU
     assert result["step_id"] == "init"
 
     # Choose the action
@@ -96,7 +96,7 @@ async def test_edit_sensor_uom_with_device_class(
     )
 
     # Check that the config flow shows the form for choosing a sensor to edit
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "select_edit_sensor"
 
     # Choose the sensor to edit
@@ -105,7 +105,7 @@ async def test_edit_sensor_uom_with_device_class(
     )
 
     # Check that the config flow shows the form with sensor config
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "edit_sensor"
 
     # Fill config name
@@ -119,5 +119,5 @@ async def test_edit_sensor_uom_with_device_class(
     )
 
     assert result["errors"] == {"base": "uom_with_device_class_update"}
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "edit_sensor"

@@ -48,7 +48,7 @@ COUNTER_ENTRY = MockConfigEntry(
 )
 
 
-async def test_counter_meter_setup(hass: HomeAssistant):
+async def test_counter_meter_setup(hass: HomeAssistant) -> None:
     """Test MeasureIt setup."""
     await setup_with_mock_config(hass, COUNTER_ENTRY)
 
@@ -62,7 +62,7 @@ async def test_counter_meter_setup(hass: HomeAssistant):
         assert state.attributes["state_class"] == "total"
 
 
-async def test_counter_meter_counting(hass: HomeAssistant):
+async def test_counter_meter_counting(hass: HomeAssistant) -> None:
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
@@ -114,7 +114,7 @@ async def test_counter_meter_counting(hass: HomeAssistant):
 
 async def test_counter_should_not_count_positive_template_on_startup(
     hass: HomeAssistant,
-):
+) -> None:
     """Test counter_meter should be counting when condition becomes True."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 
@@ -138,7 +138,7 @@ async def test_counter_should_not_count_positive_template_on_startup(
         assert state.state == "1"
 
 
-async def test_counter_calibrate(hass: HomeAssistant):
+async def test_counter_calibrate(hass: HomeAssistant) -> None:
     """Test calibration of counter meter."""
     # counter_template = "{{ states('sensor.test_counter') | float % 2 == 0 }}"
 

@@ -6,7 +6,6 @@ target-version = "py312"
 select = ["ALL"]
 
 ignore = [
-    "ANN101", # Missing type annotation for `self` in method
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
     "D203",   # no-blank-line-before-class (incompatible with formatter)
     "D212",   # multi-line-summary-first-line (incompatible with formatter)
@@ -36,14 +35,11 @@ max-complexity = 25
     "ANN201", # Missing return type
     "PT011", # ValueError is too broad
     "SLF001", # Private member accessed
-    "ANN001", # Missing type annotation for function argument
-    "E501", # Line too long
-    "INP001", # File is part of an implicit namespace package
     "DTZ007", # Naive datatime constructed
     "ERA001", # "Found commented-out code
     "DTZ005", # datetime.now() called without a `tz` argument
-    "A002", # Wrong type passed to first argument; expected tuple
-    "PT006", # Function argument `input` is shadowing a Python builtin
-    "N806",
+
+
+
 
 ]

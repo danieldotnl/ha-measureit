@@ -5,7 +5,7 @@ from decimal import Decimal
 from custom_components.measureit.meter import SourceMeter
 
 
-def test_init():
+def test_init() -> None:
     """Test initializing a counter meter."""
     meter = SourceMeter()
     assert meter.measured_value == Decimal(0)
@@ -13,7 +13,7 @@ def test_init():
     assert meter.measuring is False
 
 
-def test_update_initial_source_value():
+def test_update_initial_source_value() -> None:
     """Test updating a counter meter with an initial source value."""
     meter = SourceMeter()
     assert meter._source_value is None
@@ -21,7 +21,7 @@ def test_update_initial_source_value():
     assert meter._source_value == Decimal(100)
 
 
-def test_start():
+def test_start() -> None:
     """Test starting a counter meter."""
     meter = SourceMeter()
     meter.update(Decimal(100))
@@ -30,7 +30,7 @@ def test_start():
     assert meter.measured_value == Decimal(0)
 
 
-def test_stop():
+def test_stop() -> None:
     """Test stopping a counter meter."""
     meter = SourceMeter()
     meter.update(Decimal(100))
@@ -40,7 +40,7 @@ def test_stop():
     assert meter.measured_value == Decimal(0)
 
 
-def test_update():
+def test_update() -> None:
     """Test updating a counter meter."""
     meter = SourceMeter()
     meter.update(Decimal(100))
@@ -59,7 +59,7 @@ def test_update():
     assert meter.measured_value == Decimal(700)
 
 
-def test_negative_update():
+def test_negative_update() -> None:
     """Test updating a counter meter with negative values."""
     meter = SourceMeter()
     meter.update(Decimal(100))
@@ -79,7 +79,7 @@ def test_negative_update():
     assert meter.measured_value == Decimal(-150)
 
 
-def test_update_decimal_values():
+def test_update_decimal_values() -> None:
     """Test updating a counter meter with decimal values."""
     meter = SourceMeter()
     meter.update(Decimal("10.03"))
@@ -90,7 +90,7 @@ def test_update_decimal_values():
     assert meter.measured_value == Decimal("0.03")
 
 
-def test_reset():
+def test_reset() -> None:
     """Test resetting a counter meter."""
     meter = SourceMeter()
     meter.update(Decimal(100))
@@ -122,7 +122,7 @@ def test_reset():
     assert meter.prev_measured_value == Decimal(0)
 
 
-def test_store_and_restore():
+def test_store_and_restore() -> None:
     """Test storing and restoring a source meter."""
     meter = SourceMeter()
     meter.update(Decimal(100))
@@ -147,7 +147,8 @@ def test_store_and_restore():
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(400)
 
-def test_calibrate_while_measuring():
+
+def test_calibrate_while_measuring() -> None:
     """Test calibrating a source meter while measuring."""
     meter = SourceMeter()
     meter.update(Decimal(100))
