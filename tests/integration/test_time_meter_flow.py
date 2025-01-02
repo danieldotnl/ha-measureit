@@ -7,10 +7,12 @@ from freezegun import freeze_time
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
-    MockConfigEntry, async_fire_time_changed, async_fire_time_changed_exact)
+    MockConfigEntry,
+    async_fire_time_changed,
+    async_fire_time_changed_exact,
+)
 
-from custom_components.measureit.const import (DOMAIN, PREDEFINED_PERIODS,
-                                               SensorState)
+from custom_components.measureit.const import DOMAIN, PREDEFINED_PERIODS, SensorState
 from tests import setup_with_mock_config, unload_with_mock_config
 
 TIME_ENTRY = MockConfigEntry(
@@ -58,7 +60,7 @@ TIME_ENTRY = MockConfigEntry(
                 "sensor_name": "session",
                 "cron": "session",
                 "period": "session",
-            }
+            },
         ],
     },
 )
@@ -99,6 +101,7 @@ FORMATTED_TIME_ENTRY = MockConfigEntry(
         ],
     },
 )
+
 
 async def test_time_meter_setup(hass: HomeAssistant):
     """Test MeasureIt setup for source meter."""
@@ -192,7 +195,6 @@ async def test_time_meter_start(hass: HomeAssistant):
 
 async def test_time_meter_stop(hass: HomeAssistant):
     """Test MeasureIt setup for source meter."""
-
     hass.states.async_set("switch.test_switch", "on")
     await hass.async_block_till_done()
 
@@ -312,7 +314,6 @@ async def test_service_reset_with_datetime(hass: HomeAssistant):
 
 async def test_format_time_with_template(hass: HomeAssistant):
     """Test formatting time with a value_template and no state class."""
-
     current_time = datetime(2024, 2, 11, 4, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     with freeze_time(current_time) as mock_time:
         await setup_with_mock_config(hass, FORMATTED_TIME_ENTRY)
@@ -345,9 +346,9 @@ async def test_format_time_with_template(hass: HomeAssistant):
         assert state.attributes["status"] == SensorState.MEASURING
         assert state.state == "13.397"
 
+
 async def test_reset_after_session(hass: HomeAssistant):
     """Test if meter resets after session."""
-
     current_time = datetime(2024, 3, 11, 8, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     with freeze_time(current_time) as mock_time:
         await setup_with_mock_config(hass, TIME_ENTRY)
@@ -365,9 +366,7 @@ async def test_reset_after_session(hass: HomeAssistant):
         assert state.attributes["sensor_last_reset"] == current_time.isoformat()
         assert state.attributes["sensor_next_reset"] is None
 
-        current_time = datetime(
-            2024, 3, 11, 10, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
-        )
+        current_time = datetime(2024, 3, 11, 10, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
         mock_time.move_to(current_time)
         async_fire_time_changed(hass, current_time)
         hass.states.async_set("switch.test_switch", "off")
@@ -380,9 +379,6 @@ async def test_reset_after_session(hass: HomeAssistant):
         assert state.attributes["prev_period"] == "7200"
         assert state.attributes["sensor_last_reset"] == current_time.isoformat()
         assert state.attributes["sensor_next_reset"] is None
-
-
-
 
 
 # async def test_sensor_next_reset(hass: HomeAssistant):

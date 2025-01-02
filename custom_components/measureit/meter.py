@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Never
 
 from custom_components.measureit.const import MeterType
 
@@ -37,25 +38,25 @@ class MeasureItMeter:
         """Get the meter type."""
         return self._meter_type
 
-    def start(self):
+    def start(self) -> Never:
         """Start the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def stop(self):
+    def stop(self) -> Never:
         """Stop the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def update(self, value: Decimal | None = None):
+    def update(self, value: Decimal | None = None) -> Never:
         """Update the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def calibrate(self, value: Decimal):
+    def calibrate(self, value: Decimal) -> Never:
         """Calibrate the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def reset(self):
+    def reset(self) -> Never:
         """Reset the meter."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def to_dict(self) -> dict:
         """Return the meter as a dictionary."""
@@ -77,31 +78,32 @@ class CounterMeter(MeasureItMeter):
 
     _meter_type = MeterType.COUNTER
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize meter."""
         super().__init__()
 
-    def start(self):
+    def start(self) -> None:
         """Start the meter."""
         self._measuring = True
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the meter."""
         self._measuring = False
 
-    def update(self, value: Decimal | None = None):
+    def update(self, value: Decimal | None = None) -> None:
         """Update the meter."""
         if self._measuring:
             self._measured_value += value
 
-    def calibrate(self, value: Decimal):
+    def calibrate(self, value: Decimal) -> None:
         """Calibrate the meter."""
         self._measured_value = value
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the meter."""
-        self._prev_measured_value, self._measured_value = self._measured_value, Decimal(
-            0
+        self._prev_measured_value, self._measured_value = (
+            self._measured_value,
+            Decimal(0),
         )
 
 
@@ -110,7 +112,7 @@ class SourceMeter(MeasureItMeter):
 
     _meter_type = MeterType.SOURCE
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize meter."""
         super().__init__()
         self._session_start_value = Decimal(0)
@@ -122,22 +124,23 @@ class SourceMeter(MeasureItMeter):
         """Check if the meter has a source value."""
         return self._source_value is not None
 
-    def start(self):
+    def start(self) -> None:
         """Start the meter."""
         self._measuring = True
         self._session_start_value = self._source_value
         self._session_start_measured_value = self.measured_value
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the meter."""
         self._measuring = False
         self._session_total = self._source_value - self._session_start_value
         self._measured_value = self._session_start_measured_value + self._session_total
 
-    def update(self, value: Decimal | None = None):
+    def update(self, value: Decimal | None = None) -> None:
         """Update the meter."""
         if value is None:
-            raise ValueError("Source meter requires a value to update")
+            msg = "Source meter requires a value to update"
+            raise ValueError(msg)
         self._source_value = value
         if self._measuring:
             self._session_total = self._source_value - self._session_start_value
@@ -145,7 +148,7 @@ class SourceMeter(MeasureItMeter):
                 self._session_start_measured_value + self._session_total
             )
 
-    def calibrate(self, value: Decimal):
+    def calibrate(self, value: Decimal) -> None:
         """Calibrate the meter."""
         self._measured_value = value
         if self._measuring:
@@ -153,7 +156,7 @@ class SourceMeter(MeasureItMeter):
             # This kind of starts a new session but does not do a reset
             self._session_start_value = self._source_value
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the meter."""
         if self._measuring:
             self.stop()
@@ -164,7 +167,7 @@ class SourceMeter(MeasureItMeter):
             self._prev_measured_value = self._measured_value
             self._measured_value = Decimal(0)
 
-    def handle_source_reset(self, value: Decimal):
+    def handle_source_reset(self, value: Decimal) -> None:
         """Handle source reset."""
         if self._measuring:
             self.stop()
@@ -203,7 +206,7 @@ class TimeMeter(MeasureItMeter):
 
     _meter_type = MeterType.TIME
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize meter."""
         super().__init__()
         self._session_start_value = Decimal(0)
@@ -213,19 +216,19 @@ class TimeMeter(MeasureItMeter):
         """Get timestamp."""
         return Decimal(datetime.now(UTC).timestamp())
 
-    def start(self):
+    def start(self) -> None:
         """Start the meter."""
         self._measuring = True
         self._session_start_value = self.get_timestamp()
         self._session_start_measured_value = self.measured_value
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the meter."""
         self._measuring = False
         self._session_total = self.get_timestamp() - self._session_start_value
         self._measured_value = self._session_start_measured_value + self._session_total
 
-    def update(self, value: Decimal | None = None):
+    def update(self, value: Decimal | None = None) -> None:  # noqa: ARG002
         """Update the meter."""
         if self._measuring:
             self._session_total = self.get_timestamp() - self._session_start_value
@@ -233,7 +236,7 @@ class TimeMeter(MeasureItMeter):
                 self._session_start_measured_value + self._session_total
             )
 
-    def calibrate(self, value: Decimal):
+    def calibrate(self, value: Decimal) -> None:
         """Calibrate the meter."""
         self._measured_value = value
         if self._measuring:
@@ -241,7 +244,7 @@ class TimeMeter(MeasureItMeter):
             # This kind of starts a new session but does not do a reset
             self._session_start_value = self.get_timestamp()
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the meter."""
         if self._measuring:
             self.stop()
