@@ -29,7 +29,7 @@ FOREVER_ENTRY = MockConfigEntry(
 )
 
 
-async def test_noreset_meter_setup(hass: HomeAssistant):
+async def test_noreset_meter_setup(hass: HomeAssistant) -> None:
     """Test MeasureIt setup."""
     await setup_with_mock_config(hass, FOREVER_ENTRY)
 
@@ -44,7 +44,7 @@ async def test_noreset_meter_setup(hass: HomeAssistant):
     await unload_with_mock_config(hass, FOREVER_ENTRY)
 
 
-async def test_noreset_meter_reset(hass: HomeAssistant):
+async def test_noreset_meter_reset(hass: HomeAssistant) -> None:
     """Test MeasureIt reset."""
     hass.states.async_set("sensor.test_counter", "3")
     await hass.async_block_till_done()

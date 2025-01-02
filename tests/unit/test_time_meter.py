@@ -1,4 +1,5 @@
 """Test the TimeMeter class."""
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -21,7 +22,7 @@ class DatetimeMock:
         return Decimal(self._now.timestamp())
 
 
-def test_init():
+def test_init() -> None:
     """Test initializing a time meter."""
     meter = TimeMeter()
     assert meter.measured_value == Decimal(0)
@@ -29,7 +30,7 @@ def test_init():
     assert meter.measuring is False
 
 
-def test_start():
+def test_start() -> None:
     """Test starting a time meter."""
     meter = TimeMeter()
     meter.start()
@@ -37,7 +38,7 @@ def test_start():
     assert meter.measured_value == Decimal(0)
 
 
-def test_stop():
+def test_stop() -> None:
     """Test stopping a time meter."""
     meter = TimeMeter()
     mock = DatetimeMock(datetime.now(), timedelta(hours=1))
@@ -48,7 +49,7 @@ def test_stop():
     assert meter.measured_value == Decimal(HOUR)
 
 
-def test_update():
+def test_update() -> None:
     """Test updating a time meter."""
     meter = TimeMeter()
     mock = DatetimeMock(datetime.now(), timedelta(hours=1))
@@ -69,7 +70,7 @@ def test_update():
     assert meter.measured_value == Decimal(HOUR * 5)
 
 
-def test_reset_when_measuring():
+def test_reset_when_measuring() -> None:
     """Test resetting a time meter when measuring."""
     meter = TimeMeter()
     mock = DatetimeMock(datetime.now(), timedelta(hours=1))
@@ -85,7 +86,7 @@ def test_reset_when_measuring():
     assert meter.prev_measured_value == Decimal(HOUR * 2)
 
 
-def test_reset_when_not_measuring():
+def test_reset_when_not_measuring() -> None:
     """Test resetting a time meter when not measuring."""
     meter = TimeMeter()
     mock = DatetimeMock(datetime.now(), timedelta(hours=1))
@@ -100,7 +101,7 @@ def test_reset_when_not_measuring():
     assert meter.prev_measured_value == Decimal(HOUR * 2)
 
 
-def test_store_and_restore():
+def test_store_and_restore() -> None:
     """Test storing and restoring a counter meter."""
     meter = TimeMeter()
     mock = DatetimeMock(datetime.now(), timedelta(hours=1))
@@ -132,7 +133,8 @@ def test_store_and_restore():
     assert meter3.measuring is False
     assert meter3.measured_value == Decimal(HOUR * 4)
 
-def test_calibrate():
+
+def test_calibrate() -> None:
     """Test calibrating a time meter."""
     meter = TimeMeter()
     mock = DatetimeMock(datetime.now(), timedelta(hours=1))
@@ -142,13 +144,12 @@ def test_calibrate():
     meter.update()
     assert meter.measuring is True
     assert meter.measured_value == Decimal(HOUR)
-    meter.calibrate(Decimal(HOUR)*3)
-    assert meter.measured_value == Decimal(HOUR*3)
+    meter.calibrate(Decimal(HOUR) * 3)
+    assert meter.measured_value == Decimal(HOUR * 3)
     meter.update()
-    assert meter.measured_value == Decimal(HOUR*4)
+    assert meter.measured_value == Decimal(HOUR * 4)
     meter.stop()
     assert meter.measuring is False
-    assert meter.measured_value == Decimal(HOUR*5)
-    meter.calibrate(Decimal(HOUR)*6)
-    assert meter.measured_value == Decimal(HOUR*6)
-
+    assert meter.measured_value == Decimal(HOUR * 5)
+    meter.calibrate(Decimal(HOUR) * 6)
+    assert meter.measured_value == Decimal(HOUR * 6)
