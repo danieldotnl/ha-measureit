@@ -50,7 +50,7 @@ async def test_counter_config_flow(hass: HomeAssistant) -> None:
     )
 
     # Check that the config flow shows the form for the config name
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
 
     # Fill config name
     result = await hass.config_entries.flow.async_configure(
@@ -62,7 +62,7 @@ async def test_counter_config_flow(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "when"
 
     # Fill the when config step
@@ -77,7 +77,7 @@ async def test_counter_config_flow(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "sensors"
 
     result = await hass.config_entries.flow.async_configure(
@@ -89,7 +89,7 @@ async def test_counter_config_flow(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "thank_you"
 
     result = await hass.config_entries.flow.async_configure(
@@ -121,7 +121,7 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
     )
 
     # Check that the config flow shows the form for the config name
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
 
     # Fill config name
     result = await hass.config_entries.flow.async_configure(
@@ -129,7 +129,7 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "when"
 
     # Fill the when config step
@@ -144,7 +144,7 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "sensors"
 
     result = await hass.config_entries.flow.async_configure(
@@ -158,7 +158,7 @@ async def test_time_config_flow(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] is None
-    assert result["type"] == data_entry_flow.RESULT_TYPE_FORM
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "thank_you"
 
     result = await hass.config_entries.flow.async_configure(

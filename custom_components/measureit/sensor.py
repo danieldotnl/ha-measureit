@@ -291,7 +291,6 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         self._attr_device_class = device_class
 
         self._attr_should_poll = False
-        self._set_translation_key()
 
         self._time_window_active: bool = False
         self._active: bool = False
@@ -366,15 +365,6 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         if self.state_class == SensorStateClass.TOTAL:
             return self._last_reset
         return None
-
-    def _set_translation_key(self) -> None:
-        """Set the translation key."""
-        if self.meter.meter_type == MeterType.SOURCE:
-            self._attr_translation_key = "source-meter"
-        elif self.meter.meter_type == MeterType.TIME:
-            self._attr_translation_key = "time-meter"
-        elif self.meter.meter_type == MeterType.COUNTER:
-            self._attr_translation_key = "counter-meter"
 
     @property
     def extra_state_attributes(self) -> dict[str, str]:
