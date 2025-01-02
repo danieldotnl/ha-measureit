@@ -2,6 +2,8 @@
 
 from datetime import datetime, time, timedelta
 
+NOF_WEEKDAYS = 7
+
 
 class TimeWindow:
     """TimeWindow class with active check and next change time."""
@@ -17,7 +19,7 @@ class TimeWindow:
 
         self._days = [int(day) for day in days]
         for day in self._days:
-            if day < 0 or day > 6:
+            if day < 0 or day > NOF_WEEKDAYS - 1:
                 msg = "Invalid day provided."
                 raise ValueError(msg)
 
@@ -25,7 +27,7 @@ class TimeWindow:
         self._end = datetime.strptime(till_time, "%H:%M:%S").time()  # noqa: DTZ007
 
         self._always_active = (
-            len(self._days) == 7
+            len(self._days) == NOF_WEEKDAYS
             and self._start == time(0, 0)
             and self._end == time(0, 0)
         )
