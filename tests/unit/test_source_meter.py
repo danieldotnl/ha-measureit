@@ -74,7 +74,7 @@ def test_negative_update() -> None:
     meter.update(Decimal(200))
     assert meter.measured_value == Decimal(50)
     meter.start()
-    assert meter.measured_value == Decimal(50.0)
+    assert meter.measured_value == Decimal("50.0")
     meter.update(Decimal(0))
     assert meter.measured_value == Decimal(-150)
 
