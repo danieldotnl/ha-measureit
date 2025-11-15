@@ -1,5 +1,19 @@
 # Measure It
 
+---
+
+> ## 👋 A quick note
+>
+> I run **[Smart Home Newsletter](https://smarthomenewsletter.com/?utm_source=github&utm_medium=readme&utm_campaign=measureit)** — a weekly curated digest for smart home enthusiasts.
+>
+> Each issue highlights the most relevant smart home **articles, news, and projects** from the past week.
+>
+> Since you're here, you're clearly into home automation — so you might genuinely enjoy the newsletter.
+>
+> 👉 [Subscribe at smarthomenewsletter.com](https://smarthomenewsletter.com/?utm_source=github&utm_medium=readme&utm_campaign=measureit)
+>
+---
+
 MeasureIt can measure all kind of things happening in Home Assistant based on time and templates.
 
 Some examples of use cases:
