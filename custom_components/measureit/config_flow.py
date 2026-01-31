@@ -60,6 +60,11 @@ from .const import (
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+# URL constants for description placeholders
+_DEVICE_CLASS_URL = "https://www.home-assistant.io/integrations/sensor/#device-class"
+_STATE_CLASS_URL = "https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes"
+_BUYMEACOFFEE_URL = "https://www.buymeacoffee.com/danieldotnl"
+
 PERIOD_OPTIONS = [
     selector.SelectOptionDict(value="hour", label="hour"),
     selector.SelectOptionDict(value="day", label="day"),
@@ -388,6 +393,35 @@ DATA_SCHEMA_EDIT_MAIN = vol.Schema(
 DATA_SCHEMA_THANK_YOU = vol.Schema({})
 
 
+async def get_sensors_step_placeholders(
+    handler: SchemaCommonFlowHandler,  # noqa: ARG001
+) -> dict[str, str]:
+    """Return description placeholders for sensors step."""
+    return {
+        "device_class_url": _DEVICE_CLASS_URL,
+        "state_class_url": _STATE_CLASS_URL,
+    }
+
+
+async def get_thank_you_placeholders(
+    handler: SchemaCommonFlowHandler,  # noqa: ARG001
+) -> dict[str, str]:
+    """Return description placeholders for thank you step."""
+    return {
+        "buymeacoffee_url": _BUYMEACOFFEE_URL,
+    }
+
+
+async def get_add_sensors_placeholders(
+    handler: SchemaCommonFlowHandler,  # noqa: ARG001
+) -> dict[str, str]:
+    """Return description placeholders for add sensors step."""
+    return {
+        "device_class_url": _DEVICE_CLASS_URL,
+        "state_class_url": _STATE_CLASS_URL,
+    }
+
+
 CONFIG_FLOW = {
     "user": SchemaFlowMenuStep(["time", "source", "count"]),
     "time": SchemaFlowFormStep(
@@ -415,9 +449,11 @@ CONFIG_FLOW = {
         validate_user_input=validate_sensor_setup,
         suggested_values=get_add_sensor_suggested_values,
         next_step="thank_you",
+        description_placeholders=get_sensors_step_placeholders,
     ),
     "thank_you": SchemaFlowFormStep(
         DATA_SCHEMA_THANK_YOU,
+        description_placeholders=get_thank_you_placeholders,
     ),
 }
 
@@ -434,6 +470,7 @@ OPTIONS_FLOW = {
         suggested_values=get_add_sensor_suggested_values,
         validate_user_input=validate_sensor_setup,
         next_step="thank_you",
+        description_placeholders=get_add_sensors_placeholders,
     ),
     "select_edit_sensor": SchemaFlowFormStep(
         get_select_sensor_schema,
@@ -455,6 +492,7 @@ OPTIONS_FLOW = {
     ),
     "thank_you": SchemaFlowFormStep(
         DATA_SCHEMA_THANK_YOU,
+        description_placeholders=get_thank_you_placeholders,
     ),
 }
 
