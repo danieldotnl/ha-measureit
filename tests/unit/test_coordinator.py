@@ -186,8 +186,8 @@ def test_async_on_heartbeat(coordinator: MeasureItCoordinator) -> None:
 
 def test_start_with_counter(coordinator: MeasureItCoordinator) -> None:
     """Test start."""
-    coordinator._condition_template = Template("{{ True }}")
-    coordinator._counter_template = Template("{{ True }}")
+    coordinator._condition_template = Template("{{ True }}", coordinator.hass)
+    coordinator._counter_template = Template("{{ True }}", coordinator.hass)
     assert coordinator._condition_template_listener is None
     assert coordinator._time_window_listener is None
     assert coordinator._condition_template_listener is None
@@ -200,7 +200,7 @@ def test_start_with_counter(coordinator: MeasureItCoordinator) -> None:
 def test_start_with_source(coordinator: MeasureItCoordinator) -> None:
     """Test start."""
     coordinator._meter_type = MeterType.SOURCE
-    coordinator._condition_template = Template("{{ True }}")
+    coordinator._condition_template = Template("{{ True }}", coordinator.hass)
     coordinator._source_entity = "sensor.test"
     coordinator._get_sensor_state = MagicMock(return_value=123)
     entity = MeasureItCoordinatorEntity()
@@ -221,7 +221,7 @@ def test_start_with_source(coordinator: MeasureItCoordinator) -> None:
 def test_start_with_time(coordinator: MeasureItCoordinator) -> None:
     """Test start."""
     coordinator._meter_type = MeterType.TIME
-    coordinator._condition_template = Template("{{ True }}")
+    coordinator._condition_template = Template("{{ True }}", coordinator.hass)
     assert coordinator._condition_template_listener is None
     assert coordinator._time_window_listener is None
     assert coordinator._heartbeat_listener is None

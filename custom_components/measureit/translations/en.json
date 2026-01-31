@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Choose what you want to measure (what)",
-        "description": "Thank you for setting up MeasureIt!\nIf you need help with the configuration have a look at the [readme](https://github.com/danieldotnl/ha-measureit) or ask a question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).\n\nChoose what you want to measure:\n**Time:** Measure the elapsed time while conditions are met.\n**Source:** Measure the state changes of a source entity, while conditions are met.\n**Counter:** Measure the number of times something (described in a template) occurs, while conditions are met.",
+        "description": "Thank you for setting up MeasureIt!\nIf you need help with the configuration, have a look at the readme or ask a question on the community forum.\n\nChoose what you want to measure:\n**Time:** Measure the elapsed time while conditions are met.\n**Source:** Measure the state changes of a source entity, while conditions are met.\n**Counter:** Measure the number of times something (described in a template) occurs, while conditions are met.",
         "menu_options": {
           "time": "Time",
           "source": "Source",
@@ -45,7 +45,7 @@
       },
       "sensors": {
         "title": "Configure the sensors (how)",
-        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select a predefined period to measure (when the meter will reset). Alternatively, provide a custom cron expression. Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
+        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select a predefined period to measure (when the meter will reset). Alternatively, provide a custom cron expression. Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [{device_class_url}].\n**State class**: Find more about state classes [{state_class_url}].",
         "data": {
           "periods": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
@@ -56,7 +56,7 @@
       },
       "thank_you": {
         "title": "Thank you for setting up MeasureIt!",
-        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl 🙏"
+        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\n{buymeacoffee_url} 🙏"
       }
     },
     "error": {
@@ -77,7 +77,7 @@
       },
       "add_sensors": {
         "title": "Add sensor(s)",
-        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [here](https://www.home-assistant.io/integrations/sensor/#device-class).\n**State class**: Find more about state classes [here](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes).",
+        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [{device_class_url}].\n**State class**: Find more about state classes [{state_class_url}].",
         "data": {
           "period": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
@@ -97,7 +97,7 @@
       },
       "thank_you": {
         "title": "Thank you for setting up MeasureIt!",
-        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\nhttps://www.buymeacoffee.com/danieldotnl 🙏"
+        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\n{buymeacoffee_url} 🙏"
       },
       "edit_sensor": {
         "title": "Edit sensor",
