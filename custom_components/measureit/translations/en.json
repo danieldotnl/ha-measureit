@@ -45,7 +45,7 @@
       },
       "sensors": {
         "title": "Configure the sensors (how)",
-        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select a predefined period to measure (when the meter will reset). Alternatively, provide a custom cron expression. Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes in the documentation.\n**State class**: Find more about state classes in the documentation.",
+        "description": "Configure the sensors. When in doubt, stick to the defaults. Individual sensor settings can be adjusted after this setup via 'configure'.\n\n**Reset periods:** Select a predefined period to measure (when the meter will reset). Alternatively, provide a custom cron expression. Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [{device_class_url}].\n**State class**: Find more about state classes [{state_class_url}].",
         "data": {
           "periods": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
@@ -56,7 +56,7 @@
       },
       "thank_you": {
         "title": "Thank you for setting up MeasureIt!",
-        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee! 🙏"
+        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\n{buymeacoffee_url} 🙏"
       }
     },
     "error": {
@@ -77,7 +77,7 @@
       },
       "add_sensors": {
         "title": "Add sensor(s)",
-        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes in the documentation.\n**State class**: Find more about state classes in the documentation.",
+        "description": "Add and configure one or more sensors. When in doubt, stick to the defaults.\n\n**Reset periods:** Select the periods you want to measure (when the meter will reset). Each period becomes a separate sensor.\n**Value template:** A template that is applied on the output of the sensor. Use `value` to refer to the sensor state.\n**Unit of measurement:** The unit of what your are measuring. E.g.: m3\n**Device class:** Find more about device classes [{device_class_url}].\n**State class**: Find more about state classes [{state_class_url}].",
         "data": {
           "period": "Reset periods:",
           "unit_of_measurement": "Unit of measurement",
@@ -97,7 +97,7 @@
       },
       "thank_you": {
         "title": "Thank you for setting up MeasureIt!",
-        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee! 🙏"
+        "description": "Did you know that I'm incredibly motivated by coffee? ☕\nIf you like using MeasureIt, please consider buying me a coffee!\n{buymeacoffee_url} 🙏"
       },
       "edit_sensor": {
         "title": "Edit sensor",
