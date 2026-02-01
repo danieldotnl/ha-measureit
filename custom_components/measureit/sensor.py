@@ -221,7 +221,7 @@ class MeasureItSensorStoredData(ExtraStoredData):
         return cls(meter_data, time_window_active, active, last_reset, next_reset)
 
     @classmethod
-    def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData:
+    def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData | None:
         """Initialize a stored sensor state from a dict."""
         try:
             if not restored.get("meter_data"):
@@ -229,7 +229,8 @@ class MeasureItSensorStoredData(ExtraStoredData):
 
             meter_data = restored["meter_data"]
             time_window_active = bool(restored["time_window_active"])
-            active = bool(restored["active"])
+            # Handle migration from old field name 'condition_active' to 'active'
+            active = bool(restored.get("active", restored.get("condition_active", False)))
             last_reset = (
                 datetime.fromisoformat(restored["last_reset"]).astimezone(
                     tz=dt_util.DEFAULT_TIME_ZONE
