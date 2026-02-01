@@ -1,6 +1,6 @@
 {
   "name": "danieldotnl/measureit",
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.14",
   "postCreateCommand": "scripts/setup && gh auth setup-git",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
