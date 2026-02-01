@@ -463,8 +463,19 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
             return
         if not next_reset:
             if self.scheduler:
-                while (next_reset := next(self.scheduler)) <= tznow:
-                    pass
+                max_iterations = 1000
+                for _ in range(max_iterations):
+                    next_reset = next(self.scheduler)
+                    if next_reset > tznow:
+                        break
+                else:
+                    _LOGGER.error(
+                        "%s # Could not determine next reset time after %s iterations",
+                        self._attr_name,
+                        max_iterations,
+                    )
+                    self._next_reset = None
+                    return
             else:
                 self._next_reset = None
                 return
