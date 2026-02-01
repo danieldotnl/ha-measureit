@@ -222,15 +222,42 @@ class MeasureItSensorStoredData(ExtraStoredData):
 
     @classmethod
     def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData | None:
-        """Initialize a stored sensor state from a dict."""
-        try:
-            if not restored.get("meter_data"):
-                return MeasureItSensorStoredData.from_old_format_dict(restored)
+        """Initialize a stored sensor state from a dict.
 
-            meter_data = restored["meter_data"]
-            time_window_active = bool(restored["time_window_active"])
-            # Handle migration from old field name 'condition_active' to 'active'
-            active = bool(restored.get("active", restored.get("condition_active", False)))
+        Raises
+        ------
+            ValueError: When required fields are missing (abnormal situation)
+            ValueError: When datetime fields have invalid format
+
+        """
+        if not restored.get("meter_data"):
+            # Try old format - if it fails, data is corrupted, return None
+            try:
+                return MeasureItSensorStoredData.from_old_format_dict(restored)
+            except (KeyError, TypeError):
+                # Old format also invalid - data is corrupted
+                return None
+
+        # Validate required fields - missing fields indicate data corruption
+        if "time_window_active" not in restored:
+            msg = "Required field 'time_window_active' is missing from stored data"
+            raise ValueError(msg)
+
+        meter_data = restored["meter_data"]
+        time_window_active = bool(restored["time_window_active"])
+
+        # Handle migration from old field name 'condition_active' to 'active'
+        # Log warning if both fields exist (shouldn't happen)
+        if "active" in restored and "condition_active" in restored:
+            _LOGGER.warning(
+                "Found both 'active' and 'condition_active' in stored data. "
+                "Using 'active'. This indicates an unusual state."
+            )
+
+        active = bool(restored.get("active", restored.get("condition_active", False)))
+
+        # Parse datetime fields with validation
+        try:
             last_reset = (
                 datetime.fromisoformat(restored["last_reset"]).astimezone(
                     tz=dt_util.DEFAULT_TIME_ZONE
@@ -238,6 +265,11 @@ class MeasureItSensorStoredData(ExtraStoredData):
                 if restored.get("last_reset")
                 else None
             )
+        except (ValueError, TypeError) as err:
+            msg = f"Invalid 'last_reset' datetime format: {restored.get('last_reset')}"
+            raise ValueError(msg) from err
+
+        try:
             next_reset = (
                 datetime.fromisoformat(restored["next_reset"]).astimezone(
                     tz=dt_util.DEFAULT_TIME_ZONE
@@ -245,9 +277,9 @@ class MeasureItSensorStoredData(ExtraStoredData):
                 if restored.get("next_reset")
                 else None
             )
-        except KeyError:
-            # restored is a dict, but does not have all values
-            return None
+        except (ValueError, TypeError) as err:
+            msg = f"Invalid 'next_reset' datetime format: {restored.get('next_reset')}"
+            raise ValueError(msg) from err
 
         return cls(meter_data, time_window_active, active, last_reset, next_reset)
 
@@ -516,7 +548,23 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         )
 
     async def async_get_last_sensor_data(self) -> MeasureItSensorStoredData | None:
-        """Retrieve sensor data to be restored."""
+        """
+        Retrieve sensor data to be restored.
+
+        Returns None if data cannot be restored, logging appropriate warnings/errors.
+        """
         if (restored_last_extra_data := await self.async_get_last_extra_data()) is None:
             return None
-        return MeasureItSensorStoredData.from_dict(restored_last_extra_data.as_dict())
+
+        try:
+            return MeasureItSensorStoredData.from_dict(
+                restored_last_extra_data.as_dict()
+            )
+        except ValueError:
+            # Data corruption or invalid format - log error with details
+            _LOGGER.exception(
+                "%s # Cannot restore data due to corruption. "
+                "Sensor will start fresh. Please check your Home Assistant database.",
+                self._attr_name,
+            )
+            return None
