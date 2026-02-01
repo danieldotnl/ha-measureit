@@ -138,7 +138,8 @@ def fixture_restore_sensor(hass: HomeAssistant, test_now: datetime):
 
 @pytest.fixture(name="restore_sensor_old_format")
 def fixture_restore_sensor_old_format(hass: HomeAssistant, test_now: datetime):
-    """Fixture for creating a MeasureIt sensor with old 'condition_active' field.
+    """
+    Fixture for creating a MeasureIt sensor with old 'condition_active' field.
 
     This simulates a sensor that was saved with v0.8.2 or earlier and is being
     restored after upgrading to v0.8.3/v0.5.1+.
@@ -459,7 +460,8 @@ def test_restore_old_format_state_with_null_values() -> None:
 
 
 def test_restore_migration_condition_active_to_active() -> None:
-    """Test migration from old field name 'condition_active' to 'active'.
+    """
+    Test migration from old field name 'condition_active' to 'active'.
 
     This test ensures backward compatibility when restoring data saved with
     the old 'condition_active' field name (pre-v0.8.3/v0.5.1).
@@ -505,7 +507,8 @@ def test_restore_migration_condition_active_to_active() -> None:
 
 
 def test_restore_with_new_active_field() -> None:
-    """Test restoration with new 'active' field name works correctly.
+    """
+    Test restoration with new 'active' field name works correctly.
 
     Ensures that data saved with the new field name (v0.8.3/v0.5.1+)
     continues to work correctly.
@@ -528,8 +531,9 @@ def test_restore_with_new_active_field() -> None:
     assert restored.meter_data["measured_value"] == 500.25
 
 
-def test_restore_prefers_new_field_over_old(caplog) -> None:
-    """Test that if both 'active' and 'condition_active' exist, 'active' takes precedence.
+def test_restore_prefers_new_field_over_old(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Test that if both 'active' and 'condition_active' exist, 'active' takes precedence.
 
     DESIRED BEHAVIOR: This shouldn't happen in practice (indicates unusual state).
     Log a warning to alert the user, but proceed using 'active' field.
@@ -561,7 +565,8 @@ def test_restore_prefers_new_field_over_old(caplog) -> None:
 
 
 def test_restore_with_missing_active_fields() -> None:
-    """Test restoration when both 'active' and 'condition_active' are missing.
+    """
+    Test restoration when both 'active' and 'condition_active' are missing.
 
     This handles corrupted or incomplete data by defaulting to False,
     which is safer than failing completely and losing all data.
@@ -625,7 +630,8 @@ async def test_added_to_hass_with_restore(restore_sensor: MeasureItSensor) -> No
 async def test_added_to_hass_with_restore_old_format(
     restore_sensor_old_format: MeasureItSensor,
 ) -> None:
-    """Test sensor restoration with old 'condition_active' field name.
+    """
+    Test sensor restoration with old 'condition_active' field name.
 
     CRITICAL TEST: This ensures that sensors with data saved using the old
     'condition_active' field name (v0.8.2 and earlier) can successfully
@@ -809,7 +815,8 @@ def test_next_reset_with_dst(
 
 
 def test_restore_with_missing_time_window_active_field() -> None:
-    """Test restoration raises exception when time_window_active is missing.
+    """
+    Test restoration raises exception when time_window_active is missing.
 
     DESIRED BEHAVIOR: When required fields are missing (abnormal situation
     indicating data corruption), raise ValueError so the user knows there's
@@ -830,12 +837,13 @@ def test_restore_with_missing_time_window_active_field() -> None:
         "active": True,
     }
 
-    with pytest.raises(ValueError, match="time_window_active.*missing"):
+    with pytest.raises(ValueError, match=r"time_window_active.*missing"):
         MeasureItSensorStoredData.from_dict(data_missing_field)
 
 
 def test_restore_with_null_datetime_fields() -> None:
-    """Test restoration handles null datetime fields correctly.
+    """
+    Test restoration handles null datetime fields correctly.
 
     Sensors may have null last_reset or next_reset in certain states
     (e.g., never reset, or no scheduled reset).
@@ -860,7 +868,8 @@ def test_restore_with_null_datetime_fields() -> None:
 
 
 def test_restore_round_trip_preserves_data() -> None:
-    """Test that data survives a complete save/restore cycle.
+    """
+    Test that data survives a complete save/restore cycle.
 
     CRITICAL: Ensures no data is lost during serialization and deserialization.
     This tests the complete as_dict() -> from_dict() cycle.
@@ -895,7 +904,8 @@ def test_restore_round_trip_preserves_data() -> None:
 
 
 def test_restore_with_invalid_datetime_format() -> None:
-    """Test restoration raises exception for invalid datetime formats.
+    """
+    Test restoration raises exception for invalid datetime formats.
 
     DESIRED BEHAVIOR: Invalid datetime format indicates data corruption or
     database issues. Raise ValueError so the user is alerted to fix the problem.
@@ -914,12 +924,13 @@ def test_restore_with_invalid_datetime_format() -> None:
         "active": True,
     }
 
-    with pytest.raises(ValueError, match="Invalid.*last_reset.*datetime"):
+    with pytest.raises(ValueError, match=r"Invalid.*last_reset.*datetime"):
         MeasureItSensorStoredData.from_dict(data_with_invalid_datetime)
 
 
 def test_restore_empty_meter_data() -> None:
-    """Test restoration with empty meter_data dict.
+    """
+    Test restoration with empty meter_data dict.
 
     DESIRED BEHAVIOR: Empty meter_data is abnormal and indicates corruption.
     Falls back to old format parsing, which will fail and return None.
@@ -939,7 +950,8 @@ def test_restore_empty_meter_data() -> None:
 
 
 def test_restore_all_boolean_combinations() -> None:
-    """Test restoration with all combinations of active/time_window_active.
+    """
+    Test restoration with all combinations of active/time_window_active.
 
     Ensures all four sensor states can be correctly restored:
     1. MEASURING (active=True, time_window=True)
@@ -974,7 +986,8 @@ def test_restore_all_boolean_combinations() -> None:
 
 
 def test_restore_large_measured_values() -> None:
-    """Test restoration with very large measured values.
+    """
+    Test restoration with very large measured values.
 
     Ensures sensors measuring for years don't overflow or lose precision.
     """
