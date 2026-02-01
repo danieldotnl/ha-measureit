@@ -232,10 +232,19 @@ class MeasureItSensorStoredData(ExtraStoredData):
         """
         if not restored.get("meter_data"):
             # Try old format - if it fails, data is corrupted, return None
+            _LOGGER.debug(
+                "No meter_data found, attempting old format restoration. Keys: %s",
+                list(restored.keys()),
+            )
             try:
                 return MeasureItSensorStoredData.from_old_format_dict(restored)
-            except (KeyError, TypeError):
+            except (KeyError, TypeError) as err:
                 # Old format also invalid - data is corrupted
+                _LOGGER.warning(
+                    "Could not restore from old format: %s. Data keys: %s",
+                    err,
+                    list(restored.keys()),
+                )
                 return None
 
         # Validate required fields - missing fields indicate data corruption
@@ -565,12 +574,16 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         Returns None if data cannot be restored, logging appropriate warnings/errors.
         """
         if (restored_last_extra_data := await self.async_get_last_extra_data()) is None:
+            _LOGGER.debug("%s # No extra data found to restore", self._attr_name)
             return None
 
+        restored_dict = restored_last_extra_data.as_dict()
+        _LOGGER.debug(
+            "%s # Restoring from stored data: %s", self._attr_name, restored_dict
+        )
+
         try:
-            return MeasureItSensorStoredData.from_dict(
-                restored_last_extra_data.as_dict()
-            )
+            return MeasureItSensorStoredData.from_dict(restored_dict)
         except ValueError:
             # Data corruption or invalid format - log error with details
             _LOGGER.exception(
