@@ -6,7 +6,7 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
     },
-    "ghcr.io/devcontainers/features/github-cli:1.0.15": {},
+    "ghcr.io/devcontainers/features/github-cli:1.1.0": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
   },
   "mounts": [
