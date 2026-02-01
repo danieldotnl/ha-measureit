@@ -222,7 +222,8 @@ class MeasureItSensorStoredData(ExtraStoredData):
 
     @classmethod
     def from_dict(cls, restored: dict[str, Any]) -> MeasureItSensorStoredData | None:
-        """Initialize a stored sensor state from a dict.
+        """
+        Initialize a stored sensor state from a dict.
 
         Raises
         ------
