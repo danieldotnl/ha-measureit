@@ -192,8 +192,7 @@ async def validate_when(
         msg = "tw_days_minimum"
         raise SchemaFlowError(msg)
     if user_input.get(CONF_CONDITION):
-        template = Template(user_input[CONF_CONDITION])
-        template.hass = async_get_hass()
+        template = Template(user_input[CONF_CONDITION], hass=async_get_hass())
         try:
             template.ensure_valid()
             template.async_render()
@@ -269,8 +268,9 @@ async def get_add_sensor_suggested_values(
             suggested[CONF_UNIT_OF_MEASUREMENT] = state.attributes.get(
                 "unit_of_measurement"
             )
-        msg = "Source entity not found"
-        raise ValueError(msg)
+        else:
+            msg = "Source entity not found"
+            raise ValueError(msg)
     elif handler.options[CONF_METER_TYPE] == MeterType.COUNTER:
         suggested[CONF_STATE_CLASS] = SensorStateClass.TOTAL_INCREASING
     return suggested

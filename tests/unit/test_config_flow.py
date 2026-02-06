@@ -13,6 +13,7 @@ from custom_components.measureit.const import (
     CONF_CONFIG_NAME,
     CONF_COUNTER_TEMPLATE,
     CONF_PERIODS,
+    CONF_SOURCE,
     CONF_STATE_CLASS,
     CONF_TW_DAYS,
     CONF_TW_FROM,
@@ -247,3 +248,85 @@ async def test_flow_with_errors(hass: HomeAssistant) -> None:
     )
 
     assert result["errors"] == {"base": "condition_invalid"}
+
+
+async def test_source_config_flow(hass: HomeAssistant) -> None:
+    """Test the config flow for setting up a config with source meters."""
+    # Set up a mock source entity with attributes
+    hass.states.async_set(
+        "sensor.energy_meter",
+        "100.5",
+        {"device_class": "energy", "unit_of_measurement": "kWh"},
+    )
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    # Check that the config flow shows the menu as the first step
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "user"
+
+    # Choose config for a source config
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={"next_step_id": "source"}
+    )
+
+    # Check that the config flow shows the form for the config name and source
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["step_id"] == "source"
+
+    # Fill config name and source entity
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_CONFIG_NAME: "test_config_source",
+            CONF_SOURCE: "sensor.energy_meter",
+        },
+    )
+
+    assert result["errors"] is None
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["step_id"] == "when"
+
+    # Fill the when config step
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_TW_DAYS: ["0", "1", "2", "3", "4", "5", "6"],
+            CONF_TW_FROM: "00:00",
+            CONF_TW_TILL: "00:00",
+        },
+    )
+
+    # This is where the bug manifests - transitioning to sensors step fails
+    # because get_add_sensor_suggested_values always raises ValueError for SOURCE type
+    assert result["errors"] is None
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["step_id"] == "sensors"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_PERIODS: ["day", "month"],
+            CONF_UNIT_OF_MEASUREMENT: "kWh",
+            CONF_DEVICE_CLASS: "energy",
+            CONF_STATE_CLASS: "total",
+        },
+    )
+
+    assert result["errors"] is None
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["step_id"] == "thank_you"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], user_input={}
+    )
+
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+
+    config_entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert config_entry.data == {}
+    assert config_entry.options.get(CONF_CONFIG_NAME) == "test_config_source"
+    assert config_entry.options.get(CONF_SOURCE) == "sensor.energy_meter"
+    assert config_entry.title == "test_config_source"
