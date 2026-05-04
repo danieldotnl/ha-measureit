@@ -28,7 +28,15 @@ from homeassistant.helpers import entity_platform
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
-from homeassistant.helpers.template import is_number
+
+try:
+    from homeassistant.helpers.template.extensions.type_cast import (
+        TypeCastExtension,
+    )
+
+    is_number = TypeCastExtension.is_number
+except ImportError:
+    from homeassistant.helpers.template import is_number
 from homeassistant.util import dt as dt_util
 
 from .const import (
