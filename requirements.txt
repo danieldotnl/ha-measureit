@@ -1,5 +1,5 @@
 colorlog==6.10.1
 pip>=26,<27
 ruff==0.15.15
-pytest-homeassistant-custom-component==0.13.335
+pytest-homeassistant-custom-component==0.13.336
 pre-commit==4.6.0
