@@ -61,7 +61,8 @@
     },
     "error": {
       "tw_days_minimum": "Select at least one day to measure.",
-      "invalid_cron": "One of the periods is not a valid cron expression."
+      "invalid_cron": "One of the periods is not a valid cron expression.",
+      "condition_invalid": "The condition template is invalid."
     }
   },
   "options": {
@@ -89,6 +90,7 @@
       "edit_main": {
         "title": "Configure an optional condition (template). We will only measure when this template evaluates to `True`.\nThen configure the days and time when you want to measure. *Default: always measure.*\nWhen the *from* is later than the *till* time, it is assumed that the time window crosses midnight.",
         "data": {
+          "counter_template": "Counter template:",
           "condition": "Condition template:",
           "when_days": "Days:",
           "when_from": "From time:",
@@ -116,6 +118,8 @@
     },
     "error": {
       "tw_days_minimum": "Select at least one day to measure.",
+      "invalid_cron": "One of the periods is not a valid cron expression.",
+      "condition_invalid": "The condition template is invalid.",
       "uom_with_device_class_update": "Updating the unit of measurement is not allowed when a device class is set. Remove the sensor and add a new one."
     }
   },

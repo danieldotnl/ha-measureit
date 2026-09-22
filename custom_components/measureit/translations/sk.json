@@ -89,6 +89,7 @@
       "edit_main": {
         "title": "Upravte hlavnú konfiguráciu",
         "data": {
+          "counter_template": "Šablóna počítadla:",
           "condition": "Šablóna stavu",
           "when_days": "Dni:",
           "when_from": "Od času",
@@ -133,14 +134,14 @@
     },
     "period_selector": {
       "options": {
-          "5m": "5 minút",
-          "hour": "Hodina",
-          "day": "Deň",
-          "week": "Týždeň",
-          "month": "Mesiac",
-          "year": "Rok",
-          "noreset": "Manuálne/bez resetovania",
-          "session": "Po každej relácii"
+        "5m": "5 minút",
+        "hour": "Hodina",
+        "day": "Deň",
+        "week": "Týždeň",
+        "month": "Mesiac",
+        "year": "Rok",
+        "noreset": "Manuálne/bez resetovania",
+        "session": "Po každej relácii"
       }
     }
   },

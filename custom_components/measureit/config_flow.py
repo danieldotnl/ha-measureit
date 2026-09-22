@@ -148,14 +148,6 @@ def validate_period(period: str) -> bool:
         return False
 
 
-async def validate_edit_main_config(
-    handler: SchemaCommonFlowHandler,  # noqa: ARG001
-    user_input: dict[str, Any],
-) -> dict[str, Any]:
-    """Validate edit main config."""
-    return user_input
-
-
 async def validate_time_config(
     handler: SchemaCommonFlowHandler,  # noqa: ARG001
     user_input: dict[str, Any],
@@ -384,13 +376,19 @@ DATA_SCHEMA_EDIT_SENSOR = vol.Schema(
 )
 DATA_SCHEMA_SENSORS = vol.Schema(SENSORS_CONFIG)
 
-DATA_SCHEMA_EDIT_MAIN = vol.Schema(
-    {
-        **WHEN_CONFIG,
-    }
-)
-
 DATA_SCHEMA_THANK_YOU = vol.Schema({})
+
+
+async def get_edit_main_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
+    """Return schema for editing the main config, based on the meter type."""
+    if handler.options[CONF_METER_TYPE] == MeterType.COUNTER:
+        return vol.Schema(
+            {
+                vol.Required(CONF_COUNTER_TEMPLATE): selector.TemplateSelector(),
+                **WHEN_CONFIG,
+            }
+        )
+    return vol.Schema(WHEN_CONFIG)
 
 
 async def get_sensors_step_placeholders(
@@ -462,8 +460,8 @@ OPTIONS_FLOW = {
         ["edit_main", "add_sensors", "select_edit_sensor", "remove_sensor"]
     ),
     "edit_main": SchemaFlowFormStep(
-        DATA_SCHEMA_EDIT_MAIN,
-        validate_user_input=validate_edit_main_config,
+        get_edit_main_schema,
+        validate_user_input=validate_when,
     ),
     "add_sensors": SchemaFlowFormStep(
         DATA_SCHEMA_SENSORS,
