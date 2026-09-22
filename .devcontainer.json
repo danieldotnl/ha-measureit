@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.14",
   "postCreateCommand": "scripts/setup && gh auth setup-git",
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1.1.0": {},
+    "ghcr.io/devcontainers/features/github-cli:1.1.2": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
   },
   "mounts": [
