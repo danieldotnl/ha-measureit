@@ -273,7 +273,8 @@ async def test_edit_main_config_without_days(
 async def test_edit_main_config_keeps_unrenderable_condition(
     hass: HomeAssistant, loaded_counter_entry: MockConfigEntry
 ) -> None:
-    """Test that a condition which cannot be rendered does not block editing.
+    """
+    Test that a condition which cannot be rendered does not block editing.
 
     The coordinator logs render errors and keeps going, so a config with such a
     condition works fine and should not become uneditable.
@@ -307,7 +308,8 @@ async def test_edit_main_config_keeps_unrenderable_condition(
 async def test_edit_main_config_with_malformed_counter_template(
     hass: HomeAssistant, loaded_counter_entry: MockConfigEntry
 ) -> None:
-    """Test that a malformed counter template is rejected by the selector.
+    """
+    Test that a malformed counter template is rejected by the selector.
 
     Setup raises on a template which is not valid, so it should never be possible
     to store one.
