@@ -6,11 +6,13 @@ target-version = "py312"
 select = ["ALL"]
 
 ignore = [
-    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
-    "D203",   # no-blank-line-before-class (incompatible with formatter)
-    "D212",   # multi-line-summary-first-line (incompatible with formatter)
-    "COM812", # incompatible with formatter
-    "ISC001", # incompatible with formatter
+    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+    "D203",    # no-blank-line-before-class (incompatible with formatter)
+    "D212",    # multi-line-summary-first-line (incompatible with formatter)
+    "COM812",  # incompatible with formatter
+    "ISC001",  # incompatible with formatter
+    "CPY001",  # Missing copyright notice at top of file
+    "PLR0917", # Too many positional arguments (also ignored by home-assistant/core)
 ]
 
 [lint.flake8-pytest-style]
