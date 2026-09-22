@@ -7,7 +7,7 @@ from homeassistant import data_entry_flow
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_DEVICE_CLASS, CONF_UNIT_OF_MEASUREMENT
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.measureit.const import (
@@ -268,3 +268,64 @@ async def test_edit_main_config_without_days(
     assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["step_id"] == "edit_main"
     assert result["errors"] == {"base": "tw_days_minimum"}
+
+
+async def test_edit_main_config_keeps_unrenderable_condition(
+    hass: HomeAssistant, loaded_counter_entry: MockConfigEntry
+) -> None:
+    """Test that a condition which cannot be rendered does not block editing.
+
+    The coordinator logs render errors and keeps going, so a config with such a
+    condition works fine and should not become uneditable.
+    """
+    condition = "{{ states('sensor.power') | float > 100 }}"
+    hass.config_entries.async_update_entry(
+        loaded_counter_entry,
+        options={**loaded_counter_entry.options, CONF_CONDITION: condition},
+    )
+    await hass.async_block_till_done()
+
+    result = await start_edit_main_flow(hass, loaded_counter_entry)
+    assert get_suggested_value(result, CONF_CONDITION) == condition
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_COUNTER_TEMPLATE: loaded_counter_entry.options[CONF_COUNTER_TEMPLATE],
+            CONF_CONDITION: condition,
+            CONF_TW_DAYS: ["0", "1"],
+            CONF_TW_FROM: "08:00:00",
+            CONF_TW_TILL: "20:00:00",
+        },
+    )
+
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert loaded_counter_entry.options[CONF_CONDITION] == condition
+    assert loaded_counter_entry.options[CONF_TW_FROM] == "08:00:00"
+
+
+async def test_edit_main_config_with_malformed_counter_template(
+    hass: HomeAssistant, loaded_counter_entry: MockConfigEntry
+) -> None:
+    """Test that a malformed counter template is rejected by the selector.
+
+    Setup raises on a template which is not valid, so it should never be possible
+    to store one.
+    """
+    result = await start_edit_main_flow(hass, loaded_counter_entry)
+
+    with pytest.raises(InvalidData):
+        await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            user_input={
+                CONF_COUNTER_TEMPLATE: "{{ invalid",
+                CONF_TW_DAYS: ["0", "1"],
+                CONF_TW_FROM: "00:00:00",
+                CONF_TW_TILL: "00:00:00",
+            },
+        )
+
+    assert (
+        loaded_counter_entry.options[CONF_COUNTER_TEMPLATE]
+        == "{{ is_state('binary_sensor.test_sensor', 'on') }}"
+    )

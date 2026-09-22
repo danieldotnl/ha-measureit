@@ -175,22 +175,48 @@ async def validate_count_config(
     return user_input
 
 
+def validate_time_window_days(user_input: dict[str, Any]) -> None:
+    """Validate that at least one day is selected."""
+    if len(user_input[CONF_TW_DAYS]) == 0:
+        msg = "tw_days_minimum"
+        raise SchemaFlowError(msg)
+
+
+def validate_condition(condition: str) -> None:
+    """Validate that a condition template is valid and can be rendered."""
+    template = Template(condition, hass=async_get_hass())
+    try:
+        template.ensure_valid()
+        template.async_render()
+    except TemplateError as ex:
+        msg = "condition_invalid"
+        raise SchemaFlowError(msg) from ex
+
+
 async def validate_when(
     handler: SchemaCommonFlowHandler,  # noqa: ARG001
     user_input: dict[str, Any],
 ) -> dict[str, Any]:
     """Validate when config."""
-    if len(user_input[CONF_TW_DAYS]) == 0:
-        msg = "tw_days_minimum"
-        raise SchemaFlowError(msg)
+    validate_time_window_days(user_input)
     if user_input.get(CONF_CONDITION):
-        template = Template(user_input[CONF_CONDITION], hass=async_get_hass())
-        try:
-            template.ensure_valid()
-            template.async_render()
-        except TemplateError as ex:
-            msg = "condition_invalid"
-            raise SchemaFlowError(msg) from ex
+        validate_condition(user_input[CONF_CONDITION])
+    return user_input
+
+
+async def validate_edit_main_config(
+    handler: SchemaCommonFlowHandler,
+    user_input: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate edit main config."""
+    validate_time_window_days(user_input)
+    condition = user_input.get(CONF_CONDITION)
+    # Only validate the condition when it is changed. An existing condition can
+    # fail to render (e.g. when an entity it uses is unavailable) while the config
+    # works fine, since the coordinator logs render errors and keeps going. We
+    # should not block editing the rest of the config in that case.
+    if condition and condition != handler.options.get(CONF_CONDITION):
+        validate_condition(condition)
     return user_input
 
 
@@ -461,7 +487,7 @@ OPTIONS_FLOW = {
     ),
     "edit_main": SchemaFlowFormStep(
         get_edit_main_schema,
-        validate_user_input=validate_when,
+        validate_user_input=validate_edit_main_config,
     ),
     "add_sensors": SchemaFlowFormStep(
         DATA_SCHEMA_SENSORS,
