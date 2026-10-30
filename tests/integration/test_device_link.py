@@ -174,6 +174,40 @@ async def test_removed_device_is_ignored(hass: HomeAssistant) -> None:
     await unload_with_mock_config(hass, entry)
 
 
+async def test_deleting_linked_device_keeps_sensor(hass: HomeAssistant) -> None:
+    """Test the sensor survives, unlinked, when the linked device is deleted."""
+    device = create_device(hass, "selected_device")
+    entry = create_time_entry({"device_id": device.id})
+    await setup_with_mock_config(hass, entry)
+    entity_id = get_sensor_entity_id(hass)
+
+    dr.async_get(hass).async_remove_device(device.id)
+    await hass.async_block_till_done()
+    assert get_sensor_device_id(hass) is None
+
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert get_sensor_device_id(hass) is None
+    assert hass.states.get(entity_id)
+    await unload_with_mock_config(hass, entry)
+
+
+async def test_disabled_device_disables_sensor(hass: HomeAssistant) -> None:
+    """Test linking to a disabled device disables the sensor."""
+    device = create_device(hass, "selected_device")
+    dr.async_get(hass).async_update_device(
+        device.id, disabled_by=dr.DeviceEntryDisabler.USER
+    )
+    entry = create_time_entry({"device_id": device.id})
+
+    await setup_with_mock_config(hass, entry)
+
+    registry_entry = er.async_get(hass).async_get(get_sensor_entity_id(hass))
+    assert registry_entry
+    assert registry_entry.disabled_by == er.RegistryEntryDisabler.DEVICE
+    await unload_with_mock_config(hass, entry)
+
+
 async def test_changing_device_relinks_sensors(hass: HomeAssistant) -> None:
     """Test changing the device in the options relinks the sensors."""
     first_device = create_device(hass, "first_device")

@@ -340,18 +340,18 @@ async def test_source_config_flow(hass: HomeAssistant) -> None:
     assert config_entry.title == "test_config_source"
 
 
-async def create_source_entry(
-    hass: HomeAssistant, source_input: dict[str, str]
+async def create_entry(
+    hass: HomeAssistant, meter_step: str, meter_input: dict[str, str]
 ) -> dict:
-    """Run the source config flow and return the options of the created entry."""
+    """Run the config flow for a meter type and return the created entry's options."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], user_input={"next_step_id": "source"}
+        result["flow_id"], user_input={"next_step_id": meter_step}
     )
     for user_input in (
-        {CONF_CONFIG_NAME: "test_config_source", **source_input},
+        {CONF_CONFIG_NAME: f"test_config_{meter_step}", **meter_input},
         {
             CONF_TW_DAYS: ["0", "1", "2", "3", "4", "5", "6"],
             CONF_TW_FROM: "00:00",
@@ -395,7 +395,7 @@ async def test_source_config_flow_defaults_to_source_device(
     """Test the device defaults to the device of the source entity."""
     source_device_id, _ = register_source_on_devices(hass)
 
-    options = await create_source_entry(hass, {CONF_SOURCE: "sensor.energy_meter"})
+    options = await create_entry(hass, "source", {CONF_SOURCE: "sensor.energy_meter"})
 
     assert options[CONF_DEVICE_ID] == source_device_id
 
@@ -404,8 +404,28 @@ async def test_source_config_flow_keeps_selected_device(hass: HomeAssistant) -> 
     """Test a selected device is not replaced by the source entity's device."""
     _, other_device_id = register_source_on_devices(hass)
 
-    options = await create_source_entry(
-        hass, {CONF_SOURCE: "sensor.energy_meter", CONF_DEVICE_ID: other_device_id}
+    options = await create_entry(
+        hass,
+        "source",
+        {CONF_SOURCE: "sensor.energy_meter", CONF_DEVICE_ID: other_device_id},
     )
 
     assert options[CONF_DEVICE_ID] == other_device_id
+
+
+async def test_time_config_flow_stores_selected_device(hass: HomeAssistant) -> None:
+    """Test the time step stores the selected device."""
+    options = await create_entry(hass, "time", {CONF_DEVICE_ID: "device_1"})
+
+    assert options[CONF_DEVICE_ID] == "device_1"
+
+
+async def test_count_config_flow_stores_selected_device(hass: HomeAssistant) -> None:
+    """Test the count step stores the selected device."""
+    options = await create_entry(
+        hass,
+        "count",
+        {CONF_COUNTER_TEMPLATE: "{{ True }}", CONF_DEVICE_ID: "device_1"},
+    )
+
+    assert options[CONF_DEVICE_ID] == "device_1"

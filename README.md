@@ -83,6 +83,10 @@ If you want different properties per sensor, you can add additional sensor after
 
 Optionally, you can link the sensors to a device, so they show up on that device's page. For a source meter, this defaults to the device of the source entity. The device is stored when you set up MeasureIt and doesn't follow the source entity afterwards: if you move the source entity to another device, change the device in the options flow as well.
 
+Once linked, the sensor names get the device name as prefix. E.g. a sensor `shower_day` linked to the device `Bathroom` is shown as "Bathroom shower_day", and a new sensor gets the entity id `sensor.bathroom_shower_day`. Entity ids of existing sensors don't change. Since a source meter is linked to the device of the source entity by default, new source meters get this prefix as well. Clear the device field if you don't want that.
+
+**Attention**: when the linked device is disabled, Home Assistant disables the MeasureIt sensors as well, and they stop measuring. Enable the device again, or remove the link in the options flow.
+
 ## FAQ
 
 #### How do I show time sensors in a different format?
