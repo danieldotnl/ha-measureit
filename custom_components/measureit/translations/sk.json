@@ -14,7 +14,11 @@
         "title": "Konfigurácia merača času (čo)",
         "description": "Nakonfigurujte názov konfigurácie (používaný pre názvy snímačov a protokolovanie) a jednotku merania.",
         "data": {
-          "config_name": "Názov konfigurácie"
+          "config_name": "Názov konfigurácie",
+          "device_id": "Zariadenie"
+        },
+        "data_description": {
+          "device_id": "Voliteľné. Prepojí senzory s týmto zariadením, aby sa zobrazovali na jeho stránke."
         }
       },
       "source": {
@@ -22,7 +26,11 @@
         "description": "Nakonfigurujte názov konfigurácie (používa sa pre názvy snímačov a protokolovanie), zdroj na meranie a jednotku merania.",
         "data": {
           "config_name": "Názov konfigurácie",
-          "source_entity": "Zdrojová entita"
+          "source_entity": "Zdrojová entita",
+          "device_id": "Zariadenie"
+        },
+        "data_description": {
+          "device_id": "Voliteľné. Prepojí senzory s týmto zariadením, aby sa zobrazovali na jeho stránke. Ak zostane prázdne, použije sa zariadenie zdrojovej entity."
         }
       },
       "count": {
@@ -30,7 +38,11 @@
         "description": "Nakonfigurujte názov konfigurácie (používaný pre názvy snímačov a protokolovanie) a šablónu počítadla.",
         "data": {
           "config_name": "Názov konfigurácie",
-          "counter_template": "Šablóna počítadla:"
+          "counter_template": "Šablóna počítadla:",
+          "device_id": "Zariadenie"
+        },
+        "data_description": {
+          "device_id": "Voliteľné. Prepojí senzory s týmto zariadením, aby sa zobrazovali na jeho stránke."
         }
       },
       "when": {
@@ -93,7 +105,11 @@
           "condition": "Šablóna stavu",
           "when_days": "Dni:",
           "when_from": "Od času",
-          "when_till": "Do času"
+          "when_till": "Do času",
+          "device_id": "Zariadenie"
+        },
+        "data_description": {
+          "device_id": "Voliteľné. Prepojí senzory s týmto zariadením, aby sa zobrazovali na jeho stránke."
         }
       },
       "thank_you": {

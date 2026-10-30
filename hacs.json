@@ -1,6 +1,6 @@
 {
   "name": "MeasureIt",
-  "homeassistant": "2024.2.0",
+  "homeassistant": "2025.8.0",
   "render_readme": true,
   "zip_release": true,
   "hide_default_branch": true,

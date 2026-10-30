@@ -11,7 +11,7 @@
 > Since you're here, you're clearly into home automation — so you might genuinely enjoy the newsletter.
 >
 > 👉 [Subscribe at smarthomenewsletter.com](https://smarthomenewsletter.com/?utm_source=github&utm_medium=readme&utm_campaign=measureit)
->
+
 ---
 
 MeasureIt can measure all kind of things happening in Home Assistant based on time and templates.
@@ -27,7 +27,7 @@ MeasureIt has overlap with `history_stats` and `utility_meter` but provides othe
 
 Note: you do require some Home Assistant templating knowledge for most use cases. If you need help with this, do not create a Github issue but ask your question on the [community forum](https://community.home-assistant.io/t/measureit-measure-all-you-need-based-on-time-and-templates/660614).
 
-*Supporting integrations like this one is a lot of work. Please consider supporting me:*
+_Supporting integrations like this one is a lot of work. Please consider supporting me:_
 
 <a href="https://www.buymeacoffee.com/danieldotnl" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-blue.png" alt="Buy Me A Coffee" style="height: 51px !important;width: 217px !important;" ></a>
 
@@ -44,7 +44,7 @@ Time is basically just a timer that runs when all the conditions that you provid
 Source meters do listen for state changes in another entity and measure the difference. E.g. listen to the gas consumption sensor, and keep track of how much it changes when the shower is on.\
 Source sensors that do reset are supported if they have `state_class`: `total_increasing`. In this case we will assume that the source entity was reset when an updated source value is lower than 90% of the previous value (similar to what is used by HA when calculating long term statistics).
 This enables you for example to measure the weekly precipitation based on a precipitation sensor that resets daily.\
-*Source entities that do reset and have `state_class` `total` are not yet supported.*
+_Source entities that do reset and have `state_class` `total` are not yet supported._
 
 ### Counter
 
@@ -80,6 +80,14 @@ Do keep in mind that the config flow is guiding you through 3 important steps:
 The _what_ is the time, source or counter described above, plus the details required for those. The _when_ is all about the conditions that should be met for measuring. And the _how_ is about the sensors that will be created. Here you pick the periods (e.g. per day/week/year) and for each of those a sensor will be created.\
 For the additional sensor properties like unit of measurement, state class and device class, defaults are picked as good as possible. Only change those when you know what you are doing.\
 If you want different properties per sensor, you can add additional sensor after setting up MeasureIt, by choosing 'configure' (the options flow) behind you MeasureIt configuration in 'Devices & services'.
+
+### Linking to a device
+
+Optionally, you can link the sensors to a device, so they show up on that device's page. For a source meter, this defaults to the device of the source entity. The device is stored when you set up MeasureIt and doesn't follow the source entity afterwards: if you move the source entity to another device, change the device in the options flow as well.
+
+Once linked, the sensor names get the device name as prefix. E.g. a sensor `shower_day` linked to the device `Bathroom` is shown as "Bathroom shower_day", and a new sensor gets the entity id `sensor.bathroom_shower_day`. Entity ids of existing sensors don't change. Since a source meter is linked to the device of the source entity by default, new source meters get this prefix as well. Clear the device field if you don't want that.
+
+**Attention**: when the linked device is disabled, Home Assistant disables the MeasureIt sensors as well, and they stop measuring. Enable the device again, or remove the link in the options flow.
 
 ## FAQ
 

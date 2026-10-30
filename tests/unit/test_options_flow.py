@@ -5,7 +5,11 @@ from unittest.mock import patch
 import pytest
 from homeassistant import data_entry_flow
 from homeassistant.config_entries import SOURCE_USER
-from homeassistant.const import CONF_DEVICE_CLASS, CONF_UNIT_OF_MEASUREMENT
+from homeassistant.const import (
+    CONF_DEVICE_CLASS,
+    CONF_DEVICE_ID,
+    CONF_UNIT_OF_MEASUREMENT,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -78,7 +82,7 @@ def get_suggested_value(result: data_entry_flow.FlowResult, key: str) -> str | N
     """Return the value suggested for a key in the form shown to the user."""
     for schema_key in result["data_schema"].schema:
         if schema_key == key:
-            return schema_key.description.get("suggested_value")
+            return (schema_key.description or {}).get("suggested_value")
     return None
 
 
@@ -217,6 +221,56 @@ async def test_edit_counter_template(
         == "{{ is_state('binary_sensor.other', 'on') }}"
     )
     assert loaded_counter_entry.options[CONF_TW_DAYS] == ["0", "1"]
+
+
+async def test_edit_main_config_device(
+    hass: HomeAssistant, loaded_counter_entry: MockConfigEntry
+) -> None:
+    """Test that the linked device can be set and cleared via edit main."""
+    when_input = {
+        CONF_COUNTER_TEMPLATE: "{{ is_state('binary_sensor.test_sensor', 'on') }}",
+        CONF_TW_DAYS: ["0", "1", "2", "3", "4", "5", "6"],
+        CONF_TW_FROM: "00:00:00",
+        CONF_TW_TILL: "00:00:00",
+    }
+
+    result = await start_edit_main_flow(hass, loaded_counter_entry)
+    assert get_suggested_value(result, CONF_DEVICE_ID) is None
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], user_input={**when_input, CONF_DEVICE_ID: "device_1"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert loaded_counter_entry.options[CONF_DEVICE_ID] == "device_1"
+
+    result = await start_edit_main_flow(hass, loaded_counter_entry)
+    assert get_suggested_value(result, CONF_DEVICE_ID) == "device_1"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], user_input=when_input
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert CONF_DEVICE_ID not in loaded_counter_entry.options
+
+
+async def test_edit_main_config_device_on_time_meter(
+    hass: HomeAssistant, loaded_entry: MockConfigEntry
+) -> None:
+    """Test that the linked device can be set via edit main for a time meter."""
+    result = await start_edit_main_flow(hass, loaded_entry)
+    assert CONF_COUNTER_TEMPLATE not in result["data_schema"].schema
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_TW_DAYS: ["0", "1", "2", "3", "4", "5", "6"],
+            CONF_TW_FROM: "00:00:00",
+            CONF_TW_TILL: "00:00:00",
+            CONF_DEVICE_ID: "device_1",
+        },
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert loaded_entry.options[CONF_DEVICE_ID] == "device_1"
+
+    result = await start_edit_main_flow(hass, loaded_entry)
+    assert get_suggested_value(result, CONF_DEVICE_ID) == "device_1"
 
 
 async def test_edit_main_config_with_invalid_condition(

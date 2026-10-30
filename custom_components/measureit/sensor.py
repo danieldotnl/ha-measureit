@@ -18,12 +18,14 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_DEVICE_CLASS,
+    CONF_DEVICE_ID,
     CONF_UNIQUE_ID,
     CONF_UNIT_OF_MEASUREMENT,
     CONF_VALUE_TEMPLATE,
 )
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.event import async_track_point_in_time
@@ -60,7 +62,7 @@ from .meter import CounterMeter, MeasureItMeter, SourceMeter, TimeMeter
 from .util import create_renderer
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
 
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -76,6 +78,16 @@ def validate_is_number(value: Any) -> bool:
     raise vol.Invalid(msg)
 
 
+@callback
+def async_get_linked_device(
+    hass: HomeAssistant, options: Mapping[str, Any]
+) -> dr.DeviceEntry | None:
+    """Return the device the sensors should be linked to, if any."""
+    if device_id := options.get(CONF_DEVICE_ID):
+        return dr.async_get(hass).async_get(device_id)
+    return None
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -87,6 +99,7 @@ async def async_setup_entry(
     config_name: str = config_entry.options[CONF_CONFIG_NAME]
 
     coordinator = hass.data[DOMAIN_DATA][entry_id][COORDINATOR]
+    device = async_get_linked_device(hass, config_entry.options)
 
     sensors: list[MeasureItSensor] = []
     for sensor in config_entry.options[CONF_SENSOR]:
@@ -128,6 +141,7 @@ async def async_setup_entry(
             state_class,
             device_class,
             uom,
+            device,
         )
         sensors.append(sensor_entity)
 
@@ -319,9 +333,11 @@ class MeasureItSensor(MeasureItCoordinatorEntity, RestoreEntity, SensorEntity):
         state_class: SensorStateClass,
         device_class: SensorDeviceClass | None = None,
         unit_of_measurement: str | None = None,
+        device: dr.DeviceEntry | None = None,
     ) -> None:
         """Initialize a sensor entity."""
         self.hass = hass
+        self.device_entry = device
         self._coordinator = coordinator
         self.meter = meter
         self._attr_unique_id = unique_id

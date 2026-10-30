@@ -19,6 +19,7 @@ from homeassistant.components.sensor.const import (
 )
 from homeassistant.const import (
     CONF_DEVICE_CLASS,
+    CONF_DEVICE_ID,
     CONF_UNIQUE_ID,
     CONF_UNIT_OF_MEASUREMENT,
     CONF_VALUE_TEMPLATE,
@@ -158,11 +159,17 @@ async def validate_time_config(
 
 
 async def validate_source_config(
-    handler: SchemaCommonFlowHandler,  # noqa: ARG001
+    handler: SchemaCommonFlowHandler,
     user_input: dict[str, Any],
 ) -> dict[str, Any]:
     """Validate source config."""
     user_input[CONF_METER_TYPE] = MeterType.SOURCE
+    # Default to the device of the source entity, so it shows up in the options
+    if not user_input.get(CONF_DEVICE_ID):
+        entity_registry = er.async_get(handler.parent_handler.hass)
+        source_entity = entity_registry.async_get(user_input[CONF_SOURCE])
+        if source_entity and source_entity.device_id:
+            user_input[CONF_DEVICE_ID] = source_entity.device_id
     return user_input
 
 
@@ -170,7 +177,7 @@ async def validate_count_config(
     handler: SchemaCommonFlowHandler,  # noqa: ARG001
     user_input: dict[str, Any],
 ) -> dict[str, Any]:
-    """Validate source config."""
+    """Validate count config."""
     user_input[CONF_METER_TYPE] = MeterType.COUNTER
     return user_input
 
@@ -340,6 +347,10 @@ MAIN_CONFIG = {
     vol.Required(CONF_CONFIG_NAME): selector.TextSelector(),
 }
 
+DEVICE_CONFIG = {
+    vol.Optional(CONF_DEVICE_ID): selector.DeviceSelector(),
+}
+
 SENSOR_CONFIG = {
     vol.Optional(CONF_VALUE_TEMPLATE): selector.TemplateSelector(),
     vol.Optional(CONF_UNIT_OF_MEASUREMENT): selector.TextSelector(),
@@ -383,17 +394,19 @@ SENSORS_CONFIG = {
     **SENSOR_CONFIG,
 }
 
-DATA_SCHEMA_TIME = vol.Schema(MAIN_CONFIG)
+DATA_SCHEMA_TIME = vol.Schema({**MAIN_CONFIG, **DEVICE_CONFIG})
 DATA_SCHEMA_SOURCE = vol.Schema(
     {
         **MAIN_CONFIG,
         vol.Required(CONF_SOURCE): selector.EntitySelector(),
+        **DEVICE_CONFIG,
     }
 )
 DATA_SCHEMA_COUNT = vol.Schema(
     {
         **MAIN_CONFIG,
         vol.Required(CONF_COUNTER_TEMPLATE): selector.TemplateSelector(),
+        **DEVICE_CONFIG,
     }
 )
 DATA_SCHEMA_WHEN = vol.Schema(WHEN_CONFIG)
@@ -411,10 +424,11 @@ async def get_edit_main_schema(handler: SchemaCommonFlowHandler) -> vol.Schema:
         return vol.Schema(
             {
                 vol.Required(CONF_COUNTER_TEMPLATE): selector.TemplateSelector(),
+                **DEVICE_CONFIG,
                 **WHEN_CONFIG,
             }
         )
-    return vol.Schema(WHEN_CONFIG)
+    return vol.Schema({**DEVICE_CONFIG, **WHEN_CONFIG})
 
 
 async def get_sensors_step_placeholders(
