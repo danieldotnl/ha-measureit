@@ -4,7 +4,7 @@ import logging
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
+from homeassistant.const import CONF_DEVICE_ID, EVENT_HOMEASSISTANT_STARTED, Platform
 from homeassistant.core import CoreState, Event, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.template import Template
@@ -95,6 +95,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         run_start(None)
 
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate an old config entry."""
+    if entry.version > 1:
+        # Downgraded from a future version
+        return False
+
+    if entry.minor_version < 2:  # noqa: PLR2004
+        # Source meters used to be linked to the device of the source entity at
+        # runtime. Store that device, so an empty device means no device.
+        options = {**entry.options}
+        if options[CONF_METER_TYPE] == MeterType.SOURCE and not options.get(
+            CONF_DEVICE_ID
+        ):
+            registry = er.async_get(hass)
+            try:
+                source_entity_id = er.async_validate_entity_id(
+                    registry, options[CONF_SOURCE]
+                )
+            except vol.Invalid:
+                source_entity_id = None
+            if (
+                source_entity_id
+                and (source_entity := registry.async_get(source_entity_id))
+                and source_entity.device_id
+            ):
+                options[CONF_DEVICE_ID] = source_entity.device_id
+        hass.config_entries.async_update_entry(entry, options=options, minor_version=2)
+        _LOGGER.debug("Migrated config entry %s to version 1.2", entry.title)
+
     return True
 
 
