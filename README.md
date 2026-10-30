@@ -81,6 +81,8 @@ The _what_ is the time, source or counter described above, plus the details requ
 For the additional sensor properties like unit of measurement, state class and device class, defaults are picked as good as possible. Only change those when you know what you are doing.\
 If you want different properties per sensor, you can add additional sensor after setting up MeasureIt, by choosing 'configure' (the options flow) behind you MeasureIt configuration in 'Devices & services'.
 
+### Linking to a device
+
 Optionally, you can link the sensors to a device, so they show up on that device's page. For a source meter, this defaults to the device of the source entity. The device is stored when you set up MeasureIt and doesn't follow the source entity afterwards: if you move the source entity to another device, change the device in the options flow as well.
 
 Once linked, the sensor names get the device name as prefix. E.g. a sensor `shower_day` linked to the device `Bathroom` is shown as "Bathroom shower_day", and a new sensor gets the entity id `sensor.bathroom_shower_day`. Entity ids of existing sensors don't change. Since a source meter is linked to the device of the source entity by default, new source meters get this prefix as well. Clear the device field if you don't want that.
