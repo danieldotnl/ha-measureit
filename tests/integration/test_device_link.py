@@ -1,6 +1,7 @@
 """Test linking MeasureIt sensors to a device."""
 
 from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -30,13 +31,10 @@ def create_device(hass: HomeAssistant, name: str) -> dr.DeviceEntry:
     )
 
 
-def create_source_entry(
-    options: dict | None = None, minor_version: int = 2
-) -> MockConfigEntry:
+def create_source_entry(options: dict | None = None) -> MockConfigEntry:
     """Create a source meter config entry."""
     return MockConfigEntry(
         domain=DOMAIN,
-        minor_version=minor_version,
         options={
             "config_name": "test",
             "meter_type": "source",
@@ -66,14 +64,18 @@ def create_time_entry(options: dict | None = None) -> MockConfigEntry:
     )
 
 
-def get_sensor_device_id(hass: HomeAssistant) -> str | None:
-    """Return the device id of the MeasureIt sensor."""
-    entity_registry = er.async_get(hass)
-    entity_id = entity_registry.async_get_entity_id(
+def get_sensor_entity_id(hass: HomeAssistant) -> str:
+    """Return the entity id of the MeasureIt sensor."""
+    entity_id = er.async_get(hass).async_get_entity_id(
         "sensor", DOMAIN, SENSORS[0]["unique_id"]
     )
     assert entity_id
-    entry = entity_registry.async_get(entity_id)
+    return entity_id
+
+
+def get_sensor_device_id(hass: HomeAssistant) -> str | None:
+    """Return the device id of the MeasureIt sensor."""
+    entry = er.async_get(hass).async_get(get_sensor_entity_id(hass))
     assert entry
     return entry.device_id
 
@@ -88,46 +90,6 @@ def register_source_entity(hass: HomeAssistant, device: dr.DeviceEntry) -> None:
         device_id=device.id,
     )
     hass.states.async_set("sensor.test_source", "3")
-
-
-async def test_migration_links_source_meter_to_source_device(
-    hass: HomeAssistant,
-) -> None:
-    """Test migrating an old source meter stores the device of the source entity."""
-    source_device = create_device(hass, "source_device")
-    register_source_entity(hass, source_device)
-    entry = create_source_entry(minor_version=1)
-
-    await setup_with_mock_config(hass, entry)
-
-    assert entry.minor_version == 2
-    assert entry.options["device_id"] == source_device.id
-    assert get_sensor_device_id(hass) == source_device.id
-    await unload_with_mock_config(hass, entry)
-
-
-async def test_migration_keeps_selected_device(hass: HomeAssistant) -> None:
-    """Test migrating does not replace a selected device."""
-    source_device = create_device(hass, "source_device")
-    selected_device = create_device(hass, "selected_device")
-    register_source_entity(hass, source_device)
-    entry = create_source_entry({"device_id": selected_device.id}, minor_version=1)
-
-    await setup_with_mock_config(hass, entry)
-
-    assert entry.options["device_id"] == selected_device.id
-    await unload_with_mock_config(hass, entry)
-
-
-async def test_migration_with_unknown_source_entity(hass: HomeAssistant) -> None:
-    """Test migrating a source meter whose source entity is not registered."""
-    entry = create_source_entry(minor_version=1)
-
-    await setup_with_mock_config(hass, entry)
-
-    assert entry.minor_version == 2
-    assert "device_id" not in entry.options
-    await unload_with_mock_config(hass, entry)
 
 
 async def test_source_meter_without_device_is_not_linked(hass: HomeAssistant) -> None:
@@ -177,6 +139,21 @@ async def test_time_meter_links_to_selected_device(hass: HomeAssistant) -> None:
     await unload_with_mock_config(hass, entry)
 
 
+async def test_linked_sensor_is_named_after_device(hass: HomeAssistant) -> None:
+    """Test a linked sensor gets the device name as prefix."""
+    device = create_device(hass, "selected_device")
+    entry = create_time_entry({"device_id": device.id})
+
+    await setup_with_mock_config(hass, entry)
+
+    entity_id = get_sensor_entity_id(hass)
+    assert entity_id == "sensor.selected_device_test_day"
+    state = hass.states.get(entity_id)
+    assert state
+    assert state.attributes["friendly_name"] == "selected_device test_day"
+    await unload_with_mock_config(hass, entry)
+
+
 async def test_time_meter_without_device(hass: HomeAssistant) -> None:
     """Test a time meter without a selected device is not linked."""
     entry = create_time_entry()
@@ -217,4 +194,32 @@ async def test_changing_device_relinks_sensors(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
     assert get_sensor_device_id(hass) is None
 
+    await unload_with_mock_config(hass, entry)
+
+
+async def test_clearing_device_unlinks_source_meter(hass: HomeAssistant) -> None:
+    """Test clearing the device unlinks a source meter, despite its source device."""
+    source_device = create_device(hass, "source_device")
+    register_source_entity(hass, source_device)
+    entry = create_source_entry({"device_id": source_device.id})
+    await setup_with_mock_config(hass, entry)
+    assert get_sensor_device_id(hass) == source_device.id
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], user_input={"next_step_id": "edit_main"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            "when_days": ["0", "1", "2", "3", "4", "5", "6"],
+            "when_from": "00:00:00",
+            "when_till": "00:00:00",
+        },
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+
+    assert "device_id" not in entry.options
+    assert get_sensor_device_id(hass) is None
     await unload_with_mock_config(hass, entry)

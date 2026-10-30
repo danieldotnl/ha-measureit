@@ -177,7 +177,7 @@ async def validate_count_config(
     handler: SchemaCommonFlowHandler,  # noqa: ARG001
     user_input: dict[str, Any],
 ) -> dict[str, Any]:
-    """Validate source config."""
+    """Validate count config."""
     user_input[CONF_METER_TYPE] = MeterType.COUNTER
     return user_input
 
@@ -537,9 +537,6 @@ OPTIONS_FLOW = {
 
 class MeasureItFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config flow for Scrape."""
-
-    VERSION = 1
-    MINOR_VERSION = 2
 
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
