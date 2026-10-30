@@ -19,15 +19,17 @@ jobs:
 
       - name: "Adjust version number"
         shell: "bash"
+        env:
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
+          yq -i -o json ".version=\"${TAG#v}\"" \
             "${{ github.workspace }}/custom_components/measureit/manifest.json"
 
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |
           cd "${{ github.workspace }}/custom_components/measureit"
-          zip measureit.zip -r ./
+          zip measureit.zip -r ./ -x "__pycache__/*"
 
       - name: "Upload the ZIP file to the release"
         uses: softprops/action-gh-release@v3
