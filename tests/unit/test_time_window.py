@@ -80,6 +80,37 @@ def test_tw_cross_midnight() -> None:
     assert tw.is_active(fake_now) is False
 
 
+def test_tw_cross_midnight_end_exclusive() -> None:
+    """Test is_active is False exactly at the end of a time window crossing midnight."""
+    tw = TimeWindow(["0"], "22:00:00", "04:00:00")  # monday
+
+    fake_now = datetime(2022, 1, 3, 21, 59, 59, tzinfo=TZ)  # = monday before TW
+    assert tw.is_active(fake_now) is False
+
+    fake_now = datetime(2022, 1, 3, 22, 0, tzinfo=TZ)  # = monday at start of TW
+    assert tw.is_active(fake_now) is True
+
+    fake_now = datetime(2022, 1, 4, 3, 59, 59, tzinfo=TZ)  # = tuesday in TW of monday
+    assert tw.is_active(fake_now) is True
+
+    fake_now = datetime(2022, 1, 4, 4, 0, tzinfo=TZ)  # = tuesday at end of TW
+    assert tw.is_active(fake_now) is False
+
+
+def test_tw_ending_at_midnight() -> None:
+    """Test is_active when the time window ends at midnight."""
+    tw = TimeWindow(["0"], "22:00:00", "00:00:00")  # monday
+
+    fake_now = datetime(2022, 1, 3, 23, 59, 59, tzinfo=TZ)  # = monday in TW
+    assert tw.is_active(fake_now) is True
+
+    fake_now = datetime(2022, 1, 4, 0, 0, tzinfo=TZ)  # = tuesday at end of TW
+    assert tw.is_active(fake_now) is False
+
+    fake_now = datetime(2022, 1, 4, 10, 0, tzinfo=TZ)  # = tuesday after TW
+    assert tw.is_active(fake_now) is False
+
+
 def test_cross_midnight_on_sunday() -> None:
     """Test is_active() on time_window when it crosses midnight on first day of week."""
     tw = TimeWindow(["6"], "22:00:00", "04:00:00")  # sunday
@@ -177,6 +208,113 @@ def test_next_change_crosses_midnight_inactive() -> None:
     # Expect the next change to be the next Friday at 22:00
     expected_change = datetime(2023, 4, 14, 22, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
     assert tw.next_change(current_time) == expected_change
+
+
+def test_next_change_crosses_midnight_at_end() -> None:
+    """Test next_change exactly at the end of a TimeWindow crossing midnight."""
+    # TimeWindow active on all days from 22:00 to 07:00 (crosses midnight)
+    tw = TimeWindow(
+        days=["0", "1", "2", "3", "4", "5", "6"],
+        from_time="22:00:00",
+        till_time="07:00:00",
+    )
+    # Current time is Wednesday at 07:00, the scheduled end of the window
+    current_time = datetime(2023, 4, 5, 7, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    # Expect the next change to be the same day at 22:00, not tomorrow at 07:00
+    expected_change = datetime(2023, 4, 5, 22, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == expected_change
+
+
+def test_next_change_ending_at_midnight() -> None:
+    """Test next_change exactly at the end of a TimeWindow ending at midnight."""
+    # TimeWindow active on all days from 18:00 to 00:00
+    tw = TimeWindow(
+        days=["0", "1", "2", "3", "4", "5", "6"],
+        from_time="18:00:00",
+        till_time="00:00:00",
+    )
+    # Current time is Tuesday at 00:00, the scheduled end of Monday's window
+    current_time = datetime(2023, 4, 4, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    # Expect the next change to be the same day at 18:00, not tomorrow at 00:00
+    expected_change = datetime(2023, 4, 4, 18, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == expected_change
+
+    # TimeWindow active on Mondays (0) from 22:00 to 00:00
+    tw = TimeWindow(days=["0"], from_time="22:00:00", till_time="00:00:00")
+    # Expect the next change to be the next Monday at 22:00
+    expected_change = datetime(2023, 4, 10, 22, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == expected_change
+
+
+def test_next_change_full_days() -> None:
+    """Test next_change for a 00:00 - 00:00 TimeWindow on part of the week."""
+    # TimeWindow active the whole day on Mondays (0) and Tuesdays (1)
+    tw = TimeWindow(days=["0", "1"], from_time="00:00:00", till_time="00:00:00")
+
+    # Sunday at 23:59:59: inactive, next change is Monday at 00:00
+    current_time = datetime(2023, 4, 2, 23, 59, 59, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 3, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+    # Monday at 00:00: active, next change is Tuesday at 00:00
+    current_time = datetime(2023, 4, 3, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is True
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 4, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+    # Tuesday at 00:00: still active, next change is Wednesday at 00:00
+    current_time = datetime(2023, 4, 4, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is True
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 5, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+    # Tuesday at 23:59:59: still active, next change is Wednesday at 00:00
+    current_time = datetime(2023, 4, 4, 23, 59, 59, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is True
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 5, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+    # Wednesday at 00:00: inactive, next change is the next Monday at 00:00
+    current_time = datetime(2023, 4, 5, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 10, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+
+def test_next_change_starting_at_midnight() -> None:
+    """Test next_change for a TimeWindow starting at midnight."""
+    # TimeWindow active on Mondays (0) from 00:00 to 02:00
+    tw = TimeWindow(days=["0"], from_time="00:00:00", till_time="02:00:00")
+
+    # Sunday at 23:00: inactive, next change is Monday at 00:00
+    current_time = datetime(2023, 4, 2, 23, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 3, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+    # Monday at 00:00: active, next change is Monday at 02:00
+    current_time = datetime(2023, 4, 3, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is True
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 3, 2, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+    # Monday at 02:00: inactive, next change is the next Monday at 00:00
+    current_time = datetime(2023, 4, 3, 2, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+    assert tw.is_active(current_time) is False
+    assert tw.next_change(current_time) == datetime(
+        2023, 4, 10, 0, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
 
 
 def test_next_change_crosses_new_week() -> None:

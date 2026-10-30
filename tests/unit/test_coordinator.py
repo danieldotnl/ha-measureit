@@ -93,6 +93,32 @@ def test_async_on_time_window_active_change(coordinator: MeasureItCoordinator) -
     assert coordinator._time_window_listener is not None
 
 
+def test_async_on_time_window_active_change_at_end_crossing_midnight(
+    hass: HomeAssistant,
+) -> None:
+    """Test the time window closes at the end of a window crossing midnight."""
+    coordinator = MeasureItCoordinator(
+        hass,
+        "test",
+        MeterType.COUNTER,
+        TimeWindow(["0", "1", "2", "3", "4", "5", "6"], "22:00:00", "07:00:00"),
+    )
+    entity = MeasureItCoordinatorEntity()
+    entity.on_time_window_change = MagicMock()
+    coordinator.async_register_sensor(entity)
+    with patch(
+        "custom_components.measureit.coordinator.async_track_point_in_time"
+    ) as mock_track:
+        # HA calls the listener with the exact scheduled point in time
+        coordinator.async_on_time_window_active_change(
+            datetime(2023, 4, 5, 7, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        )
+    entity.on_time_window_change.assert_called_with(active=False)
+    assert mock_track.call_args.args[2] == datetime(
+        2023, 4, 5, 22, 0, 0, tzinfo=dt_util.DEFAULT_TIME_ZONE
+    )
+
+
 def test_async_on_condition_template_update(coordinator: MeasureItCoordinator) -> None:
     """Test async_on_condition_update."""
     entity = MeasureItCoordinatorEntity()

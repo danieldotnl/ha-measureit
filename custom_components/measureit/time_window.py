@@ -60,7 +60,7 @@ class TimeWindow:
         if self._start < self._end:
             if check_time >= self._start and check_time < self._end:
                 return tznow.weekday() in self._days
-        elif check_time >= self._start or check_time <= self._end:
+        elif check_time >= self._start or check_time < self._end:
             if check_time < self._start:
                 return prev_weekday(tznow.weekday()) in self._days
             return tznow.weekday() in self._days
