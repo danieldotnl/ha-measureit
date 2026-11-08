@@ -73,7 +73,8 @@
     },
     "error": {
       "tw_days_minimum": "Vyberte aspoň jeden deň na meranie.",
-      "invalid_cron": "Jedno z období nie je platným cron výrazom."
+      "invalid_cron": "Jedno z období nie je platným cron výrazom.",
+      "condition_invalid": "Šablóna podmienky je neplatná."
     }
   },
   "options": {
@@ -133,6 +134,8 @@
     },
     "error": {
       "tw_days_minimum": "Vyberte aspoň jeden deň na meranie.",
+      "invalid_cron": "Jedno z období nie je platným cron výrazom.",
+      "condition_invalid": "Šablóna podmienky je neplatná.",
       "uom_with_device_class_update": "Aktualizácia mernej jednotky nie je povolená, keď je nastavená trieda zariadenia. Vyberte snímač a pridajte nový."
     }
   },
